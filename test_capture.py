@@ -12,14 +12,22 @@ def main() -> int:
     cap = GDCapture(cfg)
     print(f"expected obs_shape={cap.obs_shape} dtype=uint8")
 
-    # Offline shape test (no screen needed): push synthetic frames.
-    fake = (np.random.rand(180, 320) * 255).astype(np.uint8)
+    # Offline shape test (no screen needed): push synthetic RGB frames.
+    fake = (np.random.rand(180, 320, 3) * 255).astype(np.uint8)
     for _ in range(4):
         cap._push(fake)
     obs = cap._stacked_obs()
-    assert obs.shape == (4, 180, 320), f"bad shape {obs.shape}"
+    assert obs.shape == (4, 180, 320, 3), f"bad shape {obs.shape}"
     assert obs.dtype == np.uint8, f"bad dtype {obs.dtype}"
     print(f"offline stack OK: shape={obs.shape} dtype={obs.dtype}")
+
+    # Offline conversion test: BGR in -> RGB out (red <-> blue swapped).
+    bgr = np.zeros((480, 640, 3), dtype=np.uint8)
+    bgr[:, :, 0] = 255  # pure blue in BGR
+    small = cap._to_rgb_small(bgr)
+    assert small.shape == (180, 320, 3), f"bad small {small.shape}"
+    assert small[:, :, 0].mean() < 8 and small[:, :, 2].mean() > 247, "BGR->RGB swap wrong"
+    print("offline BGR->RGB OK")
     cap.reset()
 
     # Live test: real dxcam capture with EXACT tick accounting.
@@ -41,7 +49,7 @@ def main() -> int:
         h = cap.health
 
         print(f"live obs shape={obs.shape} dtype={obs.dtype}")
-        assert obs.shape == (4, 180, 320), f"bad live shape {obs.shape}"
+        assert obs.shape == (4, 180, 320, 3), f"bad live shape {obs.shape}"
         # EXACTNESS: one read() == one tick, ticks == frames + drops.
         assert ticks_done == n, f"tick miscount: {ticks_done} != {n} reads"
         assert h["frames"] + h["drops"] == h["tick"], (
@@ -53,7 +61,7 @@ def main() -> int:
         print(f"frames={h['frames']} drops={h['drops']} "
               f"drop_rate={h['drop_rate'] * 100:.2f}% restarts={h['restarts']} "
               f"p95={h['lat_p95_ms']:.1f}ms max={h['lat_max_ms']:.1f}ms "
-              f"gray_direct={h['gray_direct']}")
+              f"bgr_direct={h['bgr_direct']}")
         ok = True
         if abs(fps - 60.0) > 1.0:
             print(f"FAIL: loop rate {fps:.2f}Hz not locked to 60Hz (+/-1)")
@@ -69,7 +77,7 @@ def main() -> int:
             ok = False
         if not ok:
             return 1
-        print("PASS: shape (4,180,320) uint8, hard-locked 60Hz, counts exact")
+        print("PASS: shape (4,180,320,3) RGB uint8, hard-locked 60Hz, counts exact")
         return 0
     finally:
         cap.stop()

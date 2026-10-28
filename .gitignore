@@ -1,0 +1,59 @@
+# ================= GD-RL: keep code + config, ignore everything generated ================
+# Kept (tracked): *.py, templates/*.png, pct_roi.json, .gitattributes, README/TRAINING docs.
+# Everything below is regenerated or machine-local and must NOT be committed.
+
+# --- model weights / checkpoints (large binaries, regenerated every run) ---
+checkpoints/
+*.zip
+digit_cnn.pt
+yolo_gd.pt
+best*.pt
+*.onnx
+
+# --- training telemetry (logs, tensorboard, monitor csv) ---
+logs/
+logs_boxes/
+tb/
+tb_boxes/
+runs/
+lightning_logs/
+*.tfevents*
+events.out.tfevents*
+
+# --- recordings + labels + eval traces (100s of MB of mp4/npy/png) ---
+recs/
+candidates/
+*.mp4
+*.avi
+*.mkv
+*.npz
+*.npy
+
+# --- ad-hoc debug screenshots at repo root ---
+detect_debug*.png
+preview_check.png
+preview*.png
+detect_probe.png
+pct_capture.png
+calibrate*.png
+debug*.png
+*.trace.png
+
+# --- python bytecode / caches / venv ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+.env
+
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

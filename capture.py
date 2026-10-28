@@ -1,12 +1,13 @@
 """Second Attempt 1.1 — fast screen capture pipeline.
 
-Pipeline: dxcam -> crop (via DXGI region) -> grayscale (on GPU if
-available) -> downscale to 320x180 -> 4-frame stack.
+Pipeline: dxcam -> crop (via DXGI region) -> BGR -> RGB -> downscale to
+320x180 -> 4-frame stack. Full RGB so orb/portal colors survive (yellow
+bounce vs blue flip vs pink vs portals are hue-coded, near-identical
+in luma at 320x180).
 
 Optimizations for stable 60 FPS:
   - Capture only `region` so fewer pixels cross the bus.
-  - Ask dxcam for GRAY output directly (GPU-side conversion), fall back
-    to cv2 BGR->GRAY only if the backend ignores it.
+  - Keep native BGR from DXGI, swap to RGB + downscale in place.
   - `video_mode=True` + `target_fps=60` so DXGI paces acquisition.
   - Small `max_buffer_len` so we never build latency backlog.
   - Preallocated numpy buffers; cv2.resize writes into `dst` in place.
@@ -60,24 +61,30 @@ class CaptureConfig:
 
 
 class GDCapture:
-    """Optimized dxcam capture with grayscale + resize + frame stack."""
+    """Optimized dxcam capture with RGB + resize + frame stack.
+
+    Also caches the last native full-res BGR frame (`last_fullres`) for
+    the 1Hz x% digit-template reader: 320x180 is too coarse for OCR, so
+    percent text must be matched on full-res crops, never on the policy obs.
+    """
 
     def __init__(self, config: CaptureConfig | None = None, **kwargs) -> None:
         self.cfg: CaptureConfig = config or CaptureConfig(**kwargs)
         self._period_s: float = 1.0 / float(self.cfg.target_fps)
         self._period_ns: int = int(round(1e9 / float(self.cfg.target_fps)))
         self._camera = None
-        self._gray_direct: bool = True  # assume GPU grayscale works until proven otherwise
+        self._bgr_direct: bool = True  # True once we confirm native BGR path
         self._running: bool = False
         self._lock = threading.Lock()
 
         H, W, N = self.cfg.height, self.cfg.width, self.cfg.n_stack
-        # Ring buffer history: (N, H, W) uint8, written in place.
-        self._stack: np.ndarray = np.zeros((N, H, W), dtype=np.uint8)
+        # Ring buffer history: (N, H, W, 3) RGB uint8, written in place.
+        self._stack: np.ndarray = np.zeros((N, H, W, 3), dtype=np.uint8)
         self._ptr: int = 0  # next slot to overwrite
         self._filled: int = 0
         # Scratch destination for cv2.resize (avoids one alloc per frame).
-        self._small: np.ndarray = np.zeros((H, W), dtype=np.uint8)
+        self._small: np.ndarray = np.zeros((H, W, 3), dtype=np.uint8)
+        self._fullres: np.ndarray | None = None  # last native BGR frame (no copy beyond this)
         self._last_tick_ns: int = 0
         # --- exact tick/frame accounting ---
         self._ticks: int = 0  # every read() call = exactly one 60Hz tick
@@ -94,9 +101,9 @@ class GDCapture:
 
     # ------------------------------------------------------------------ #
     @property
-    def obs_shape(self) -> Tuple[int, int, int]:
-        """Stacked observation shape: (n_stack, height, width)."""
-        return (self.cfg.n_stack, self.cfg.height, self.cfg.width)
+    def obs_shape(self) -> Tuple[int, int, int, int]:
+        """Stacked observation shape: (n_stack, height, width, 3) RGB."""
+        return (self.cfg.n_stack, self.cfg.height, self.cfg.width, 3)
 
     @property
     def obs_dtype(self):
@@ -105,7 +112,7 @@ class GDCapture:
     def _create_and_start(self) -> None:
         create_kwargs: dict = dict(
             output_idx=self.cfg.output_idx,
-            output_color="GRAY",  # GPU-side grayscale when supported
+            output_color="BGR",  # native DXGI order; swap to RGB in place
             max_buffer_len=self.cfg.max_buffer_len,
         )
         # dxcam 0.3.x accepts region in create(); older builds only in start().
@@ -194,6 +201,18 @@ class GDCapture:
         return self._ticks
 
     @property
+    def last_fullres(self) -> np.ndarray | None:
+        """Last native full-res BGR frame (no downscale). Same-tick read-only.
+
+        Used by the 1Hz x% digit-template reader: percent glyphs are
+        ~6-10px at 320x180 (unreadable) but crisp at native res. Returns
+        None before the first fresh frame. Do NOT hold across ticks: dxcam
+        reuses the buffer, so copy the crop if you need it later.
+        """
+        with self._lock:
+            return self._fullres
+
+    @property
     def expected_ticks(self) -> int:
         """Ticks that SHOULD have elapsed since start at exactly target_fps."""
         if not self._t_start:
@@ -234,7 +253,8 @@ class GDCapture:
             "lat_p95_ms": float(np.percentile(lat, 95)),
             "lat_max_ms": float(lat.max()),
             "stale_s": (time.perf_counter() - self._last_good_ts) if self._last_good_ts else 0.0,
-            "gray_direct": self._gray_direct,
+            "bgr_direct": self._bgr_direct,
+            "gray_direct": self._bgr_direct,  # back-compat alias for old tests
             "obs_shape": self.obs_shape,
         }
 
@@ -280,36 +300,62 @@ class GDCapture:
         self._last_tick_ns = time.perf_counter_ns()
         return missed
 
-    def _to_grayscale_small(self, frame: np.ndarray) -> np.ndarray:
-        """Crop is already done by DXGI region; convert + downscale in place."""
+    def _to_rgb_small(self, frame: np.ndarray) -> np.ndarray:
+        """Crop is already done by DXGI region; swap to RGB + downscale."""
         if frame is None:
             raise RuntimeError("dxcam returned None (minimized/protected content?)")
-        # Fast path: dxcam with output_color="GRAY" gives (H, W) or (H, W, 1).
-        if frame.ndim == 2:
-            gray = frame
-        elif frame.ndim == 3 and frame.shape[2] == 1:
-            gray = frame[:, :, 0]
-        elif frame.ndim == 3 and frame.shape[2] == 3:
-            # Fallback: backend ignored output_color="GRAY", convert on CPU.
-            # Note: dxcam default order is BGR.
-            self._gray_direct = False
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # Native path: dxcam with output_color="BGR" gives (H, W, 3) BGR.
+        if frame.ndim == 3 and frame.shape[2] == 3:
+            bgr = frame
         elif frame.ndim == 3 and frame.shape[2] == 4:
-            self._gray_direct = False
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
+            # BGRA (alpha unused): drop channel in place via scratch.
+            if not hasattr(self, "_scratch") or self._scratch is None:
+                self._scratch = np.empty_like(frame)
+            np.copyto(self._scratch, frame)
+            bgr = self._scratch[:, :, :3]
+        elif frame.ndim == 2 or (frame.ndim == 3 and frame.shape[2] == 1):
+            # Backend gave GRAY despite BGR request: replicate to RGB.
+            self._bgr_direct = False
+            g = frame[:, :, 0] if frame.ndim == 3 else frame
+            if g.shape[0] == self.cfg.height and g.shape[1] == self.cfg.width:
+                self._small[:, :, 0] = g
+                self._small[:, :, 1] = g
+                self._small[:, :, 2] = g
+            else:
+                cv2.resize(
+                    g,
+                    (self.cfg.width, self.cfg.height),
+                    dst=self._small[:, :, 0],
+                    interpolation=self.cfg.interpolation,
+                )
+                self._small[:, :, 1] = self._small[:, :, 0]
+                self._small[:, :, 2] = self._small[:, :, 0]
+            return self._small
         else:  # pragma: no cover - defensive
             raise ValueError(f"unexpected frame ndim={frame.ndim} shape={frame.shape}")
 
-        if gray.shape[0] == self.cfg.height and gray.shape[1] == self.cfg.width:
-            np.copyto(self._small, gray)
+        if bgr.shape[0] == self.cfg.height and bgr.shape[1] == self.cfg.width:
+            # Exact size: BGR->RGB channel swap in place, no resize needed.
+            self._small[:, :, 0] = bgr[:, :, 2]
+            self._small[:, :, 1] = bgr[:, :, 1]
+            self._small[:, :, 2] = bgr[:, :, 0]
         else:
+            # Resize all 3 channels at once, then swap R<->B in place.
             cv2.resize(
-                gray,
+                bgr,
                 (self.cfg.width, self.cfg.height),
                 dst=self._small,
                 interpolation=self.cfg.interpolation,
             )
+            # In-place R<->B swap via temp view (no alloc).
+            tmp = self._small[:, :, 0].copy()
+            self._small[:, :, 0] = self._small[:, :, 2]
+            self._small[:, :, 2] = tmp
         return self._small
+
+    # Back-compat alias (old name); health key renamed below.
+    def _to_grayscale_small(self, frame: np.ndarray) -> np.ndarray:
+        return self._to_rgb_small(frame)
 
     def _push(self, small: np.ndarray) -> None:
         self._stack[self._ptr] = small
@@ -379,13 +425,14 @@ class GDCapture:
             self._lat_ms.append((time.perf_counter() - t_in) * 1000.0)
             return self._stacked_obs()
         try:
-            small = self._to_grayscale_small(frame)
+            small = self._to_rgb_small(frame)
         except Exception:  # noqa: BLE001 - corrupt frame; keep last obs
             log.warning("dropping corrupt frame shape=%s", getattr(frame, "shape", "?"))
             self._note_tick(missed, fresh=False)
             return self._stacked_obs()
         with self._lock:
             self._push(small)
+            self._fullres = frame  # dxcam owns buffer; read-only use, same-tick only
             self._consec_none = 0
             self._last_good_ts = time.perf_counter()
             obs = self._stacked_obs()
@@ -445,5 +492,5 @@ class GDCapture:
             "p95_ms": float(np.percentile(arr, 95)),
             "max_ms": float(arr.max()),
             "obs_shape": self.obs_shape,
-            "gray_direct": self._gray_direct,
+            "bgr_direct": self._bgr_direct,
         }
