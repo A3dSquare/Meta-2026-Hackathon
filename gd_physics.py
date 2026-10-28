@@ -259,12 +259,19 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
     x_prev = 0.0
     corr_by: dict = {}
     corr_key: dict = {}
-    for i in range(1, steps + 1):
+    # 1/30 s steps for the first 0.5 s (where every plan does its pressing), then 1/15 s:
+    # the physics is exact for any step, it only makes far-away timing a bit coarser
+    fine = min(steps, int(round(0.5 / dt)))
+    times = [k * dt for k in range(1, fine + 1)]
+    while times[-1] + 1e-9 < horizon:
+        times.append(min(horizon, times[-1] + 2 * dt))
+    t_prev = 0.0
+    for i, t in enumerate(times, start=1):
         if not live:
             break
-        t = i * dt
+        dt_i = t - t_prev
         x = speed * t
-        jd = int((t - dt) / dec_dt + 1e-9)          # decision index during this step (0 = now)
+        jd = int(t_prev / dec_dt + 1e-9)            # decision index during this step (0 = now)
         if jd < len(pending):
             holds = [bool(pending[jd])] * len(live)  # already sent, still in the pipeline
         else:
@@ -286,10 +293,11 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         for k, pi in enumerate(live):
             b = B[pi]
             was = b.grounded
-            advance(b, holds[k], dt, speed, p, (floors, ceils))
+            advance(b, holds[k], dt_i, speed, p, (floors, ceils))
             if corr is not None and not b.grounded:
-                b.y += float(corr[k]) * dt                # learned leftover error
-                b.vy += float(corr[k])
+                s_ = dt_i / dt                            # learned leftover error (it was learned
+                b.y += float(corr[k]) * dt_i * (1 + s_) / 2   # per 1/30 s step; a 2x step gets
+                b.vy += float(corr[k]) * s_               # what two of them would add)
             if pi == 0 and was and not b.grounded and t_ledge is None and b.mode not in ("ship", "wave", "ufo"):
                 t_ledge = t
             y = b.y
@@ -311,6 +319,7 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                 still.append(pi)
         live = still
         x_prev = x
+        t_prev = t
     paths = []
     for pi in range(N_PLANS):
         h = hit_t[pi]
