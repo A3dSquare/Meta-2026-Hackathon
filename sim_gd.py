@@ -439,6 +439,7 @@ def main() -> int:
     p.add_argument("--no-trim", action="store_true", help="ablation: no death-time correction")
     p.add_argument("--eval", default=None, help="evaluate a checkpoint instead of training")
     p.add_argument("--quiet", action="store_true")
+    p.add_argument("--no-shield", action="store_true", help="no physics-preview safety shield")
     p.add_argument("--no-motion-fix", action="store_true", help="don't learn a correction of the physics preview")
     p.add_argument("--input-lag", type=int, default=0,
                    help="decisions between pressing and the icon reacting (real GD + capture: ~1)")
@@ -455,7 +456,7 @@ def main() -> int:
         level = random_level(a.seed)
     env = SimGD(level, frame_skip=a.frame_skip, seed=a.seed, input_lag=a.input_lag,
                 motion_fix=not a.no_motion_fix)
-    cfg = TrainConfig(algo=a.algo, total_steps=a.steps, name=f"sim_{a.level}", log_dir="./logs_sim",
+    cfg = TrainConfig(algo=a.algo, total_steps=a.steps, shield=not a.no_shield, name=f"sim_{a.level}", log_dir="./logs_sim",
                       trim_death=not a.no_trim, verbose=0 if a.quiet else 1,
                       stop_on_complete=False)
     tr = Trainer(env, cfg, model_path=a.eval)

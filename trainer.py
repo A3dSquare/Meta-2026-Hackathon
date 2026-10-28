@@ -54,6 +54,8 @@ class TrainConfig:
     update_steps: int = 128        # train once this many new steps are banked (checked at deaths)
     max_rollout: int = 2048        # ...or mid-attempt once this many are pending
     trim_death: bool = True        # cut post-crash steps (ablation switch)
+    shield: bool = True            # never take an action the physics preview says crashes when
+                                   # the other action has a path that survives (see safety_shield)
     stop_on_complete: bool = True  # live GD sits on the level-complete screen: save and stop
     save_dir: str = "./checkpoints"
     name: str = "preview_boxes"
@@ -443,6 +445,39 @@ def make_learner(env, cfg: TrainConfig, model_path: str | None = None):
     return PPOLearner(env.observation_space, env.action_space, cfg, model)
 
 
+def safety_shield(obs: np.ndarray, a: int) -> int:
+    """Use the physics preview as a safety net.
+
+    The preview simulated 8 short plans; some start by pressing now, the rest by
+    not pressing. If every plan that starts with action `a` crashes, but a plan
+    starting with the other action survives (or survives clearly longer), take
+    the other action. When both are fine -- or both doomed -- the brain decides.
+    Works the same for random (exploring) and chosen actions, and the brain
+    learns from the action actually taken.
+    """
+    try:
+        from env_boxes import OFF_PLAN, OBS_DIM
+        from gd_physics import N_PLANS, PLANS
+    except Exception:
+        return a
+    if obs is None or len(obs) != OBS_DIM:
+        return a
+    f = obs[OFF_PLAN:OFF_PLAN + 3 * N_PLANS]
+    if not np.any(f):                       # no preview this step (icon not found)
+        return a
+    best = {0: 0.0, 1: 0.0}                 # longest survival (1 = whole horizon) per first action
+    for pi, (_name, plan) in enumerate(PLANS):
+        first = int(bool(plan(0)))
+        surv = 1.0 if f[3 * pi] < 0.5 else float(f[3 * pi + 1])
+        best[first] = max(best[first], surv)
+    mine, other = best[int(a)], best[1 - int(a)]
+    if mine < 1.0 and other >= 1.0:
+        return 1 - int(a)                   # only the other action has a path that survives
+    if mine < 0.5 and other > mine + 0.3:
+        return 1 - int(a)                   # both crash eventually, the other buys much more time
+    return int(a)
+
+
 class Trainer:
     def __init__(self, env, cfg: TrainConfig | None = None, learner=None, model_path: str | None = None,
                  on_step: Callable[..., Any] | None = None,
@@ -453,6 +488,8 @@ class Trainer:
         self.on_step = on_step
         self.on_attempt = on_attempt
         self.on_train_tick = None     # called every 50 gradient steps during an update
+        self.shield_n = 0             # actions the safety shield changed since the last update
+        self.shield_steps = 0
         self._step_t0 = time.perf_counter()
         self._step_n0 = 0
         self.best_prog = -1.0
@@ -489,6 +526,13 @@ class Trainer:
     def act(self, obs, deterministic: bool = False):
         a, extra = self.learner.act(obs, deterministic)
         self.last_q = extra.get("q")
+        if self.cfg.shield and self.cfg.algo == "dqn":
+            a2 = safety_shield(obs, a)
+            if a2 != a:
+                self.shield_n += 1
+                extra = dict(extra, shielded=True)
+                a = a2
+        self.shield_steps += 1
         return a, extra
 
     def hold_prob(self, obs) -> float:
@@ -530,8 +574,11 @@ class Trainer:
         if self.cfg.verbose and st:
             mean_s = np.mean([r[0] for r in self.recent[-20:]]) if self.recent else 0
             extra = "  ".join(f"{k}={v:.3g}" if isinstance(v, float) else f"{k}={v}" for k, v in st.items())
+            sh = (f"  shield saved {self.shield_n}x ({100 * self.shield_n / max(1, self.shield_steps):.1f}% of steps)"
+                  if self.cfg.shield and self.cfg.algo == "dqn" else "")
             print(f"[update {self.updates}] {why}: {extra}  avg survive (last 20)={mean_s / 30:.1f}s  "
-                  f"(paused {dt:.2f}s)")
+                  f"(paused {dt:.2f}s){sh}")
+            self.shield_n = self.shield_steps = 0
 
     def _health(self, pause_dt: float) -> None:
         """One status line per update: if the run degrades, this shows what grew."""

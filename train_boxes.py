@@ -38,6 +38,8 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                    help="only jump when it's this confident jumping beats not jumping (0 = off)")
     p.add_argument("--hold-cost", type=float, default=0.02,
                    help="tiny penalty per step SPACE is held (0 = off)")
+    p.add_argument("--no-shield", action="store_true",
+                   help="don't let the physics preview veto actions it predicts will crash")
     p.add_argument("--motion-model", default="checkpoints/motion_model.npz",
                    help="learned physics correction + tuned jump + input delay (shared by all "
                         "brains and levels); 'none' = don't load or save one")
@@ -80,7 +82,8 @@ def build(args):
                        motion_path=None if str(args.motion_model).lower() == "none" else args.motion_model)
     cfg = TrainConfig(algo=args.algo, total_steps=args.steps, device=dev, name=args.name,
                       update_steps=args.update_steps, replay_ratio=args.replay_ratio,
-                      jump_margin=args.jump_margin, hold_cost=args.hold_cost)
+                      jump_margin=args.jump_margin, hold_cost=args.hold_cost,
+                      shield=not args.no_shield)
     if args.eps is not None:
         cfg.eps_start = float(args.eps)
     print(f"algo={cfg.algo} device={dev} frame_skip={args.frame_skip} hires={not args.no_hires} "

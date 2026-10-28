@@ -35,6 +35,14 @@ the preview worse. It is saved, with the tuned jump and the input delay, in
 10 deaths, and the header shows `fix NN%` = how much it is used in the current
 mode (0% is normal where the formulas are already right, like the cube).
 
+**Safety shield:** before every action (chosen or random), the preview is
+checked: if that action crashes on every path but the other action has a
+path that survives, the other action is taken. Otherwise the brain decides.
+It learns from what was actually done, so it picks up the habit itself. The
+`[update]` line shows `shield saved Nx (P% of steps)`, which should shrink as
+it learns. In the simulator this took the Stereo-like level from ~60-70%
+after 55 attempts to completing it by attempt 6-14. `--no-shield` turns it off.
+
 **Future-proofing:** the brain has 12 spare inputs that are wired in but
 switched off. New features can be added there later without starting a new
 brain. **Brains from before this update (v4 and older) can't be resumed** --
