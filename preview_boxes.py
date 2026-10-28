@@ -5,7 +5,8 @@
     python preview_boxes.py --model checkpoints/best_boxes.pt --eps 0.05   # new level, same brain
 
 Window: the 640x360 frame the detector sees, with
-  red = spike, gray = wall/block, yellow/cyan/pink = orbs, green = player,
+  red = spike, gray = wall/block, yellow/blue/pink = orbs, orange = pad,
+  magenta = portal (labelled), green = player,
   thick box = nearest hazard ahead, bar on the left = how much the policy
   wants to jump right now, green border = SPACE held.
 Keys in the window: q / ESC quit (saves).  p pause/unpause training (GD
@@ -45,7 +46,7 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
         x1, y1 = int((e.x + e.w / 2) * W), int((e.y + e.h / 2) * H)
         c = _COL.get(int(e.cls), (255, 255, 255))
         cv2.rectangle(img, (x0, y0), (x1, y1), c, 3 if e is near else 1)
-        if e is near:
+        if e is near or int(e.cls) in (1, 2, 3, 4, 5):
             cv2.putText(img, CLASSES[int(e.cls)], (x0, max(12, y0 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, c, 1)
     if a == 1:
         cv2.rectangle(img, (0, 0), (W - 1, H - 1), (0, 255, 0), 3)
@@ -59,10 +60,14 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
     cv2.rectangle(img, (4, 30), (14, H - 10), (255, 255, 255), 1)
     ns = sum(1 for e in ents.items if e.cls == 0)
     eps = getattr(tr.learner, "epsilon", lambda: 0.0)()
+    spd = (env.speed or 10.38) / 10.38
+    pl = ents.player()
+    icon = f"{pl.w / 0.0527:.1f}x{pl.h / 0.0938:.1f}" if pl is not None else "--"
     txt = (f"att {tr.attempts + 1}  best {max(tr.best_prog, 0) * 100:.0f}%  spikes {ns}  "
-           f"eps {eps:.2f}  {'MOVING' if info.get('moving') else 'FROZEN'}  upd {tr.updates}")
+           f"speed {spd:.1f}x  icon {icon}  eps {eps:.2f}  "
+           f"{'MOVING' if info.get('moving') else 'FROZEN'}  upd {tr.updates}")
     cv2.rectangle(img, (0, 0), (W, 22), (0, 0, 0), -1)
-    cv2.putText(img, txt, (6, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
+    cv2.putText(img, txt, (6, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
     if scale != 1.0:
         img = cv2.resize(img, (int(W * scale), int(H * scale)), interpolation=cv2.INTER_NEAREST)
     return img

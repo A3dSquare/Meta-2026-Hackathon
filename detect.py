@@ -29,6 +29,17 @@ HAZARDS (spikes + blocks) -- v2, profile based:
   A small tracker confirms hazards over 2 frames and coasts through a single
   missed frame, so boxes neither flash nor flicker.
 
+ORBS / PADS / PORTALS -- colour + shape (detect_specials):
+  bright, saturated sprites whose hue differs from the level background (or
+  that are much brighter than it), sorted by shape in block units: tall rings
+  = portals, round blobs = orbs (class by hue), flat strips = pads. Each keeps
+  its mean hue as Entity.hue so the policy can tell e.g. a ship portal from a
+  gravity portal. Speed portals are not classified -- speed is measured
+  directly from how fast hazards scroll (Entities.scroll).
+
+PLAYER: blob of the icon colour (HeuristicDetector(icon_hue=...), default
+green/cyan) in the left half of the screen, any height, tracked frame to frame.
+
 Backends:
   --backend heuristic (default, zero deps, ~3-5 ms CPU per decision)
   --backend yolo (opt-in, see detect_yolo.py)
@@ -60,6 +71,7 @@ BLOCK_FRAC_H = 30.0 / 320.0
 # process (GUI probe + env) agrees on the cube position.
 _PL_LAST: list = [None]  # [(x, y)] last accepted cube center
 _PL_HOLD: list = [0]     # [ticks] held-through-miss counter
+_PL_SIZE: list = [(0.045, 0.08)]  # [(w, h)] last accepted icon box size
 
 
 @dataclass
@@ -70,6 +82,7 @@ class Entity:
     w: float  # width 0..1
     h: float  # height 0..1
     conf: float = 1.0
+    hue: float = -1.0  # mean OpenCV hue / 180 for coloured objects (orbs/pads/portals), -1 = n/a
 
 
 @dataclass
@@ -313,6 +326,94 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False)
     return out
 
 
+def _hue_dist(h, ref):
+    d = np.abs(h.astype(np.int16) - int(ref))
+    return np.minimum(d, 180 - d)
+
+
+def _orb_class(hue: float) -> int:
+    """Nearest of the three orb classes by hue (others keep their hue feature)."""
+    cands = {CLS_ID["orb_y"]: 27, CLS_ID["orb_b"]: 105, CLS_ID["orb_p"]: 150}
+    return min(cands, key=lambda c: min(abs(hue - cands[c]), 180 - abs(hue - cands[c])))
+
+
+def detect_specials(bgr: np.ndarray, player_box=None) -> list:
+    """Orbs, pads and portals from one BGR frame -> [(cls, x0, y0, x1, y1, conf, hue)].
+
+    GD draws these as bright, saturated sprites whose colour encodes the type
+    (yellow/blue/pink orbs and pads, mode/gravity/speed portals). Colour alone
+    is not enough -- the level's own background is often just as saturated --
+    so a pixel only counts if its hue differs from the background's typical
+    hue, or it is clearly brighter than the background. Blobs are then sorted
+    by SHAPE, in block units:
+      portal: tall (>= 1.7 blocks, height >= 1.6 x width)
+      orb:    round, 0.45 .. 1.5 blocks
+      pad:    flat strip, height <= 0.5 block, width >= 1.8 x height
+    Everything else (decoration) is dropped.
+    """
+    import cv2
+
+    H, W = bgr.shape[:2]
+    blk = BLOCK_FRAC_H * H
+    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    Hh, S, V = hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2]
+    sub = hsv[::4, ::4].reshape(-1, 3)
+    sat = sub[sub[:, 1] > 60]
+    if len(sat) > 50:
+        # dominant hue of the saturated background (circular mode via histogram)
+        hist = np.bincount(sat[:, 0].astype(np.int64), minlength=180)
+        hist = np.convolve(np.concatenate([hist[-5:], hist, hist[:5]]), np.ones(11), "valid")
+        bg_h = int(np.argmax(hist))
+    else:
+        bg_h = -1
+    bg_v = float(np.median(sub[:, 2]))
+    colour = (S >= 100) & (V >= 150)
+    if bg_h >= 0:
+        colour &= _hue_dist(Hh, bg_h) >= 14
+    glow = (S >= 70) & (V.astype(np.int16) >= min(250, bg_v + 50))
+    pad_x0 = pad_x1 = pad_y0 = pad_y1 = None
+    if player_box is not None:
+        px0, py0, px1, py1 = player_box
+        pad_x0 = max(0, int((px0 - 0.2 * blk / W) * W)); pad_x1 = min(W, int((px1 + 0.2 * blk / W) * W) + 1)
+        pad_y0 = max(0, int((py0 - 0.2 * blk / H) * H)); pad_y1 = min(H, int((py1 + 0.2 * blk / H) * H) + 1)
+    out = []
+    # two separate masks: a bright background patch in the "glow" mask must not
+    # swallow an orb that the "different hue" mask already isolates cleanly
+    for raw in (colour, glow):
+        mask = raw.astype(np.uint8)
+        mask[: int(0.065 * H)] = 0
+        if pad_x0 is not None:
+            mask[pad_y0:pad_y1, pad_x0:pad_x1] = 0
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
+        n, lab, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+        for i in range(1, n):
+            x, y, bw, bh, area = (int(v) for v in stats[i])
+            wb, hb = bw / blk, bh / blk
+            if area < 0.06 * blk * blk or wb > 5 or hb > 5:
+                continue
+            m = lab[y:y + bh, x:x + bw] == i
+            hue_vals = Hh[y:y + bh, x:x + bw][m]
+            ang = hue_vals.astype(np.float32) * (2 * np.pi / 180)
+            hue = (np.degrees(np.arctan2(np.sin(ang).mean(), np.cos(ang).mean())) / 2) % 180
+            box = (x / W, y / H, (x + bw) / W, (y + bh) / H)
+            det = None
+            if hb >= 1.7 and hb >= 1.6 * wb and wb >= 0.3:
+                det = (CLS_ID["portal"], *box, 0.8, hue / 180.0)
+            elif 0.45 <= wb <= 1.5 and 0.45 <= hb <= 1.5 and 0.7 <= wb / max(hb, 1e-6) <= 1.4:
+                cnts, _ = cv2.findContours(m.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                if cnts:
+                    c = max(cnts, key=cv2.contourArea)
+                    per = cv2.arcLength(c, True)
+                    circ = 4 * np.pi * cv2.contourArea(c) / max(1e-6, per * per)
+                    if circ >= 0.6 and area >= 0.45 * bw * bh:
+                        det = (_orb_class(hue), *box, 0.8, hue / 180.0)
+            elif hb <= 0.5 and wb >= 0.45 and wb <= 1.8 and wb >= 1.8 * hb:
+                det = (CLS_ID["pad"], *box, 0.7, hue / 180.0)
+            if det is not None and not any(_iou(det[1:5], o[1:5]) > 0.3 for o in out):
+                out.append(det)
+    return out
+
+
 class _HazardTracker:
     """2-frame confirmation + 2-frame coasting for hazard boxes.
 
@@ -380,10 +481,11 @@ class _HazardTracker:
 class HeuristicDetector:
     """Hazards from the 640x360 frame (or the 320x180 one), the rest from 320x180."""
 
-    def __init__(self, temporal: bool = True) -> None:
+    def __init__(self, temporal: bool = True, icon_hue: tuple = (55, 95)) -> None:
         import cv2 as _cv2
         self._cv2 = _cv2
         self.temporal = temporal
+        self.icon_hue = icon_hue   # OpenCV hue range of your icon's main colour
         self._tracker = _HazardTracker()
 
     def reset(self) -> None:
@@ -391,35 +493,55 @@ class HeuristicDetector:
         self._tracker.reset()
 
     def _player(self, hsv, w, h) -> Entity | None:
+        """Icon = blob of the icon colour in the left half, tracked frame to frame.
+
+        Runs on whatever resolution it is given (640x360 preferred: the icon's
+        black outline survives there and keeps it apart from a same-coloured
+        background). Sizes are in block units so the gates are resolution-free.
+        """
         cv2 = self._cv2
-        mask_p = cv2.inRange(hsv, np.array([55, 100, 100]), np.array([95, 255, 255]))
+        blk2 = (BLOCK_FRAC_H * h) ** 2
+        mask_p = cv2.inRange(hsv, np.array([self.icon_hue[0], 100, 100]), np.array([self.icon_hue[1], 255, 255]))
+        sub = hsv[::4, ::4].reshape(-1, 3)
+        sat = sub[sub[:, 1] > 60]
+        if len(sat) > 50:
+            hist = np.bincount(sat[:, 0].astype(np.int64), minlength=180)
+            bg_h = int(np.argmax(hist))
+            lo, hi = self.icon_hue
+            if lo - 8 <= bg_h <= hi + 8:
+                # background has the icon's colour: keep only clearly brighter pixels
+                bg_v = float(np.median(sub[:, 2]))
+                mask_p[hsv[:, :, 2] < min(250, bg_v + 35)] = 0
         cnts_p, _ = cv2.findContours(mask_p, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cands = []
         for c in cnts_p:
-            area = cv2.contourArea(c)
-            if not (15 <= area <= 800):
+            area = cv2.contourArea(c) / blk2
+            if not (0.03 <= area <= 4.0):      # wave/mini icons are small, ships wide
                 continue
             x, y, bw, bh = cv2.boundingRect(c)
             cx, cy = (x + bw / 2) / w, (y + bh / 2) / h
-            if not (0.15 <= cx <= 0.50 and cy >= 0.30):
+            # whole height: ships fly high, upside-down cubes run on the ceiling
+            if not (0.15 <= cx <= 0.50 and 0.07 <= cy <= 0.97):
                 continue
-            if not (0.5 <= bw / max(1, bh) <= 3.0):
+            if not (0.3 <= bw / max(1, bh) <= 3.5):
                 continue
             if _PL_LAST[0] is not None:
                 if abs(cx - _PL_LAST[0][0]) > 0.08 or abs(cy - _PL_LAST[0][1]) > 0.15:
                     continue
             d = abs(cx - _PL_LAST[0][0]) + abs(cy - _PL_LAST[0][1]) if _PL_LAST[0] else -area
-            cands.append((d, Entity(CLS_ID["player"], cx, cy, max(bw / w, 0.045), max(bh / h, 0.08), 0.9)))
+            cands.append((d, Entity(CLS_ID["player"], cx, cy, max(bw / w, 0.03), max(bh / h, 0.05), 0.9)))
         if cands:
             cands.sort(key=lambda t: t[0])
             pl = cands[0][1]
             _PL_LAST[0] = (pl.x, pl.y)
+            _PL_SIZE[0] = (pl.w, pl.h)
             _PL_HOLD[0] = 0
             return pl
         if _PL_LAST[0] is not None:
             _PL_HOLD[0] += 1
             if _PL_HOLD[0] <= 8:
-                return Entity(CLS_ID["player"], _PL_LAST[0][0], _PL_LAST[0][1], 0.045, 0.08, 0.5)
+                pw, ph = _PL_SIZE[0]
+                return Entity(CLS_ID["player"], _PL_LAST[0][0], _PL_LAST[0][1], pw, ph, 0.5)
             _PL_LAST[0] = None
         return None
 
@@ -432,14 +554,18 @@ class HeuristicDetector:
         bgr = np.ascontiguousarray(img[:, :, ::-1])
         hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
         ents: list[Entity] = []
-        pl = self._player(hsv, w, h)
+        src = hires_bgr if hires_bgr is not None else bgr
+        src = np.ascontiguousarray(np.asarray(src)[:, :, :3])
+        hsv_src = cv2.cvtColor(src, cv2.COLOR_BGR2HSV) if hires_bgr is not None else hsv
+        pl = self._player(hsv_src, src.shape[1], src.shape[0])
         if pl is not None:
             ents.append(pl)
         pbox = None
         if pl is not None and pl.conf > 0.6:
             pbox = (pl.x - pl.w / 2, pl.y - pl.h / 2, pl.x + pl.w / 2, pl.y + pl.h / 2)
-        src = hires_bgr if hires_bgr is not None else bgr
-        dets = detect_hazards(np.asarray(src)[:, :, :3], player_box=pbox)
+        # coloured sprites near the icon's last spot are the icon (or its trail)
+        sbox = (pl.x - pl.w / 2, pl.y - pl.h / 2, pl.x + pl.w / 2, pl.y + pl.h / 2) if pl is not None else None
+        dets = detect_hazards(src, player_box=pbox)
         scroll = None
         if self.temporal:
             ents.extend(self._tracker.update(dets))
@@ -447,30 +573,10 @@ class HeuristicDetector:
         else:
             ents.extend(Entity(int(d[0]), (d[1] + d[3]) / 2, (d[2] + d[4]) / 2,
                                d[3] - d[1], d[4] - d[2], d[5]) for d in dets)
-        # orbs / pads / portals: saturated hue blobs (unchanged from v1)
-        for cls_name, (lo, hi) in ORB_HUES.items():
-            mask = cv2.inRange(hsv, np.array([lo, 90, 90]), np.array([hi, 255, 255]))
-            mask[: int(0.07 * h)] = 0
-            cnts2, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            for c in cnts2:
-                area = cv2.contourArea(c)
-                if not (20 <= area <= 3000):
-                    continue
-                x, y, bw, bh = cv2.boundingRect(c)
-                ents.append(Entity(CLS_ID[cls_name], (x + bw / 2) / w, (y + bh / 2) / h,
-                                   bw / w, bh / h, 0.8))
-        mask_g = cv2.inRange(hsv, np.array([35, 90, 90]), np.array([85, 255, 255]))
-        cnts3, _ = cv2.findContours(mask_g, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        for c in cnts3:
-            area = cv2.contourArea(c)
-            if not (40 <= area <= 2500):
-                continue
-            x, y, bw, bh = cv2.boundingRect(c)
-            cx, cy = (x + bw / 2) / w, (y + bh / 2) / h
-            if pl is not None and abs(cx - pl.x) < 1.5 * pl.w and abs(cy - pl.y) < 1.5 * pl.h:
-                continue
-            if y / h > 0.55 and bw > 1.5 * bh:  # pads are flat strips
-                ents.append(Entity(CLS_ID["pad"], cx, cy, bw / w, bh / h, 0.7))
+        # orbs / pads / portals: colour + shape (see detect_specials)
+        for s in detect_specials(src, player_box=sbox):
+            ents.append(Entity(int(s[0]), (s[1] + s[3]) / 2, (s[2] + s[4]) / 2,
+                               s[3] - s[1], s[4] - s[2], s[5], s[6]))
         return Entities(ents, scroll)
 
 

@@ -50,30 +50,56 @@ from detect import BLOCK_FRAC_H, CLS_ID, Entities, make_detector
 # ----------------------------------------------------------------------------
 N_ENT = 8                         # nearest entities ahead of the player
 ENT_CLASSES = 7                   # spike, orb_y, orb_b, orb_p, pad, portal, wall
-ENT_FEAT = 5 + ENT_CLASSES        # present, x0, x1, y0, y1, one-hot
-N_GLOBAL = 4                      # player y, player vy, holding, player found
+ENT_FEAT = 7 + ENT_CLASSES        # present, x0, x1, y0, y1, hue cos, hue sin, one-hot
+N_HIST = 8                        # past decision steps of (vertical speed, action)
+N_GLOBAL = 7 + 2 * N_HIST         # y, vy, hold, found, speed, icon w, icon h, history
 OBS_DIM = N_GLOBAL + N_ENT * ENT_FEAT
-OBS_VERSION = 2
+OBS_VERSION = 3
 
 ASPECT = 16.0 / 9.0
 BLOCK_W = BLOCK_FRAC_H / ASPECT   # one block as a fraction of screen width
 BLOCK_H = BLOCK_FRAC_H
 UNIT = 8.0                        # features are in units of 8 blocks (|x| <~ 2)
 FAR = 2.0                         # empty slot: 16 blocks away (off screen)
+SPEED_1X = 10.38                  # GD 1x speed, blocks per second
+
+
+def player_vy(ents: Entities, prev_py: float | None) -> float:
+    """Icon's vertical speed in blocks per decision step (+ = up)."""
+    if prev_py is None:
+        return 0.0
+    return float(np.clip((prev_py - ents.player_pos()[1]) / BLOCK_H, -3.0, 3.0))
 
 
 def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
-               player_found: bool | None = None) -> np.ndarray:
-    """Entities -> flat (OBS_DIM,) float32. Player-relative, in block units / 8."""
+               player_found: bool | None = None, speed: float = SPEED_1X,
+               hist=None) -> np.ndarray:
+    """Entities -> flat (OBS_DIM,) float32. Player-relative, in block units / 8.
+
+    Globals tell the policy what the boxes can't:
+      speed      scroll speed / 1x speed (speed portals change jump timing)
+      icon w, h  size of the icon box (cube ~1x1, ship wider, wave/mini smaller)
+      history    the last N_HIST steps of (vertical speed, action). How the icon
+                 responds to SPACE is what tells cube from ship from ball, and
+                 which way gravity points -- the policy reads mode from it.
+    """
     px, py = ents.player_pos()
     pl = ents.player()
     found = (pl is not None and pl.conf > 0.6) if player_found is None else bool(player_found)
     out = np.zeros(OBS_DIM, dtype=np.float32)
     out[0] = (0.75 - py) / BLOCK_H / UNIT          # height above the usual floor line
-    vy = 0.0 if prev_py is None else (prev_py - py) / BLOCK_H
-    out[1] = float(np.clip(vy, -3.0, 3.0))
+    out[1] = player_vy(ents, prev_py)
     out[2] = 1.0 if hold else 0.0
     out[3] = 1.0 if found else 0.0
+    out[4] = float(np.clip(speed / SPEED_1X, 0.0, 2.0))
+    if pl is not None:
+        out[5] = float(np.clip(pl.w / BLOCK_W / 2, 0, 2))
+        out[6] = float(np.clip(pl.h / BLOCK_H / 2, 0, 2))
+    if hist:
+        hh = list(hist)[-N_HIST:]
+        for k, (vy_k, a_k) in enumerate(reversed(hh)):   # newest first
+            out[7 + 2 * k] = vy_k
+            out[8 + 2 * k] = float(a_k)
     half_pw = 0.5 * BLOCK_W
     ahead = []
     for e in ents.items:
@@ -81,21 +107,24 @@ def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
         if c == CLS_ID["player"] or c >= ENT_CLASSES:
             continue
         x0, x1 = e.x - e.w / 2, e.x + e.w / 2
-        if x1 < px - half_pw:      # fully behind the cube: irrelevant now
+        if x1 < px - half_pw:      # fully behind the icon: irrelevant now
             continue
-        ahead.append((x0, x1, e.y - e.h / 2, e.y + e.h / 2, c))
+        ahead.append((x0, x1, e.y - e.h / 2, e.y + e.h / 2, c, float(getattr(e, "hue", -1.0))))
     ahead.sort(key=lambda t: t[0])
     base = N_GLOBAL
     for i in range(N_ENT):
         o = base + i * ENT_FEAT
         if i < len(ahead):
-            x0, x1, y0, y1, c = ahead[i]
+            x0, x1, y0, y1, c, hue = ahead[i]
             out[o] = 1.0
             out[o + 1] = (x0 - px) / BLOCK_W / UNIT
             out[o + 2] = (x1 - px) / BLOCK_W / UNIT
             out[o + 3] = (py - y1) / BLOCK_H / UNIT    # bottom edge, + = above player center
             out[o + 4] = (py - y0) / BLOCK_H / UNIT    # top edge
-            out[o + 5 + c] = 1.0
+            if hue >= 0:                               # colour = orb/pad/portal type
+                out[o + 5] = float(np.cos(2 * np.pi * hue))
+                out[o + 6] = float(np.sin(2 * np.pi * hue))
+            out[o + 7 + c] = 1.0
         else:
             out[o + 1] = FAR
             out[o + 2] = FAR
@@ -230,6 +259,8 @@ class EntityBoxEnv(gym.Wrapper):
         self._scroll_hist = deque(maxlen=120)   # |tracker scroll| on moving steps
         self._last_moved = True
         self._lag_hist = deque(maxlen=25)        # measured crash lags (steps)
+        self._hist = deque(maxlen=N_HIST)        # (vy, action) per step this attempt
+        self.speed = None                        # blocks/s, from the tracker
         self._moving: list = []
         self._prev_py: float | None = None
         self._prev_attempts = 1
@@ -273,6 +304,14 @@ class EntityBoxEnv(gym.Wrapper):
             self._err_shown = True
             print(f"[EntityBoxEnv:{where}] {type(exc).__name__}: {exc}")
 
+    def _update_speed(self, sc, moved: bool) -> None:
+        """Scroll speed from the hazard tracker (blocks/s), smoothed."""
+        if sc is None or not moved:
+            return
+        bps = abs(sc) / BLOCK_W / (self.frame_skip / 60.0)
+        if 3.0 <= bps <= 30.0:
+            self.speed = bps if self.speed is None else 0.6 * self.speed + 0.4 * bps
+
     def _observe(self, frame, hold: bool) -> np.ndarray:
         self.last_frame = frame
         hi = self._hires()
@@ -286,12 +325,15 @@ class EntityBoxEnv(gym.Wrapper):
             ents = Entities([])
         self.last_ents = ents
         pl = ents.player()
-        v = encode_obs(ents, hold=hold, prev_py=self._prev_py)
+        v = encode_obs(ents, hold=hold, prev_py=self._prev_py,
+                       speed=self.speed or SPEED_1X, hist=self._hist)
+        self._hist.append((player_vy(ents, self._prev_py) if pl is not None else 0.0, 1.0 if hold else 0.0))
         self._prev_py = ents.player_pos()[1] if pl is not None else self._prev_py
         return v
 
     def _new_attempt(self) -> None:
         self._moving = []
+        self._hist.clear()
         self._last_moved = True
         self._prev_py = None
         try:
@@ -369,6 +411,7 @@ class EntityBoxEnv(gym.Wrapper):
         else:
             moved = self._last_moved   # can't tell this step: keep the last verdict
         self._last_moved = moved
+        self._update_speed(sc, moved)
         self.last_shift = float(sc) if sc is not None else -1.0
         out_info = {
             "moving": moved, "prog": info.get("prog"), "attempts": self._prev_attempts,

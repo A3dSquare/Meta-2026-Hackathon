@@ -103,12 +103,39 @@ def _player(img, rng, y_center):
     cv2.fillPoly(img, [core], (40, 200, 255))
 
 
+COLOURS = {  # BGR
+    "yellow": (0, 230, 255), "blue": (255, 170, 0), "pink": (200, 60, 255),
+    "green": (40, 220, 60), "orange": (0, 140, 255),
+}
+
+
+def _orb(img, cx, cy, col):
+    cv2.circle(img, (int(cx), int(cy)), int(0.48 * BLOCK), (255, 255, 255), 6, cv2.LINE_AA)
+    cv2.circle(img, (int(cx), int(cy)), int(0.38 * BLOCK), col, -1, cv2.LINE_AA)
+    r = int(0.5 * BLOCK)
+    return cx - r, cy - r, cx + r, cy + r
+
+
+def _pad(img, x0, col):
+    w, h = int(0.9 * BLOCK), int(0.22 * BLOCK)
+    cv2.ellipse(img, (int(x0 + w / 2), GROUND_Y), (w // 2, h), 0, 180, 360, col, -1, cv2.LINE_AA)
+    return x0, GROUND_Y - h, x0 + w, GROUND_Y
+
+
+def _portal(img, cx, col):
+    ax, ay = int(0.5 * BLOCK), int(1.5 * BLOCK)
+    cy = GROUND_Y - ay - int(0.2 * BLOCK)
+    cv2.ellipse(img, (int(cx), cy), (ax, ay), 0, 0, 360, col, 18, cv2.LINE_AA)
+    cv2.ellipse(img, (int(cx), cy), (ax - 14, ay - 14), 0, 0, 360, (255, 255, 255), 4, cv2.LINE_AA)
+    return cx - ax - 9, cy - ay - 9, cx + ax + 9, cy + ay + 9
+
+
 def _attempt_text(img, rng):
     cv2.putText(img, f"Attempt {rng.randint(1, 400)}", (rng.randint(600, 1400), int(0.42 * H)),
                 cv2.FONT_HERSHEY_DUPLEX, 4.0, (255, 255, 255), 9, cv2.LINE_AA)
 
 
-def make_frame(seed: int, hard: bool = False) -> tuple[np.ndarray, list[GT]]:
+def make_frame(seed: int, hard: bool = False, specials: bool = False) -> tuple[np.ndarray, list[GT]]:
     """One 2560x1440 BGR frame + ground-truth hazard boxes (normalized)."""
     rng = random.Random(seed)
     img = _bg(rng, hard)
@@ -139,6 +166,20 @@ def make_frame(seed: int, hard: bool = False) -> tuple[np.ndarray, list[GT]]:
                 bs = _spike(img, x + BLOCK * (k + 0.5), y0, wb, hb)
                 gts.append(GT(kind, bs[0] / W, bs[1] / H, bs[2] / W, bs[3] / H))
             x += nw * BLOCK
+        elif specials and r < 0.95 and r >= 0.75:
+            k = rng.random()
+            col = COLOURS[rng.choice(list(COLOURS))]
+            if k < 0.4:
+                b = _orb(img, x + BLOCK / 2, GROUND_Y - BLOCK * rng.uniform(1.2, 2.5), col)
+                kind = "orb"
+            elif k < 0.7:
+                b = _pad(img, x, col)
+                kind = "pad"
+            else:
+                b = _portal(img, x + BLOCK / 2, col)
+                kind = "portal"
+            gts.append(GT(kind, b[0] / W, b[1] / H, b[2] / W, b[3] / H))
+            x += BLOCK
         elif r < 0.75:  # floating block with a ceiling spike hanging under it
             y0 = GROUND_Y - BLOCK * rng.choice([3, 4])
             b = _block(img, x, y0, 1, 1)

@@ -237,7 +237,10 @@ class DQNLearner:
         th = self.th
         ck = th.load(path, map_location=self.dev, weights_only=False)
         if ck.get("obs_dim") != self.obs_dim:
-            raise ValueError(f"{path}: obs_dim {ck.get('obs_dim')} != {self.obs_dim}")
+            raise SystemExit(
+                f"\n{path} is a brain from an older version (it sees {ck.get('obs_dim')} numbers, "
+                f"this version sees {self.obs_dim}: speed, icon shape, motion history, colours were added).\n"
+                f"It can't be resumed -- start a fresh brain by running without --model.\n")
         self.q.load_state_dict(ck["q"])
         self.qt.load_state_dict(ck.get("qt", ck["q"]))
         try:

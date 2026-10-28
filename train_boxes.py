@@ -32,6 +32,9 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--eps", type=float, default=None,
                    help="override starting exploration (default 0.15 fresh / checkpoint's value)")
     p.add_argument("--name", default="preview_boxes", help="checkpoint name in ./checkpoints")
+    p.add_argument("--icon-hue", type=int, nargs=2, default=(55, 95), metavar=("LO", "HI"),
+                   help="OpenCV hue range (0-179) of your icon's main colour; default green/cyan. "
+                        "e.g. yellow 20 35, orange 8 20, blue 95 125, pink 140 170, red 0 8")
 
 
 def build(args):
@@ -61,7 +64,11 @@ def build(args):
     base = GymGDEnv(EnvConfig(max_steps=10**9), cap=cap, pct_reader=rdr)
     base.settle_s = float(args.settle)
     lag = None if str(args.death_lag).lower() == "auto" else float(args.death_lag)
-    env = EntityBoxEnv(base, backend=args.backend, frame_skip=args.frame_skip,
+    det = None
+    if args.backend == "heuristic":
+        from detect import HeuristicDetector
+        det = HeuristicDetector(icon_hue=tuple(args.icon_hue))
+    env = EntityBoxEnv(base, backend=args.backend, detector=det, frame_skip=args.frame_skip,
                        hires=not args.no_hires, death_lag_s=lag)
     cfg = TrainConfig(algo=args.algo, total_steps=args.steps, device=dev, name=args.name,
                       update_steps=args.update_steps, replay_ratio=args.replay_ratio)

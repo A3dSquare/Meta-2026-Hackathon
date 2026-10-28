@@ -39,14 +39,18 @@ def _hit(gt, e, pad=0.25) -> bool:
     return in_gt and (in_det or (e.w < 2.5 * gw))
 
 
-def score(mod, n_frames: int, use_hires: bool, dump: bool = False, tag: str = "", hard: bool = False):
-    kinds = ["regular", "small", "mini", "ceiling", "block"]
+fp_sp = [0]
+
+
+def score(mod, n_frames: int, use_hires: bool, dump: bool = False, tag: str = "", hard: bool = False, specials: bool = False):
+    kinds = ["regular", "small", "mini", "ceiling", "block", "orb", "pad", "portal"]
     tot = {k: 0 for k in kinds}
     hit = {k: 0 for k in kinds}
     fp = 0
+    fp_sp[0] = 0
     ms = []
     for seed in range(n_frames):
-        full, gts = sf.make_frame(seed, hard)
+        full, gts = sf.make_frame(seed, hard, specials)
         rgb320, bgr640 = sf.downscale(full)
         if hasattr(mod, "_PL_LAST"):
             mod._PL_LAST[0] = None
@@ -62,15 +66,22 @@ def score(mod, n_frames: int, use_hires: bool, dump: bool = False, tag: str = ""
         ms.append((time.perf_counter() - t0) * 500.0)
         spikes = [e for e in ents.items if int(e.cls) == 0]
         walls = [e for e in ents.items if int(e.cls) == 6]
+        pools = {"block": walls, "orb": [e for e in ents.items if int(e.cls) in (1, 2, 3)],
+                 "pad": [e for e in ents.items if int(e.cls) == 4],
+                 "portal": [e for e in ents.items if int(e.cls) == 5]}
         for g in gts:
             tot[g.kind] += 1
-            pool = walls if g.kind == "block" else spikes
+            pool = pools.get(g.kind, spikes)
             if any(_hit(g, e) for e in pool):
                 hit[g.kind] += 1
-        spike_gts = [g for g in gts if g.kind != "block"]
+        spike_gts = [g for g in gts if g.kind in ("regular", "small", "mini", "ceiling")]
         for e in spikes:
             if not any(_hit(g, e, pad=0.5) for g in spike_gts):
                 fp += 1
+        sp_gts = [g for g in gts if g.kind in ("orb", "pad", "portal")]
+        for e in pools["orb"] + pools["pad"] + pools["portal"]:
+            if not any(_hit(g, e, pad=0.5) for g in sp_gts):
+                fp_sp[0] += 1
         if dump and seed < 6:
             vis = cv2.resize(full, (1280, 720), interpolation=cv2.INTER_AREA)
             for g in gts:
@@ -88,7 +99,7 @@ def report(name, tot, hit, fp, ms, n):
     for k in tot:
         if tot[k]:
             print(f"  {k:8s} recall {hit[k]:4d}/{tot[k]:<4d} = {100.0 * hit[k] / tot[k]:5.1f}%")
-    print(f"  false-positive spikes: {fp}  ({fp / n:.2f}/frame)")
+    print(f"  false-positive spikes: {fp}  ({fp / n:.2f}/frame)   false orbs/pads/portals: {fp_sp[0]} ({fp_sp[0] / n:.2f}/frame)")
 
 
 def main() -> int:
@@ -97,13 +108,14 @@ def main() -> int:
     p.add_argument("--old", default=None, help="path to an old detect.py to compare")
     p.add_argument("--dump", action="store_true")
     p.add_argument("--hard", action="store_true", help="random level colours, glow, particles")
+    p.add_argument("--specials", action="store_true", help="add orbs, pads and portals")
     a = p.parse_args()
     if a.old:
         old = _load(a.old, "detect_old")
-        report("OLD detector (320x180)", *score(old, a.frames, False, a.dump, "old", a.hard), a.frames)
+        report("OLD detector (320x180)", *score(old, a.frames, False, a.dump, "old", a.hard, a.specials), a.frames)
     new = _load("detect.py", "detect_new")
-    report("NEW detector (320x180 only)", *score(new, a.frames, False, hard=a.hard), a.frames)
-    report("NEW detector (640x360 hires, what training uses)", *score(new, a.frames, True, a.dump, "new", a.hard), a.frames)
+    report("NEW detector (320x180 only)", *score(new, a.frames, False, hard=a.hard, specials=a.specials), a.frames)
+    report("NEW detector (640x360 hires, what training uses)", *score(new, a.frames, True, a.dump, "new", a.hard, a.specials), a.frames)
     return 0
 
 

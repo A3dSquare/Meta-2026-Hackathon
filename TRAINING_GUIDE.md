@@ -1,8 +1,14 @@
 # Training Guide — cross-level GD box policy (v2)
 
 The box policy sees **detector boxes, not pixels**: spikes, blocks, orbs, pads,
-player. The same brain can be pointed at any level. Train it with
-`preview_boxes.py` (live overlay) or `train_boxes.py` (headless).
+portals, player. It also gets the scroll **speed**, the icon's **size**, and
+the last 8 steps of how the icon moved and what it pressed (that's how it
+tells cube from ship and normal from upside-down gravity). The same brain can
+be pointed at any level. Train it with `preview_boxes.py` (live overlay) or
+`train_boxes.py` (headless).
+
+**Brains from before the speed/mode update can't be resumed** (the AI sees
+more numbers now). Start fresh once; it tells you if you pass an old one.
 
 ## 0. One-time setup
 
@@ -85,9 +91,21 @@ every level (the old version started each level from scratch).
 - **Lots of `fallback` lags**: see section 2.
 - **Training pauses feel long**: `--replay-ratio 2` halves them; learning is
   a bit slower per attempt.
-- **Player not found (no green box)**: the cube detector looks for a
-  green/cyan icon. Use the default-colour icon or extend `_player()` in
-  `detect.py`.
+- **Player not found (no green box)**: the icon detector looks for a
+  green/cyan icon by default. For another colour pass its hue range, e.g.
+  `--icon-hue 20 35` (yellow), `8 20` (orange), `95 125` (blue),
+  `140 170` (pink), `0 8` (red). The overlay header shows `icon WxH` (in
+  blocks) when it's found.
+- **Speed looks wrong** (header `speed 1.0x` at a 2x section): it's measured
+  from how fast spikes/blocks scroll, so it needs some on screen.
+
+## 5b. New mechanics (ship, speed, gravity, orbs)
+
+`python sim_gd.py --level modes` trains on a simulated level with a cube
+section, a ship corridor, a 2x speed section with an orb you must hit, and an
+upside-down section. In the simulator it learns the ship corridor within ~100
+attempts; expect the real game to be slower. Portal/orb/pad detection is
+tuned on synthetic frames -- check the overlay labels on a real level.
 
 ## 6. YOLO upgrade (only if the heuristic misses a level's art)
 

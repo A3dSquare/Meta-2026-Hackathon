@@ -48,13 +48,22 @@ GROUND_SY = 0.75       # ground line screen y
 DT = 1.0 / 60.0
 
 
+A_SHIP = 42.0          # ship vertical acceleration, blocks / s^2
+VMAX_SHIP = 8.5        # ship max vertical speed
+CEIL = 9.0             # top of the playfield (ship ceiling)
+SPEEDS = {0.5: 8.36, 1: 10.38, 2: 12.91, 3: 15.6, 4: 19.2}   # GD speed portals, blocks/s
+PORTAL_HUE = {"ship": 0.85, "cube": 0.33, "grav_flip": 0.15, "grav_norm": 0.58}
+
+
 @dataclass
 class Obj:
-    kind: str          # spike | wall | ceil (downward spike)
+    kind: str          # spike | wall | ceil (downward spike) | portal | orb
     x: float           # left edge (blocks)
     y: float           # bottom (blocks above ground)
     w: float
     h: float
+    what: str = ""     # portal: ship | cube | grav_flip | grav_norm | speed
+    val: float = 0.0   # speed portal: blocks/s
 
     def hitbox(self):
         if self.kind == "wall":
@@ -87,6 +96,37 @@ def stereo_like() -> tuple[list, float]:
     S(130); S(131)
     S(140, 1.0, 0.45); S(144); S(145)
     return o, 155.0
+
+
+def modes_level() -> tuple[list, float]:
+    """Cube -> ship corridor -> cube at 2x speed with an orb gap -> upside-down
+    cube on a ceiling -> normal. Exercises speed, mode, gravity and orbs."""
+    o: list = []
+    S = lambda x, w=1.0, h=0.95, y=0.0: o.append(Obj("spike", x, y, w, h))
+    Wl = lambda x, y, w, h: o.append(Obj("wall", x, y, w, h))
+    P = lambda x, what, val=0.0: o.append(Obj("portal", x, 0.0, 1.0, 3.0, what, val))
+    S(16); S(26); S(27); S(36, 1.0, 0.45)
+    P(46, "ship")
+    Wl(46, CEIL - 1, 62, 1)                       # corridor ceiling 46..108
+    Wl(58, 0, 2, 3)                               # fly over
+    Wl(68, 4.5, 2, CEIL - 1 - 4.5)                # fly under
+    S(76); S(77); S(78)
+    Wl(86, 0, 1, 2.5); Wl(86, 5.5, 1, CEIL - 1 - 5.5)   # gap 2.5..5.5
+    Wl(96, 0, 1, 4.0)
+    P(108, "cube")
+    P(112, "speed", SPEEDS[2])
+    S(120); S(130); S(131)
+    for k in range(7):                            # 7-wide spike pit: needs the orb
+        S(140 + k)
+    o.append(Obj("orb", 141.5, 1.6, 1.0, 1.0))
+    P(156, "speed", SPEEDS[1])
+    P(160, "grav_flip")
+    Wl(160, 5.0, 36, 1)                           # ceiling to run on, 160..196
+    o.append(Obj("ceil", 172, 4.05, 1.0, 0.95))   # spikes hanging from that ceiling
+    o.append(Obj("ceil", 181, 4.05, 1.0, 0.95)); o.append(Obj("ceil", 182, 4.05, 1.0, 0.95))
+    P(192, "grav_norm")
+    S(206)
+    return o, 215.0
 
 
 def random_level(seed: int, length: float = 160.0) -> tuple[list, float]:
@@ -136,25 +176,26 @@ class SimGD(gym.Env):
         self.game_ticks = 0
         self.moving_hist: list = []
         self.prev_py = None
+        self.hist: list = []
         self._respawn()
 
     # -- physics ---------------------------------------------------------------
     def _respawn(self) -> None:
         self.x, self.y, self.vy = 0.0, 0.0, 0.0
         self.grounded = True
+        self.mode, self.gdir, self.speed = "cube", 1, SPEEDS[1]
+        self.used: set = set()  # portals / orbs already triggered this attempt
         self.dead = 0           # >0: ticks left in the death animation
         self.signal = -1        # >=0: ticks until the "% reset" death signal
 
-    def _support(self, x0, x1, y_prev, y_now):
-        """Top of a wall the cube lands on this tick, or None."""
-        best = None
+    def _surfaces(self, x0, x1):
+        tops, bots = [0.0], [CEIL] if self.mode == "ship" else []
         for o in self.objs:
             if o.kind != "wall" or o.x > x1 or o.x + o.w < x0:
                 continue
-            top = o.y + o.h
-            if y_prev >= top - 0.05 and y_now <= top + 1e-6:
-                best = top if best is None else max(best, top)
-        return best
+            tops.append(o.y + o.h)
+            bots.append(o.y)
+        return tops, bots
 
     def _tick(self, hold: bool) -> bool:
         """Advance one frame. Returns True if the camera moved."""
@@ -168,36 +209,72 @@ class SimGD(gym.Env):
             return False
         if self.signal >= 0:
             self.signal -= 1
-        x_prev, y_prev = self.x, self.y
-        self.x += SPEED * DT
-        if self.grounded and hold:
-            self.vy = V0
-            self.grounded = False
-        if not self.grounded:
-            self.vy -= G * DT
-            self.y += self.vy * DT
+        y_prev = self.y
+        self.x += self.speed * DT
         px0, px1 = self.x, self.x + 1.0
-        floor = 0.0
-        sup = self._support(px0 + 0.05, px1 - 0.05, y_prev, self.y) if self.vy <= 0 else None
-        if sup is not None:
-            floor = sup
-        if self.y <= floor and self.vy <= 0:
-            self.y, self.vy, self.grounded = floor, 0.0, True
-        elif self.grounded:
-            # walked off a platform edge?
-            on = self._support(px0 + 0.05, px1 - 0.05, self.y + 0.01, self.y)
-            if self.y > 1e-6 and on is None:
-                self.grounded = False
-        # collisions
+        for i, o in enumerate(self.objs):
+            if o.x > px1 + 1:
+                break
+            if i in self.used:
+                continue
+            if o.kind == "portal" and o.x <= self.x + 0.5:
+                self.used.add(i)
+                if o.what in ("ship", "cube"):
+                    self.mode = o.what
+                    self.vy *= 0.5
+                elif o.what == "grav_flip":
+                    self.gdir, self.grounded = -1, False
+                elif o.what == "grav_norm":
+                    self.gdir, self.grounded = 1, False
+                elif o.what == "speed":
+                    self.speed = o.val
+            elif (o.kind == "orb" and hold and self.mode == "cube"
+                  and abs(o.x + 0.5 - (self.x + 0.5)) < 0.9 and abs(o.y + 0.5 - (self.y + 0.5)) < 0.9):
+                self.used.add(i)
+                self.vy, self.grounded = V0 * self.gdir, False
+        g = self.gdir
+        if self.mode == "cube":
+            if self.grounded and hold:
+                self.vy, self.grounded = V0 * g, False
+            if not self.grounded:
+                self.vy -= G * g * DT
+                self.y += self.vy * DT
+        else:  # ship: hold = accelerate "up" (relative to gravity)
+            self.vy += (A_SHIP if hold else -A_SHIP) * g * DT
+            self.vy = float(np.clip(self.vy, -VMAX_SHIP, VMAX_SHIP))
+            self.y += self.vy * DT
+            self.grounded = False
+        tops, bots = self._surfaces(px0 + 0.05, px1 - 0.05)
+        landed = False
+        if self.vy <= 0:
+            for t in sorted(tops, reverse=True):
+                if y_prev >= t - 0.05 and self.y <= t:
+                    self.y, self.vy = t, 0.0
+                    landed = g == 1 or self.mode == "ship"
+                    break
+        if self.vy >= 0:
+            for bt in sorted(bots):
+                if y_prev + 1 <= bt + 0.05 and self.y + 1 >= bt:
+                    self.y, self.vy = bt - 1, 0.0
+                    landed = g == -1 or self.mode == "ship"
+                    break
+        if self.mode == "cube":
+            if landed:
+                self.grounded = True
+            elif self.grounded:   # walked off an edge?
+                on = any(abs(self.y - t) < 1e-6 for t in tops) if g == 1 else any(abs(self.y + 1 - b_) < 1e-6 for b_ in bots)
+                if not on:
+                    self.grounded = False
+        if self.y > CEIL + 3 or self.y < -0.5:
+            self.dead = self.dead_ticks
+            return True
         for o in self.objs:
             if o.x > px1 + 1:
                 break
-            if o.x + o.w < px0 - 1:
+            if o.x + o.w < px0 - 1 or o.kind in ("portal", "orb"):
                 continue
             hx0, hy0, hx1, hy1 = o.hitbox()
             if hx0 < px1 - 0.02 and hx1 > px0 + 0.02 and hy0 < self.y + 0.98 and hy1 > self.y + 0.02:
-                if o.kind == "wall" and self.grounded and abs(self.y - (o.y + o.h)) < 1e-3:
-                    continue
                 self.dead = self.dead_ticks
                 return True
         return True
@@ -206,7 +283,8 @@ class SimGD(gym.Env):
     def _entities(self) -> Entities:
         items = []
         py_s = GROUND_SY - (self.y + 0.5) / VIEW_H
-        items.append(Entity(CLS_ID["player"], PLAYER_SX, py_s, 1 / VIEW_W, 1 / VIEW_H, 0.9))
+        pw, ph = (1.5, 0.9) if self.mode == "ship" else (1.0, 1.0)
+        items.append(Entity(CLS_ID["player"], PLAYER_SX, py_s, pw / VIEW_W, ph / VIEW_H, 0.9))
         for o in self.objs:
             sx0 = PLAYER_SX + (o.x - self.x - 0.5) / VIEW_W
             if sx0 > 1.0:
@@ -214,19 +292,34 @@ class SimGD(gym.Env):
             sx1 = sx0 + o.w / VIEW_W
             if sx1 < 0:
                 continue
+            if o.kind == "portal" and o.what == "speed":
+                continue          # speed is sensed directly from the scroll
             if self.rng.random() < self.p_miss:
                 continue
             sy1 = GROUND_SY - o.y / VIEW_H
             sy0 = sy1 - o.h / VIEW_H
             n = self.rng.normal(0, self.pos_noise, 2)
-            cls = CLS_ID["wall"] if o.kind == "wall" else CLS_ID["spike"]
+            hue = -1.0
+            if o.kind == "wall":
+                cls = CLS_ID["wall"]
+            elif o.kind == "portal":
+                cls, hue = CLS_ID["portal"], PORTAL_HUE.get(o.what, 0.5)
+            elif o.kind == "orb":
+                cls, hue = CLS_ID["orb_y"], 0.15
+            else:
+                cls = CLS_ID["spike"]
             items.append(Entity(cls, (sx0 + sx1) / 2 + n[0], (sy0 + sy1) / 2 + n[1],
-                                sx1 - sx0, sy1 - sy0, 0.9))
+                                sx1 - sx0, sy1 - sy0, 0.9, hue))
         return Entities(items)
 
     def _obs(self, hold: bool) -> np.ndarray:
+        from env_boxes import player_vy
         ents = self._entities()
-        v = encode_obs(ents, hold=hold, prev_py=self.prev_py, player_found=True)
+        speed = self.speed * (1 + self.rng.normal(0, 0.02))
+        v = encode_obs(ents, hold=hold, prev_py=self.prev_py, player_found=True,
+                       speed=speed, hist=self.hist)
+        self.hist.append((player_vy(ents, self.prev_py), 1.0 if hold else 0.0))
+        self.hist = self.hist[-8:]
         self.prev_py = ents.player_pos()[1]
         return v
 
@@ -258,9 +351,11 @@ class SimGD(gym.Env):
             self.signal = -1
             self.moving_hist = []
             self.prev_py = None
+            self.hist = []
         if complete:
             self.attempts += 1
             self.moving_hist = []
+            self.hist = []
             self._respawn()
         return self._obs(hold), 0.0, complete, False, info
 
@@ -294,7 +389,7 @@ def evaluate(trainer, env: SimGD, episodes: int = 5, deterministic: bool = True)
 def main() -> int:
     from trainer import Trainer, TrainConfig
     p = argparse.ArgumentParser(description="train the box policy on a simulated GD level")
-    p.add_argument("--level", default="stereo", choices=("stereo", "random", "one"))
+    p.add_argument("--level", default="stereo", choices=("stereo", "random", "one", "modes"))
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--steps", type=int, default=60_000)
     p.add_argument("--algo", default="dqn", choices=("dqn", "ppo"))
@@ -305,6 +400,8 @@ def main() -> int:
     a = p.parse_args()
     if a.level == "stereo":
         level = stereo_like()
+    elif a.level == "modes":
+        level = modes_level()
     elif a.level == "one":
         level = ([Obj("spike", 16, 0, 1, 0.95)], 40.0)
     else:
