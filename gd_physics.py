@@ -205,7 +205,7 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         for i in range(1, steps + 1):
             t = i * dt
             x = speed * t
-            hold = plan(int(t / dec_dt + 1e-9))
+            hold = plan(int((t - dt) / dec_dt + 1e-9))   # the action during this step (decision 0 = now)
             floors, ceils = [], []
             for s0, s1, sb, st in solid:
                 if s0 < x + half - 0.05 and s1 > x - half + 0.05:
