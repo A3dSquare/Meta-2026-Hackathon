@@ -219,7 +219,7 @@ def _iou(a, b) -> float:
     return inter / max(1e-9, ua)
 
 
-def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False) -> list:
+def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False, hsv=None) -> list:
     """Spikes + blocks from one BGR frame (any resolution, 640x360 preferred).
 
     Returns list of (cls, x0, y0, x1, y1, conf) in normalized coordinates.
@@ -235,7 +235,8 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False)
     max_step = max(3, int(round(0.20 * blk)))      # steepest spike side ~2px/col @640
     max_flat = max(3, int(round(0.20 * blk)))
     ui_cut = int(0.065 * H)                        # progress bar / % text strip
-    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    if hsv is None:
+        hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
     V, S = hsv[:, :, 2], hsv[:, :, 1]
     med_v = float(np.median(V[::4, ::4]))
     dark_v = int(min(75, 0.55 * med_v))
@@ -478,7 +479,7 @@ def _orb_class(hue: float) -> int:
     return min(cands, key=lambda c: min(abs(hue - cands[c]), 180 - abs(hue - cands[c])))
 
 
-def detect_specials(bgr: np.ndarray, player_box=None) -> list:
+def detect_specials(bgr: np.ndarray, player_box=None, hsv=None) -> list:
     """Orbs, pads and portals from one BGR frame -> [(cls, x0, y0, x1, y1, conf, hue)].
 
     GD draws these as bright, saturated sprites whose colour encodes the type
@@ -496,7 +497,8 @@ def detect_specials(bgr: np.ndarray, player_box=None) -> list:
 
     H, W = bgr.shape[:2]
     blk = BLOCK_FRAC_H * H
-    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    if hsv is None:
+        hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
     Hh, S, V = hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2]
     sub = hsv[::4, ::4].reshape(-1, 3)
     sat = sub[sub[:, 1] > 60]
@@ -644,7 +646,7 @@ class HeuristicDetector:
     """Hazards from the 640x360 frame (or the 320x180 one), the rest from 320x180."""
 
     def __init__(self, temporal: bool = True, icon_hue: tuple = (55, 95), extra=None,
-                 extra_every: int = 1) -> None:
+                 extra_every: int = 1, specials_every: int = 2) -> None:
         import cv2 as _cv2
         self._cv2 = _cv2
         self.temporal = temporal
@@ -657,10 +659,17 @@ class HeuristicDetector:
         self.extra_every = max(1, int(extra_every))
         self._extra_cache: list = []
         self._extra_n = 0
+        # orbs / pads / portals: found every `specials_every` frames; in between, the
+        # last ones slide with the scroll (they move with the level). Saves ~3 ms/frame.
+        self.specials_every = max(1, int(specials_every))
+        self._spec_cache: list = []
+        self._spec_n = 0
 
     def reset(self) -> None:
         """New attempt: forget hazard tracks (the screen jumped back to 0%)."""
         self._tracker.reset()
+        self._spec_cache = []
+        self._spec_n = 0
         self._extra_cache = []
         self._extra_n = 0
 
@@ -746,11 +755,10 @@ class HeuristicDetector:
             img = img[-1]
         h, w = img.shape[:2]
         bgr = np.ascontiguousarray(img[:, :, ::-1])
-        hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
         ents: list[Entity] = []
         src = hires_bgr if hires_bgr is not None else bgr
         src = np.ascontiguousarray(np.asarray(src)[:, :, :3])
-        hsv_src = cv2.cvtColor(src, cv2.COLOR_BGR2HSV) if hires_bgr is not None else hsv
+        hsv_src = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)     # once per frame, shared below
         pl = self._player(hsv_src, src.shape[1], src.shape[0])
         if pl is not None:
             ents.append(pl)
@@ -759,8 +767,15 @@ class HeuristicDetector:
             pbox = (pl.x - pl.w / 2, pl.y - pl.h / 2, pl.x + pl.w / 2, pl.y + pl.h / 2)
         # coloured sprites near the icon's last spot are the icon (or its trail)
         sbox = (pl.x - pl.w / 2, pl.y - pl.h / 2, pl.x + pl.w / 2, pl.y + pl.h / 2) if pl is not None else None
-        dets = detect_hazards(src, player_box=pbox)
-        specials = detect_specials(src, player_box=sbox)
+        dets = detect_hazards(src, player_box=pbox, hsv=hsv_src)
+        self._spec_n += 1
+        if self.specials_every <= 1 or self._spec_n % self.specials_every == 1 or self._spec_n == 1:
+            specials = detect_specials(src, player_box=sbox, hsv=hsv_src)
+        else:
+            sc = float(getattr(self._tracker, "last_scroll", None) or 0.0) if self.temporal else 0.0
+            specials = [(c, x0 + sc, y0, x1 + sc, y1, cf, hu) for c, x0, y0, x1, y1, cf, hu in self._spec_cache
+                        if x1 + sc > 0.0]
+        self._spec_cache = specials
         dets = [h for h in dets if not any(_iou(h[1:5], s[1:5]) > 0.3 for s in specials)]
         if self.extra is not None:
             ydets = self._extra_dets(src, pbox)
@@ -773,7 +788,7 @@ class HeuristicDetector:
                 else:
                     if not any(_overlaps(yd, s) for s in specials):
                         if hsv_e is None:
-                            hsv_e = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
+                            hsv_e = hsv_src
                         Hs, Ws = src.shape[:2]
                         reg = hsv_e[int(yd[2] * Hs):int(yd[4] * Hs) + 1, int(yd[1] * Ws):int(yd[3] * Ws) + 1].reshape(-1, 3)
                         reg = reg[reg[:, 1] > 80]

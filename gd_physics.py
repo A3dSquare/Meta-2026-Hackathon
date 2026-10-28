@@ -597,6 +597,7 @@ class ModeEstimator:
         self._hint, self._hint_t = None, 0
         self.lag = 0                  # input delay (decisions) between a press and the icon reacting
         self._lag_votes = (None, 0)
+        self._lag_ok = 0              # checks in a row that confirmed the current delay
         self._n_upd = 0
         self._rest = []
 
@@ -716,8 +717,10 @@ class ModeEstimator:
             self._lag_votes = (L, k)
             if k >= 3:
                 self.lag, self._lag_votes = L, (None, 0)
+            self._lag_ok = 0
         else:
             self._lag_votes = (None, 0)
+            self._lag_ok += 1
 
     def update(self, y: float, hold: bool, dt: float, speed: float, p: Phys) -> None:
         if self.hist and abs(y - self.hist[-1][0]) > 3.0 and self.mode != "spider" and self._hint != "spider":
@@ -736,12 +739,21 @@ class ModeEstimator:
         # displacement: much less sensitive to detector jitter than single-step speeds)
         self._rest = [k >= 3 and abs(ys[k - 1] - ys[k - 3]) < self.REST * 2 * dt for k in range(len(ys))]
         self._n_upd += 1
-        if self._n_upd % 8 == 0 and any(holds):
+        # input-delay check: often at first, rarely once it has been confirmed a few times
+        if self._n_upd % (8 if self._lag_ok < 5 else 40) == 0 and any(holds):
             self._fit_lag(vys, holds, dt, speed, p)
         L = self.lag
         if (self.mode in ("ball", "spider") and len(holds) > L + 1 and holds[-1 - L] and not holds[-2 - L]
                 and self._rest[-1]):
             self.g = -self.g          # a press on a surface flips ball / spider gravity
+        # full re-check (all 28 mode hypotheses) only when something happened -- a press /
+        # release reaching the icon, a sudden speed change (landing, orb, pad), a portal,
+        # a switch in progress -- or every 3rd step; steady motion can't change the answer
+        h_eff = holds[: len(holds) - L] if L else holds
+        event = (len(h_eff) >= 4 and len(set(h_eff[-4:])) > 1) or abs(vys[-1] - vys[-2]) > 8.0 \
+            or self._hint_t > 0 or self._cand_streak[1] > 0
+        if not event and self._n_upd % 3:
+            return
         scores = []
         for mode in MODES:
             for g in (1, -1):

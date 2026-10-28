@@ -76,6 +76,17 @@ FAR = 2.0                         # empty slot: 16 blocks away (off screen)
 SPEED_1X = 10.38                  # GD 1x speed, blocks per second
 
 
+def _fast_downscale(img: np.ndarray, w: int, h: int) -> np.ndarray:
+    """= cv2.INTER_AREA, ~3-4x faster on big frames (same as capture.fast_downscale)."""
+    import cv2
+    while img.shape[1] // 2 >= 0.95 * w and img.shape[0] // 2 >= 0.95 * h:
+        img = cv2.resize(img, (img.shape[1] // 2, img.shape[0] // 2), interpolation=cv2.INTER_LINEAR)
+    if img.shape[1] != w or img.shape[0] != h:
+        near = abs(img.shape[1] - w) <= 0.06 * w and abs(img.shape[0] - h) <= 0.06 * h
+        img = cv2.resize(img, (w, h), interpolation=cv2.INTER_LINEAR if near else cv2.INTER_AREA)
+    return img
+
+
 def player_vy(ents: Entities, prev_py: float | None) -> float:
     """Icon's vertical speed in blocks per decision step (+ = up)."""
     if prev_py is None:
@@ -341,6 +352,7 @@ class EntityBoxEnv(gym.Wrapper):
         self.mode_est = ModeEstimator()          # which mode / gravity, from how the icon moves
         # learned correction of the physics preview (+ tuned jump + input delay), shared
         # by all brains and levels; trains itself on every step of play
+        self.timing = {"detect": 0.0, "physics": 0.0}   # seconds since the last [health] line
         self.motion_fix = MotionLearner()
         self.motion_path = motion_path
         self._mstate = None
@@ -385,13 +397,16 @@ class EntityBoxEnv(gym.Wrapper):
             return None
         try:
             import cv2
+            hi = getattr(self.base.cap, "last_hires", None)   # already shrunk by the capture
+            if hi is not None and hi.shape[:2] == (360, 640):
+                return hi
             full = getattr(self.base.cap, "last_fullres", None)
             if full is None:
                 return None
             full = np.asarray(full)
             if full.ndim != 3 or full.shape[0] < 360:
                 return None
-            return cv2.resize(full[:, :, :3], (640, 360), interpolation=cv2.INTER_AREA)
+            return _fast_downscale(np.ascontiguousarray(full[:, :, :3]), 640, 360)
         except Exception as ex:
             self._loud("hires", ex)
             return None
@@ -426,6 +441,7 @@ class EntityBoxEnv(gym.Wrapper):
 
     def _observe(self, frame, hold: bool) -> np.ndarray:
         self.last_frame = frame
+        _t0 = time.perf_counter()
         hi = self._hires()
         self.last_hires = hi
         try:
@@ -436,6 +452,8 @@ class EntityBoxEnv(gym.Wrapper):
             self._loud("detect", ex)
             ents = Entities([])
         self.last_ents = ents
+        _t1 = time.perf_counter()
+        self.timing["detect"] += _t1 - _t0
         pl = ents.player()
         spd = self.speed or SPEED_1X
         dt = self._step_dt()
@@ -489,6 +507,7 @@ class EntityBoxEnv(gym.Wrapper):
                                                     vy_bps, grounded, hold, floor_rel, ceil_rel, dec_dt=dt,
                                                     motion=self.motion_fix, out=out)
         self._mstate = (out["body"], out["surf"], spd, key) if (pl is not None and "body" in out) else None
+        self.timing["physics"] += time.perf_counter() - _t1
         v = encode_obs(ents, hold=hold, prev_py=self._prev_py,
                        speed=spd, hist=self._hist, mode=mf, plan=plan)
         self._hist.append((player_vy(ents, self._prev_py) if pl is not None else 0.0, 1.0 if hold else 0.0))

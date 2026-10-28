@@ -488,6 +488,7 @@ class Trainer:
         self.on_step = on_step
         self.on_attempt = on_attempt
         self.on_train_tick = None     # called every 50 gradient steps during an update
+        self._tm = {"brain": 0.0, "env": 0.0, "gui": 0.0}   # seconds since the last [health] line
         self.shield_n = 0             # actions the safety shield changed since the last update
         self.shield_steps = 0
         self._step_t0 = time.perf_counter()
@@ -600,7 +601,23 @@ class Trainer:
         except Exception:
             pass
         slow = "  <-- SLOW (target ~33 ms)" if ms > 45 else ""
-        print(f"[health] {ms:.1f} ms/decision{mem}{cap}{slow}")
+        # where the time went, per decision (game = capture + waiting for the next frame
+        # + reading the %: the part that's NOT our code; ~33 ms total is the target)
+        parts = ""
+        try:
+            k = 1000.0 / max(1, n)
+            et = getattr(self.env, "timing", None) or {}
+            det, phy = et.get("detect", 0.0) * k, et.get("physics", 0.0) * k
+            game = max(0.0, self._tm["env"] * k - det - phy)
+            parts = (f"  = detect {det:.1f} + physics {phy:.1f} + brain {self._tm['brain'] * k:.1f}"
+                     f" + gui {self._tm['gui'] * k:.1f} + game/capture {game:.1f}")
+            for key in et:
+                et[key] = 0.0
+        except Exception:
+            pass
+        for key in self._tm:
+            self._tm[key] = 0.0
+        print(f"[health] {ms:.1f} ms/decision{parts}{mem}{cap}{slow}")
 
     def _finish_attempt(self, seg: _Seg, info: dict, peak: float, next_obs) -> None:
         cfg = self.cfg
@@ -643,8 +660,13 @@ class Trainer:
         keep = 64            # tail kept un-pushed so a later death can still be trimmed
         try:
             while self.steps < cfg.total_steps and not self.stop:
+                _ta = time.perf_counter()
                 a, extra = self.act(obs)
+                _tb = time.perf_counter()
                 nobs, _r, _term, _trunc, info = self.env.step(a)
+                _tc = time.perf_counter()
+                self._tm["brain"] += _tb - _ta
+                self._tm["env"] += _tc - _tb
                 self.steps += 1
                 self.new_steps += 1
                 seg.obs.append(obs); seg.act.append(a); seg.rew.append(cfg.alive_reward - cfg.hold_cost * a)
@@ -654,8 +676,12 @@ class Trainer:
                 if isinstance(p, (int, float)) and not info.get("died"):
                     peak = max(peak, float(p))
                 obs = nobs
-                if self.on_step is not None and self.on_step(self, obs, a, info) is False:
-                    break
+                if self.on_step is not None:
+                    _td = time.perf_counter()
+                    _keep = self.on_step(self, obs, a, info)
+                    self._tm["gui"] += time.perf_counter() - _td
+                    if _keep is False:
+                        break
                 if info.get("died") or info.get("complete"):
                     info = dict(info, attempt_total=flushed + len(seg) - (int(info.get("death_lag", 0)) if cfg.trim_death else 0))
                     self._finish_attempt(seg, info, peak, nobs)
