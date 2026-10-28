@@ -26,8 +26,10 @@ MODE_ID = {m: i for i, m in enumerate(MODES)}
 
 @dataclass
 class Phys:
-    cube_v0: float = 22.36      # jump speed (blocks/s)  -> apex ~2.17 blocks
-    cube_g: float = 115.0       # gravity (blocks/s^2)   -> ~0.39 s in the air
+    # cube: measured from a real Stereo Madness recording (9 clean jumps, 1080p60):
+    # apex 2.21 blocks, 0.43 s in the air. Still fine-tuned live from your own jumps.
+    cube_v0: float = 20.5       # jump speed (blocks/s)
+    cube_g: float = 95.0        # gravity (blocks/s^2)
     ship_a: float = 55.0        # ship up/down acceleration
     ship_vmax: float = 12.0
     ball_g: float = 80.0
@@ -51,26 +53,41 @@ class Phys:
         return 2 * self.cube_v0 / self.cube_g
 
     def calibrate(self, y: float, vy_step: float, pressed: bool, grounded_before: bool, dt: float) -> None:
-        """Learn the cube's apex / airtime from clean floor-to-floor jumps."""
+        """Learn the cube's apex / airtime from clean floor-to-floor jumps.
+
+        pressed: a press took effect this step (after input delay);
+        grounded_before: the icon was resting BEFORE this step's motion.
+        Each jump's samples get a parabola fit (y = a + b t + c t^2), so the
+        apex and airtime don't depend on where the frames happen to fall."""
         if self._track is None:
             if pressed and grounded_before and vy_step > 0.15:
-                self._track = [dt, y - vy_step, max(0.0, vy_step)]
+                self._track = [y - vy_step, [(dt, y)]]
             return
-        t, y0, rise = self._track
-        t += dt
-        rise = max(rise, y - y0)
-        if y - y0 <= 0.05 and t > 0.15:
-            if 1.2 <= rise <= 3.5 and 0.25 <= t <= 0.8:
-                apex = self.apex + 0.15 * (rise - self.apex)
-                air = self.airtime + 0.15 * (t - self.airtime)
+        y0, pts = self._track
+        t = pts[-1][0] + dt
+        if y - y0 <= 0.05:                       # back on (about) the takeoff level
+            self._track = None
+            pts = [(tt, yy - y0) for tt, yy in pts if yy - y0 > 0.05]
+            if len(pts) < 5:
+                return
+            T = np.array([q[0] for q in pts]); Y = np.array([q[1] for q in pts])
+            c, b_, a_ = np.polyfit(T, Y, 2)
+            disc = b_ * b_ - 4 * a_ * c
+            if c >= 0 or disc <= 0:
+                return
+            rise = a_ - b_ * b_ / (4 * c)
+            air = float(np.sqrt(disc) / -c)
+            if 1.2 <= rise <= 3.5 and 0.25 <= air <= 0.8 and float(np.max(np.abs(np.polyval([c, b_, a_], T) - Y))) < 0.15:
+                k = 0.3 if self.n_cal < 5 else 0.15     # first few jumps: adapt faster
+                apex = self.apex + k * (rise - self.apex)
+                air = self.airtime + k * (air - self.airtime)
                 self.cube_v0 = 4 * apex / air
                 self.cube_g = 8 * apex / air ** 2
                 self.n_cal += 1
-            self._track = None
         elif t > 1.0:
             self._track = None
         else:
-            self._track = [t, y0, rise]
+            pts.append((t, y))
 
 
 @dataclass
@@ -96,11 +113,13 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
     press = hold and not b.prev_hold
     m = b.mode
     floors, ceils = surfaces
+    dv = 0.0   # velocity lost to gravity / thrust this step (for an exact position update)
     if m == "cube":
         if b.grounded and hold:
             b.vy, b.grounded = b.g * p.cube_v0 * s, False
         if not b.grounded:
-            b.vy -= b.g * p.cube_g * dt
+            dv = b.g * p.cube_g * dt
+            b.vy -= dv
     elif m == "robot":
         if b.grounded and hold:
             b.vy, b.grounded, b.boost = b.g * p.robot_v0 * s, False, p.robot_boost
@@ -109,19 +128,23 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
                 b.boost -= dt
             else:
                 b.boost = 0.0
-                b.vy -= b.g * p.cube_g * dt
+                dv = b.g * p.cube_g * dt
+                b.vy -= dv
     elif m == "ball":
         if b.grounded and press:
             b.g, b.grounded, b.vy = -b.g, False, -b.g * 2.0   # flip and start moving away
         if not b.grounded:
-            b.vy -= b.g * p.ball_g * dt
+            dv = b.g * p.ball_g * dt
+            b.vy -= dv
     elif m == "ufo":
         if press:
             b.vy, b.grounded = b.g * p.ufo_v0 * s, False
         if not b.grounded:
-            b.vy -= b.g * p.ufo_g * dt
+            dv = b.g * p.ufo_g * dt
+            b.vy -= dv
     elif m == "ship":
-        b.vy += b.g * (p.ship_a if hold else -p.ship_a) * s * dt
+        dv = -b.g * (p.ship_a if hold else -p.ship_a) * s * dt
+        b.vy -= dv
         b.vy = max(-p.ship_vmax * s, min(p.ship_vmax * s, b.vy))
         b.grounded = False
     elif m == "wave":
@@ -140,8 +163,9 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
             b.prev_hold = hold
             return b
         if not b.grounded:
-            b.vy -= b.g * p.cube_g * dt
-    y_new = b.y + b.vy * dt
+            dv = b.g * p.cube_g * dt
+            b.vy -= dv
+    y_new = b.y + (b.vy + 0.5 * dv) * dt   # exact for constant acceleration
     # resting surfaces: falling onto a floor / rising into a ceiling
     if b.vy <= 0:
         land = [f for f in floors if y_new <= f <= b.y + 0.06]
@@ -183,17 +207,22 @@ N_PLANS = len(PLANS)
 
 
 def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
-                   frame_skip: int = 2, horizon: float = 1.5, half: float = 0.4):
+                   frame_skip: int = 2, horizon: float = 1.5, half: float = 0.4,
+                   dec_dt: float | None = None, lag: int = 0, pending=()):
     """Run every plan forward; return (features [N_PLANS*3 + 1], paths).
 
     haz / solid: boxes (x0, x1, bottom, top) in blocks relative to the icon.
     floor / ceil: surface heights (None = unknown). Per plan: hit?, time to
     hit / horizon (1 = never), clearance to the nearest hazard. Plus: time
     until the "release" plan leaves its current surface (ledge).
+    dec_dt: real seconds per decision; lag: input delay in decisions --
+    the next `lag` steps still play the already-sent actions in `pending`
+    (oldest first), so "tap now" really takes effect `lag` steps later.
     """
     dt = 1.0 / 30.0
     steps = int(horizon / dt)
-    dec_dt = frame_skip / 60.0
+    dec_dt = dec_dt or frame_skip / 60.0
+    pending = list(pending)[-lag:] if lag > 0 else []
     feats = np.zeros(N_PLANS * 3 + 1, dtype=np.float32)
     paths = []
     t_ledge = None
@@ -205,7 +234,11 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         for i in range(1, steps + 1):
             t = i * dt
             x = speed * t
-            hold = plan(int((t - dt) / dec_dt + 1e-9))   # the action during this step (decision 0 = now)
+            j = int((t - dt) / dec_dt + 1e-9)          # decision index during this step (0 = now)
+            if j < len(pending):
+                hold = bool(pending[j])                # already sent, still in the pipeline
+            else:
+                hold = plan(j - len(pending))
             floors, ceils = [], []
             for s0, s1, sb, st in solid:
                 if s0 < x + half - 0.05 and s1 > x - half + 0.05:
@@ -268,6 +301,22 @@ class ModeEstimator:
         self.conf = 0.0
         self._cand_streak = (None, 0)
         self._hint, self._hint_t = None, 0
+        self.lag = 0                  # input delay (decisions) between a press and the icon reacting
+        self._lag_votes = (None, 0)
+        self._n_upd = 0
+        self._rest = []
+
+    def eff_hold(self, back: int = 0) -> bool:
+        """The action that actually drove the motion `back` steps ago (after input delay)."""
+        i = len(self.hist) - 1 - back - self.lag
+        return bool(self.hist[i][1]) if 0 <= i < len(self.hist) else False
+
+    def pending(self) -> list:
+        """Actions already sent that haven't reached the icon yet (oldest first)."""
+        return [h[1] for h in list(self.hist)[len(self.hist) - self.lag:]] if self.lag > 0 else []
+
+    def resting_before(self) -> bool:
+        return bool(self._rest and self._rest[-1])
 
     def reset(self) -> None:
         self.hist.clear()
@@ -325,14 +374,14 @@ class ModeEstimator:
             opts.append(jump)                          # landed and re-jumped (held)
         return opts
 
-    def _score(self, mode: str, g: int, mini: bool, vys, holds, dt: float, speed: float, p: Phys):
+    def _score(self, mode: str, g: int, mini: bool, vys, holds, dt: float, speed: float, p: Phys, lag: int = 0):
         """Mean prediction error over the window, starting with gravity g.
         Ball and spider flip gravity themselves, so g is tracked through the
         window; returns (error, n, gravity at the end of the window)."""
         err, n = 0.0, 0
-        for k in range(3, len(vys)):          # vys[0] is a placeholder: start where the
+        for k in range(3 + lag, len(vys)):    # vys[0] is a placeholder: start where the
             v0, v1 = vys[k - 1], vys[k]       # previous two speeds are real measurements
-            h, hp = holds[k], holds[k - 1]
+            h, hp = holds[k - lag], holds[k - 1 - lag]   # what reached the icon (input delay)
             resting = self._rest[k]
             pred = self._pred(mode, g, mini, v0, h, hp, resting, dt, speed, p)
             if pred is None:                       # spider teleport expected, towards +g
@@ -349,6 +398,31 @@ class ModeEstimator:
             n += 1
         return (err / n if n else None), n, g
 
+    MAX_LAG = 3
+
+    def _fit_lag(self, vys, holds, dt, speed, p) -> None:
+        """Which input delay (0..MAX_LAG decisions) explains the motion best?
+        Real GD + screen capture react a frame or two after a press; the
+        simulator reacts instantly. Switch only after 3 agreeing checks."""
+        best = {}
+        for L in range(self.MAX_LAG + 1):
+            s = [self._score(m, g, mi, vys, holds, dt, speed, p, L)
+                 for m in MODES for g in (1, -1) for mi in (False, True)]
+            s = [e for e, n, _ in s if e is not None and n >= 3]
+            if s:
+                best[L] = min(s)
+        if not best or self.lag not in best:
+            return
+        L = min(best, key=best.get)
+        if L != self.lag and best[L] < 0.75 * best[self.lag]:
+            c, k = self._lag_votes
+            k = k + 1 if c == L else 1
+            self._lag_votes = (L, k)
+            if k >= 3:
+                self.lag, self._lag_votes = L, (None, 0)
+        else:
+            self._lag_votes = (None, 0)
+
     def update(self, y: float, hold: bool, dt: float, speed: float, p: Phys) -> None:
         self.hist.append((y, bool(hold)))
         if len(self.hist) < 6:
@@ -363,13 +437,18 @@ class ModeEstimator:
         # 'resting before step k' = barely moved over the two steps before it (two-step
         # displacement: much less sensitive to detector jitter than single-step speeds)
         self._rest = [k >= 3 and abs(ys[k - 1] - ys[k - 3]) < self.REST * 2 * dt for k in range(len(ys))]
-        if self.mode in ("ball", "spider") and holds[-1] and not holds[-2] and self._rest[-1]:
+        self._n_upd += 1
+        if self._n_upd % 8 == 0 and any(holds):
+            self._fit_lag(vys, holds, dt, speed, p)
+        L = self.lag
+        if (self.mode in ("ball", "spider") and len(holds) > L + 1 and holds[-1 - L] and not holds[-2 - L]
+                and self._rest[-1]):
             self.g = -self.g          # a press on a surface flips ball / spider gravity
         scores = []
         for mode in MODES:
             for g in (1, -1):
                 for mini in (False, True):
-                    sc, n, g_end = self._score(mode, g, mini, vys, holds, dt, speed, p)
+                    sc, n, g_end = self._score(mode, g, mini, vys, holds, dt, speed, p, self.lag)
                     if sc is None or n < 3:
                         continue
                     if self._hint == mode and self._hint_t > 0:

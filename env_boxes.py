@@ -35,6 +35,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import time
+
 import numpy as np
 
 try:
@@ -105,16 +107,20 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
 
 def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phys,
                      frame_skip: int, vy_bps: float, grounded: bool, prev_hold: bool,
-                     floor_rel: float | None, ceil_rel: float | None, horizon: float = 1.5):
+                     floor_rel: float | None, ceil_rel: float | None, horizon: float = 1.5,
+                     dec_dt: float | None = None):
     """Mode block + action-plan outcomes for the current frame.
 
     floor_rel / ceil_rel: surface heights relative to the icon centre (None =
     unknown). Returns (mode_feats[N_MODE], plan_feats[N_PLAN], paths).
     """
     haz, solid, _ = preview_boxes(ents, speed * horizon + 1)
-    body = Body(0.0, vy_bps, est.g, grounded, est.mode, est.mini, 0.0, prev_hold)
+    # input delay: the icon is still reacting to actions sent `est.lag` steps ago
+    eff_prev = est.eff_hold(0) if est.lag > 0 else prev_hold
+    body = Body(0.0, vy_bps, est.g, grounded, est.mode, est.mini, 0.0, eff_prev)
     plan, paths = simulate_plans(body, haz, solid, floor_rel, ceil_rel, speed, phys,
-                                 frame_skip=frame_skip, horizon=horizon)
+                                 frame_skip=frame_skip, horizon=horizon, dec_dt=dec_dt,
+                                 lag=est.lag, pending=est.pending())
     mf = np.zeros(N_MODE, dtype=np.float32)
     mf[MODE_ID[est.mode]] = 1.0
     mf[len(MODES)] = float(est.g)
@@ -367,11 +373,26 @@ class EntityBoxEnv(gym.Wrapper):
             self._err_shown = True
             print(f"[EntityBoxEnv:{where}] {type(exc).__name__}: {exc}")
 
+    def _step_dt(self, peek: bool = False) -> float:
+        """Real seconds per decision (smoothed). Nominal is frame_skip/60, but if
+        detection can't keep up the game moves further per step than assumed."""
+        nom = self.frame_skip / 60.0
+        if peek:
+            return getattr(self, "_dt_s", nom)
+        now = time.perf_counter()
+        last = getattr(self, "_t_obs", None)
+        self._t_obs = now
+        cur = getattr(self, "_dt_s", nom)
+        if last is not None and 0.6 * nom <= now - last <= 3.0 * nom:   # ignore pauses / hiccups
+            cur = 0.9 * cur + 0.1 * (now - last)
+        self._dt_s = cur
+        return cur
+
     def _update_speed(self, sc, moved: bool) -> None:
         """Scroll speed from the hazard tracker (blocks/s), smoothed."""
         if sc is None or not moved:
             return
-        bps = abs(sc) / BLOCK_W / (self.frame_skip / 60.0)
+        bps = abs(sc) / BLOCK_W / self._step_dt(peek=True)
         if 3.0 <= bps <= 30.0:
             self.speed = bps if self.speed is None else 0.6 * self.speed + 0.4 * bps
 
@@ -389,7 +410,7 @@ class EntityBoxEnv(gym.Wrapper):
         self.last_ents = ents
         pl = ents.player()
         spd = self.speed or SPEED_1X
-        dt = self.frame_skip / 60.0
+        dt = self._step_dt()
         prev_hold = bool(self._hist and self._hist[-1][1] > 0.5)
         vy_step = player_vy(ents, self._prev_py) if pl is not None else 0.0
         vy_bps = vy_step / dt
@@ -400,8 +421,11 @@ class EntityBoxEnv(gym.Wrapper):
             py = ents.player_pos()[1]
             y_b = (0.75 - py) / BLOCK_H
             self.mode_est.update(y_b, hold, dt, spd, self.phys)
-            if self.mode_est.mode == "cube":
-                self.phys.calibrate(y_b, vy_step, hold, grounded, dt)
+            me = self.mode_est
+            if me.mode == "cube" and me.g == 1 and not me.mini:
+                # the press that reached the icon this step (input delay), and whether it
+                # was resting BEFORE this step (not counting the jump's own first motion)
+                self.phys.calibrate(y_b, vy_step, me.eff_hold(0), me.resting_before(), dt)
             for e in ents.items:            # portal crossing the icon: mode may change now
                 if int(e.cls) == CLS_ID["portal"] and abs(e.x - ents.player_pos()[0]) < 0.6 * BLOCK_W:
                     if self._portal_cool <= 0:
@@ -421,7 +445,7 @@ class EntityBoxEnv(gym.Wrapper):
             if self._ceil_y is not None:
                 ceil_rel = (py - self._ceil_y) / BLOCK_H + 0.5
         mf, plan, self.last_arcs = physics_features(ents, spd, self.mode_est, self.phys, self.frame_skip,
-                                                    vy_bps, grounded, hold, floor_rel, ceil_rel)
+                                                    vy_bps, grounded, hold, floor_rel, ceil_rel, dec_dt=dt)
         v = encode_obs(ents, hold=hold, prev_py=self._prev_py,
                        speed=spd, hist=self._hist, mode=mf, plan=plan)
         self._hist.append((player_vy(ents, self._prev_py) if pl is not None else 0.0, 1.0 if hold else 0.0))

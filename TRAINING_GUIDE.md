@@ -14,11 +14,16 @@ actually moves when it presses or doesn't (plus the colour of a portal it just
 crossed). The preview then simulates 8 short plans in that mode: don't press,
 hold, tap now / in 2 / 4 / 6 steps, hold-then-release, release-then-hold.
 For each it checks the boxes: does it hit something, how soon, with how much
-room to spare, and when it would walk off the ledge. The jump height and air
-time calibrate themselves from your icon's real jumps. In the simulator the
+room to spare, and when it would walk off the ledge. The cube's jump comes
+from a real Stereo Madness recording (2.2 blocks high, 0.43 s in the air) and
+keeps fine-tuning itself from your icon's jumps. It also measures the **input
+delay** (how many steps between pressing SPACE and the icon reacting) and
+times the paths with it. In the simulator the
 recogniser gets the mode right ~99% of the time; the robot is only recognised
 at its first jump (its portal is grey, so there's no colour hint). The overlay
-draws the paths and shows the mode in the header (e.g. `ship UPSIDE-DOWN`).
+draws the paths and shows the mode in the header (e.g. `ship UPSIDE-DOWN`),
+plus `jump 2.2b/0.43s* delay 1` (the * appears once it has tuned the jump from
+your own jumps; `delay` is the measured input delay in steps, 0-3).
 
 **Future-proofing:** the brain has 12 spare inputs that are wired in but
 switched off. New features can be added there later without starting a new

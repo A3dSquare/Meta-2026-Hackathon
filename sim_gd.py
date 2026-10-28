@@ -180,8 +180,11 @@ class SimGD(gym.Env):
     """Same interface as env_boxes.EntityBoxEnv."""
 
     def __init__(self, level=None, frame_skip: int = 2, dead_ticks: int = 60, signal_delay: int = 2,
-                 p_miss: float = 0.03, pos_noise: float = 0.002, seed: int = 0, use_jump: bool = True) -> None:
+                 p_miss: float = 0.03, pos_noise: float = 0.002, seed: int = 0, use_jump: bool = True,
+                 input_lag: int = 0) -> None:
         self.use_jump = use_jump
+        self.input_lag = int(input_lag)   # decisions between sending SPACE and the icon reacting
+        self._sent: list = []
         self.phys = gp.Phys()
         self.est = gp.ModeEstimator()
         self._hinted: set = set()
@@ -349,7 +352,9 @@ class SimGD(gym.Env):
         return self._obs(False), {"attempts": self.attempts}
 
     def step(self, action):
-        hold = int(action) == 1
+        sent = int(action) == 1
+        self._sent = (self._sent + [sent])[-(self.input_lag + 1):]
+        hold = self._sent[0] if len(self._sent) > self.input_lag else False   # what reaches the game
         moved = False
         died = complete = False
         for _ in range(self.frame_skip):
@@ -380,7 +385,7 @@ class SimGD(gym.Env):
             self.moving_hist = []
             self.hist = []
             self._respawn()
-        return self._obs(hold), 0.0, complete, False, info
+        return self._obs(sent), 0.0, complete, False, info
 
     def pause(self):
         pass
@@ -420,6 +425,8 @@ def main() -> int:
     p.add_argument("--no-trim", action="store_true", help="ablation: no death-time correction")
     p.add_argument("--eval", default=None, help="evaluate a checkpoint instead of training")
     p.add_argument("--quiet", action="store_true")
+    p.add_argument("--input-lag", type=int, default=0,
+                   help="decisions between pressing and the icon reacting (real GD + capture: ~1)")
     a = p.parse_args()
     if a.level == "stereo":
         level = stereo_like()
@@ -431,7 +438,7 @@ def main() -> int:
         level = ([Obj("spike", 16, 0, 1, 0.95)], 40.0)
     else:
         level = random_level(a.seed)
-    env = SimGD(level, frame_skip=a.frame_skip, seed=a.seed)
+    env = SimGD(level, frame_skip=a.frame_skip, seed=a.seed, input_lag=a.input_lag)
     cfg = TrainConfig(algo=a.algo, total_steps=a.steps, name=f"sim_{a.level}", log_dir="./logs_sim",
                       trim_death=not a.no_trim, verbose=0 if a.quiet else 1,
                       stop_on_complete=False)

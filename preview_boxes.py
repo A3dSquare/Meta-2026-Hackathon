@@ -96,6 +96,9 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
     icon = f"{pl.w / 0.0527:.1f}x{pl.h / 0.0938:.1f}" if pl is not None else "--"
     me = getattr(env, "mode_est", None)
     mtxt = (me.mode + (" mini" if me.mini else "") + (" UPSIDE-DOWN" if me.g < 0 else "")) if me else "?"
+    ph_ = getattr(env, "phys", None)
+    if ph_ is not None and me is not None:   # tuned jump (blocks / seconds) + measured input delay (steps)
+        mtxt += f"  jump {ph_.apex:.1f}b/{ph_.airtime:.2f}s{'*' if ph_.n_cal else ''}  delay {me.lag}"
     txt = (f"att {tr.attempts + 1}  best {max(tr.best_prog, 0) * 100:.0f}%  {mtxt}  spikes {ns}  "
            f"speed {spd:.1f}x  icon {icon}  eps {eps:.2f}  "
            f"{'MOVING' if info.get('moving') else 'FROZEN'}  upd {tr.updates}")
