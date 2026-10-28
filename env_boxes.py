@@ -1,14 +1,35 @@
-"""Level-agnostic policy env: entity BOXES in, pixels out.
+"""Level-agnostic policy env: entity BOXES in, SPACE out.  (v2)
 
-Wraps GymGDEnv: each tick runs the detector on the 320x180 frame, takes
-the 6 nearest entities ahead of the player as a (6,8) float32 vector
-(dx, dy, w, h, class/7, edge, closing, hold, player-y), and exposes THAT as the observation. PPO trains
-MlpPolicy on boxes -- no CNN, no backgrounds, no per-level memorization.
-A spike 0.2 ahead at dy 0.0 means the same jump on Stereo, Jumper, and
-Finger: that is what transfers.
+Wraps GymGDEnv (capture + input + % reader). Every decision step it:
+  1. holds the chosen action for `frame_skip` game frames (default 2 ->
+     30 decisions/s; GD's jump windows are several frames wide, and halving
+     the number of decisions halves how far back credit has to travel),
+  2. measures how far the screen scrolled each frame (phase correlation),
+     which is how we find the exact moment of death later,
+  3. runs the detector on the 640x360 frame (small spikes need the pixels),
+  4. encodes the boxes with encode_obs() -> flat float32 vector.
 
-Reward/pacing/death/pause/settle are inherited from GymGDEnv unchanged
-(progress-delta + jump + air + death penalty + pct0 counter).
+What changed vs v1 and why it matters for learning:
+  * EMPTY SLOTS: v1 filled unused entity rows with zeros, and an all-zero
+    row means "spike (class 0) at dx=0", i.e. a spike touching the player.
+    Every frame with fewer than 6 entities told the policy it was about to
+    die. v2 has a `present` flag and parks empty slots far away.
+  * No observation jitter (+-10 px of fake noise on spike distance -- about
+    3 frames of timing error on a jump that needs ~3-frame precision) and no
+    1/64 rounding.
+  * Edges (left/right/top/bottom) in BLOCK units instead of centers, one-hot
+    class, player vertical speed.
+  * DEATH TIMING: GD shows the explosion for ~1 s before the level restarts,
+    and the % reader only sees the death when the % resets. v1 therefore
+    punished whatever the agent did ~60 frames AFTER it had already died.
+    v2 reports `death_lag` = how many decision steps ago the screen froze
+    (= the moment of the crash), and the trainer cuts those steps off and
+    puts the penalty on the step that actually caused the death.
+
+The reward the trainer uses is computed in trainer.py from info flags
+(alive / died / complete); the shaped reward from gd.ProgressReward is
+ignored (its spike-proximity terms were driven by detector noise and
+rewarded holding SPACE near spikes, i.e. jumping too early).
 """
 from __future__ import annotations
 
@@ -22,181 +43,365 @@ try:
 except ImportError as e:  # pragma: no cover
     raise ImportError("gymnasium is required") from e
 
-from detect import Entities, make_detector
+from detect import BLOCK_FRAC_H, CLS_ID, Entities, make_detector
 
-N_ENT, FEAT = 6, 9
+# ----------------------------------------------------------------------------
+# Observation encoding (shared with sim_gd.py)
+# ----------------------------------------------------------------------------
+N_ENT = 8                         # nearest entities ahead of the player
+ENT_CLASSES = 7                   # spike, orb_y, orb_b, orb_p, pad, portal, wall
+ENT_FEAT = 5 + ENT_CLASSES        # present, x0, x1, y0, y1, one-hot
+N_GLOBAL = 4                      # player y, player vy, holding, player found
+OBS_DIM = N_GLOBAL + N_ENT * ENT_FEAT
+OBS_VERSION = 2
+
+ASPECT = 16.0 / 9.0
+BLOCK_W = BLOCK_FRAC_H / ASPECT   # one block as a fraction of screen width
+BLOCK_H = BLOCK_FRAC_H
+UNIT = 8.0                        # features are in units of 8 blocks (|x| <~ 2)
+FAR = 2.0                         # empty slot: 16 blocks away (off screen)
+
+
+def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
+               player_found: bool | None = None) -> np.ndarray:
+    """Entities -> flat (OBS_DIM,) float32. Player-relative, in block units / 8."""
+    px, py = ents.player_pos()
+    pl = ents.player()
+    found = (pl is not None and pl.conf > 0.6) if player_found is None else bool(player_found)
+    out = np.zeros(OBS_DIM, dtype=np.float32)
+    out[0] = (0.75 - py) / BLOCK_H / UNIT          # height above the usual floor line
+    vy = 0.0 if prev_py is None else (prev_py - py) / BLOCK_H
+    out[1] = float(np.clip(vy, -3.0, 3.0))
+    out[2] = 1.0 if hold else 0.0
+    out[3] = 1.0 if found else 0.0
+    half_pw = 0.5 * BLOCK_W
+    ahead = []
+    for e in ents.items:
+        c = int(e.cls)
+        if c == CLS_ID["player"] or c >= ENT_CLASSES:
+            continue
+        x0, x1 = e.x - e.w / 2, e.x + e.w / 2
+        if x1 < px - half_pw:      # fully behind the cube: irrelevant now
+            continue
+        ahead.append((x0, x1, e.y - e.h / 2, e.y + e.h / 2, c))
+    ahead.sort(key=lambda t: t[0])
+    base = N_GLOBAL
+    for i in range(N_ENT):
+        o = base + i * ENT_FEAT
+        if i < len(ahead):
+            x0, x1, y0, y1, c = ahead[i]
+            out[o] = 1.0
+            out[o + 1] = (x0 - px) / BLOCK_W / UNIT
+            out[o + 2] = (x1 - px) / BLOCK_W / UNIT
+            out[o + 3] = (py - y1) / BLOCK_H / UNIT    # bottom edge, + = above player center
+            out[o + 4] = (py - y0) / BLOCK_H / UNIT    # top edge
+            out[o + 5 + c] = 1.0
+        else:
+            out[o + 1] = FAR
+            out[o + 2] = FAR
+    return np.clip(out, -FAR, FAR)
+
+
+def estimate_death_lag(moving: list, fallback: int, *, min_run: int = 3,
+                       max_post: int = 8, max_gap: int = 2) -> tuple[int, str]:
+    """How many of the most recent decision steps happened after the crash.
+
+    `moving[i]` says whether the camera scrolled during decision step i of
+    this attempt. On death GD freezes the camera while the explosion plays,
+    then restarts the level (camera moves again) and only then does the %
+    reader report the death. So the history ends:
+        ...moving, [frozen x N], [moving x few]
+    and the crash happened right before the frozen run. Explosion particles
+    can make a frozen step look like motion for a step or two, so blips of
+    <= max_gap moving steps inside the frozen run are bridged (a live camera
+    never stops for just one step).
+    Returns (lag_steps, "measured"|"fallback").
+    """
+    n = len(moving)
+    if n <= 1:
+        return 0, "fallback"
+    i, post = n - 1, 0
+    while i >= 0 and moving[i] and post < max_post:
+        i -= 1
+        post += 1
+    if i < 0 or moving[i]:
+        return min(fallback, n - 1), "fallback"
+    j = i
+    while j >= 0:
+        if not moving[j]:
+            j -= 1
+            continue
+        k = j
+        while k >= 0 and moving[k]:
+            k -= 1
+        if j - k <= max_gap and k >= 0 and not moving[k]:
+            j = k          # short blip inside the freeze: keep walking back
+            continue
+        break
+    run = i - j
+    if run < min_run:
+        return min(fallback, n - 1), "fallback"
+    return min(post + run, n - 1), "measured"
+
+
+class MotionMeter:
+    """Pixel fallback for "did the camera scroll?" when no hazard is tracked.
+
+    Compares the new frame with the previous one shifted left by 1..8 px (GD
+    scrolls ~2.4 px/frame at 0.5x up to ~5.4 px at 4x, at 320 wide). Returns
+    the best shift if it matches clearly better than no shift, 0.0 if the
+    frame is unchanged (frozen / dropped), None if it can't tell (e.g. a big
+    slow-parallax background dominates the frame).
+    The primary signal is the hazard tracker's displacement (Entities.scroll):
+    at a crash the thing you hit is on screen and stops moving.
+    """
+
+    MAX_SHIFT = 8
+
+    def __init__(self) -> None:
+        import cv2
+        self._cv2 = cv2
+        self._prev = None
+
+    def reset(self) -> None:
+        self._prev = None
+
+    def update(self, rgb: np.ndarray):
+        cv2 = self._cv2
+        f = np.asarray(rgb)
+        h = f.shape[0]
+        band = np.ascontiguousarray(f[int(0.40 * h):int(0.97 * h)])
+        g = cv2.cvtColor(band, cv2.COLOR_RGB2GRAY).astype(np.int16)
+        prev, self._prev = self._prev, g
+        if prev is None or prev.shape != g.shape:
+            return None
+        S = self.MAX_SHIFT
+        W = g.shape[1]
+        cur = g[:, S:W - S]
+        d0 = float(np.abs(cur - prev[:, S:W - S]).mean())
+        if d0 <= 0.02:
+            return 0.0
+        best, best_s = d0, 0
+        for s in range(1, S + 1):
+            d = float(np.abs(cur - prev[:, S + s:W - S + s]).mean())
+            if d < best:
+                best, best_s = d, s
+        if best_s and best < 0.75 * d0:
+            return float(best_s)
+        return None
+
+
+def _find_base(env):
+    """Walk wrappers down to the GymGDEnv (has .cap, .reward, .pause)."""
+    w = env
+    for _ in range(6):
+        if hasattr(w, "cap") and hasattr(w, "reward"):
+            return w
+        w = getattr(w, "env", None)
+        if w is None:
+            break
+    return None
 
 
 class EntityBoxEnv(gym.Wrapper):
-    """(6,9) box-vector obs for cross-level PPO (dx,dy,w,h,cls/7,edge,closing,hold,py)."""
+    """GymGDEnv -> (OBS_DIM,) box vector, frame-skipped, with death timing.
 
-    def __init__(self, env: gym.Env, backend: str = "heuristic",
-                 detector: Any | None = None) -> None:
+    info keys added every step:
+      moving (bool), prog (float|None), attempts (int)
+      died (bool), death_lag (int steps), death_lag_src ("measured"|"fallback")
+      complete (bool), n_entities (int)
+    """
+
+    def __init__(self, env: gym.Env, backend: str = "heuristic", detector: Any | None = None,
+                 frame_skip: int = 2, hires: bool = True, death_lag_s: float | None = None,
+                 fallback_lag_s: float = 0.6, move_px: float = 0.6) -> None:
+        super().__init__(env)
+        self.base = _find_base(env)
+        self.det = detector if detector is not None else make_detector(backend)
+        self.frame_skip = max(1, int(frame_skip))
+        self.hires = bool(hires)
+        self.death_lag_s = death_lag_s
+        self.fallback_steps = max(0, int(round(fallback_lag_s * 60 / self.frame_skip)))
+        self.move_px = float(move_px)
+        self.observation_space = spaces.Box(-FAR, FAR, shape=(OBS_DIM,), dtype=np.float32)
+        self.action_space = spaces.Discrete(2)
+        self.motion = MotionMeter()
+        from collections import deque
+        self._scroll_hist = deque(maxlen=120)   # |tracker scroll| on moving steps
+        self._last_moved = True
+        self._moving: list = []
+        self._prev_py: float | None = None
+        self._prev_attempts = 1
+        self._started = False
+        self._err_shown = False
+        self.last_frame = np.zeros((180, 320, 3), np.uint8)   # RGB, for the GUI
+        self.last_hires = None                                # BGR 640x360
+        self.last_ents = Entities([])
+        self.last_shift = 0.0
+        self._dbg_ring: list = []   # legacy attribute (probe_diag.py)
+
+    # -- frames ---------------------------------------------------------------
+    def _newest(self, obs) -> np.ndarray | None:
+        a = np.asarray(obs)
+        if a.ndim == 3 and a.shape[0] == 180 and a.shape[1] == 320 and a.shape[2] >= 3:
+            return a[:, :, -3:]
+        d = getattr(self.env, "last_display", None)
+        if d is not None:
+            d = np.asarray(d)
+            return d[-1] if d.ndim == 4 else d
+        return None
+
+    def _hires(self):
+        if not self.hires or self.base is None:
+            return None
         try:
-            super().__init__(env)
-        except Exception:
-            # gym.Wrapper type-checks; fall back to duck-typing so a broken
-            # detector/env can never crash training -- zeros flow instead.
-            self.env = env
-            self._wrap_failed = True
-        else:
-            self._wrap_failed = False
-        try:
-            self.det = detector if detector is not None else make_detector(backend)
-        except Exception:
-            self.det = lambda f: Entities([])
-        self.observation_space = spaces.Box(-2.0, 2.0, shape=(N_ENT, FEAT),
-                                            dtype=np.float32)
-        self._last_ents: Entities = Entities([])
-        self._last_edge: float | None = None
-        self._jitter_rng = np.random.default_rng(1234)
-        self._jitter: bool = True  # obs jitter for transfer (set False for eval)
-        self._prev_attempts: int = 1  # attempts-delta death gate baseline
-        self._dbg_ring: list = []
-
-    def _jittered(self, v):
-        """Level-invariant obs: dx/edge/closing jitter +-1/32, py +-1/64.
-        Same jump on a different background = same FEATURES, not same tape."""
-        if not self._jitter:
-            return np.ascontiguousarray(v)
-        import numpy as _np
-        out = v.copy()
-        out[:, 0] = _np.clip(out[:, 0] + self._jitter_rng.uniform(-1/32, 1/32, size=out.shape[0]), -2, 2)
-        out[:, 5] = _np.clip(out[:, 5] + self._jitter_rng.uniform(-1/32, 1/32, size=out.shape[0]), -2, 2)
-        out[:, 6] = _np.clip(out[:, 6] + self._jitter_rng.uniform(-1/64, 1/64, size=out.shape[0]), -2, 2)
-        out[:, 8] = _np.clip(out[:, 8] + self._jitter_rng.uniform(-1/64, 1/64, size=out.shape[0]), -2, 2)
-        return _np.ascontiguousarray(out)
-
-    _err_shown: bool = False  # print-once: zeros must NEVER be silent
+            import cv2
+            full = getattr(self.base.cap, "last_fullres", None)
+            if full is None:
+                return None
+            full = np.asarray(full)
+            if full.ndim != 3 or full.shape[0] < 360:
+                return None
+            return cv2.resize(full[:, :, :3], (640, 360), interpolation=cv2.INTER_AREA)
+        except Exception as ex:
+            self._loud("hires", ex)
+            return None
 
     def _loud(self, where: str, exc: BaseException) -> None:
         if not self._err_shown:
             self._err_shown = True
-            print(f"[EntityBoxEnv:{where}] {type(exc).__name__}: {exc} -> zero obs (fix me)")
+            print(f"[EntityBoxEnv:{where}] {type(exc).__name__}: {exc}")
 
-    def _frame(self):
-        """Newest 180x320x3 RGB frame. SmallObsWrapper caches it in
-        last_display; the policy obs it returns (84x84x13) is NOT a frame."""
-        w = self.env
-        for _ in range(4):
-            d = getattr(w, "last_display", None)
-            if d is not None:
-                f = np.asarray(d)
-                return f[-1] if f.ndim == 4 else f
-            w = getattr(w, "env", None)
-            if w is None:
-                break
-        return None
-
-    def _vec(self, stacked, hold: bool = False) -> np.ndarray:
+    def _observe(self, frame, hold: bool) -> np.ndarray:
+        self.last_frame = frame
+        hi = self._hires()
+        self.last_hires = hi
         try:
-            ents = self.det(stacked)
+            ents = self.det(frame, hi) if hi is not None else self.det(frame)
+        except TypeError:
+            ents = self.det(frame)  # yolo backend takes one frame
         except Exception as ex:
             self._loud("detect", ex)
             ents = Entities([])
-        self._last_ents = ents
-        try:
-            px, _py = ents.player_pos()
-            # Only spikes still AHEAD count: a stale/false detection behind
-            # the player (edge very negative) must never become the "nearest
-            # spike" feeding proximity rent / clearance in ProgressReward.
-            sp = [x for x in ents.items if int(x.cls) == 0
-                  and ((x.x - px) - (x.w / 2 + 0.02)) > -0.06]
-            self._last_edge = (min((((x.x - px) - (x.w / 2 + 0.02)) for x in sp), default=None))
-        except Exception:
-            self._last_edge = None
-        try:
-            return self._jittered(ents.nearest(N_ENT, hold=hold))
-        except Exception as ex:
-            self._loud("nearest", ex)
-            return np.zeros((N_ENT, FEAT), dtype=np.float32)
+        self.last_ents = ents
+        pl = ents.player()
+        v = encode_obs(ents, hold=hold, prev_py=self._prev_py)
+        self._prev_py = ents.player_pos()[1] if pl is not None else self._prev_py
+        return v
 
-    def reset(self, *, seed=None, options=None):
-        _, info = self.env.reset(seed=seed, options=options)
+    def _new_attempt(self) -> None:
+        self._moving = []
+        self._last_moved = True
+        self._prev_py = None
         try:
-            self._prev_attempts = int(info.get("attempts", 1))
-        except Exception:
-            self._prev_attempts = 1
-        try:
-            from detect import Entities as _E
-            self._last_ents = _E([])
+            self.det.reset()
         except Exception:
             pass
-        frame = self._frame()
-        if frame is None:
-            self._loud("reset", RuntimeError("no last_display frame"))
-            return np.zeros((N_ENT, FEAT), dtype=np.float32), info
-        return self._vec(frame), info
-
-    def step(self, action):
-        try:
-            from gd import action_to_hold as _ath
-            _held = bool(_ath(action))
-        except Exception:
-            _held = False
-        try:
-            _px, _ = self._last_ents.player_pos()
-            _sp = [x for x in self._last_ents.items if int(x.cls) == 0
-                   and ((x.x - _px) - (x.w / 2 + 0.02)) > -0.06]
-            _ed = (min((((x.x - _px) - (x.w / 2 + 0.02)) for x in _sp), default=None))
-        except Exception:
-            _ed = None
-        try:
-            # walk to the GymGDEnv and stash the edge for this tick
-            _w = self.env
-            for _ in range(4):
-                if hasattr(_w, "reward") and hasattr(_w, "cap"):
-                    try:
-                        _w._pending_edge = _ed
-                    except Exception:
-                        pass
-                    break
-                _w = getattr(_w, "env", None)
-                if _w is None:
-                    break
-        except Exception:
-            pass
-        obs, r, term, trunc, info = self.env.step(action)
-        try:
-            frame = self._frame()
-            if frame is None or frame.shape != (180, 320, 3):
-                raise RuntimeError(f"bad frame {None if frame is None else frame.shape}")
-            v = self._vec(frame, hold=_held)
-        except Exception as ex:
-            self._loud("step", ex)
-            v = np.zeros((N_ENT, FEAT), dtype=np.float32)
-        try:
-            info["n_entities"] = len(self._last_ents.items)
-        except Exception:
-            pass
-        # EPISODE TERMINATION ON DEATH (the 500k-step stall fix):
-        # the inner env NEVER terminates (done=False always; death is just
-        # info['event']). SB3 therefore stitched 70k-tick timeouts into one
-        # giant episode: every rollout held 3% of an episode, GAE bootstrapped
-        # forever, explained_variance sat at exactly 0.0 for 240 updates.
-        # Death now ENDS the episode so each update sees complete attempts.
-        try:
-            ev = str(info.get("event"))
-        except Exception:
-            ev = "?"
-        try:
-            att = int(info.get("attempts", self._prev_attempts))
-        except Exception:
-            att = self._prev_attempts
-        died = (ev == "death") or (att > self._prev_attempts)
-        try:
-            if died:
-                print(f"[death-signal] event={ev} attempts {self._prev_attempts}->{att}")
-                self._dbg_ring.append((ev, self._prev_attempts, att))
-                if len(self._dbg_ring) >= 5:
-                    print(f"[death-signal] last5={self._dbg_ring[-5:]}")
-        except Exception:
-            pass
-        self._prev_attempts = max(self._prev_attempts, att)
-        if died:
+        if self.base is not None:
             try:
-                info["terminal_observation"] = v.copy()
+                self.base._steps = 0  # never let GymGDEnv's 2-min cap truncate
             except Exception:
                 pass
-            return v, r, True, False, info
-        return v, r, term, trunc, info
+
+    # -- gym API --------------------------------------------------------------
+    def reset(self, *, seed=None, options=None):
+        info: dict = {}
+        if not self._started:
+            obs, info = self.env.reset(seed=seed, options=options)
+            self._started = True
+            frame = self._newest(obs)
+        else:
+            frame = self.last_frame
+        try:
+            self._prev_attempts = int(info.get("attempts", self._prev_attempts))
+        except Exception:
+            pass
+        self._new_attempt()
+        self.motion.reset()
+        if frame is None:
+            frame = np.zeros((180, 320, 3), np.uint8)
+        return self._observe(frame, False), info
+
+    def step(self, action):
+        a = int(np.asarray(action).reshape(-1)[0])
+        died = complete = paused = False
+        px_moved = None          # pixel-shift verdict over this step's frames
+        info: dict = {}
+        frame = None
+        for _ in range(self.frame_skip):
+            obs, _r, term, _trunc, info = self.env.step(a)
+            f = self._newest(obs)
+            if f is not None:
+                frame = f
+                shift = self.motion.update(f)
+                if shift is not None:
+                    px_moved = bool(px_moved) or shift > self.move_px
+            if info.get("paused"):
+                paused = True
+                break
+            try:
+                att = int(info.get("attempts", self._prev_attempts))
+            except Exception:
+                att = self._prev_attempts
+            if str(info.get("event")) == "death" or att > self._prev_attempts:
+                died = True
+                self._prev_attempts = max(self._prev_attempts, att)
+                break
+            if str(info.get("event")) == "complete" or term:
+                complete = True
+                try:
+                    self.base.reward.reset()   # don't stay latched on "complete"
+                except Exception:
+                    pass
+                break
+        if frame is None:
+            frame = self.last_frame
+        v = self._observe(frame, a == 1)
+        sc = getattr(self.last_ents, "scroll", None)
+        if sc is not None:   # tracked hazards: frozen camera == they stopped moving
+            ref = float(np.median(self._scroll_hist)) if len(self._scroll_hist) >= 5 else 0.009 * self.frame_skip
+            moved = abs(sc) > max(0.0025 * self.frame_skip, 0.4 * ref)
+            if moved:
+                self._scroll_hist.append(abs(sc))
+        elif px_moved is not None:
+            moved = px_moved
+        else:
+            moved = self._last_moved   # can't tell this step: keep the last verdict
+        self._last_moved = moved
+        self.last_shift = float(sc) if sc is not None else -1.0
+        out_info = {
+            "moving": moved, "prog": info.get("prog"), "attempts": self._prev_attempts,
+            "died": died, "complete": complete, "paused": paused,
+            "death_lag": 0, "death_lag_src": "",
+        }
+        if not paused:
+            self._moving.append(moved)
+        if died:
+            if self.death_lag_s is not None:
+                lag = min(int(round(self.death_lag_s * 60 / self.frame_skip)), max(0, len(self._moving) - 1))
+                src = "fixed"
+            else:
+                lag, src = estimate_death_lag(self._moving, self.fallback_steps)
+            out_info["death_lag"], out_info["death_lag_src"] = lag, src
+            out_info["attempt_steps"] = len(self._moving)
+            self._new_attempt()
+        out_info["n_entities"] = len(self.last_ents.items)
+        return v, 0.0, complete, False, out_info
+
+    # -- pause protocol passthrough ------------------------------------------
+    def pause(self) -> None:
+        if self.base is not None:
+            self.base.pause()
+
+    def resume(self) -> None:
+        if self.base is not None:
+            self.base.resume()
+            self.motion.reset()
+
+    def mark_trained(self) -> None:
+        if self.base is not None:
+            self.base.mark_trained()
+
+    @property
+    def is_paused(self) -> bool:
+        return bool(getattr(self.base, "_paused", False))

@@ -2,16 +2,23 @@
 
 python train_general.py --levels stereo jumper finger --rotate-min 10
 
-Rotation does NOT swap files (GD has no API); it prints "SWITCH TO <level>"
-and pauses until you pick the level in GD and press SPACE in the GUI
-window. The policy only sees (6,9) entity vectors, so rotation changes
-WHICH boxes appear -- forcing reactive jumping over layout memory.
-Stop: CTRL+C (saves best_boxes.zip).
+Rotation does NOT swap levels for you (GD has no API): it starts
+preview_boxes.py, and when the timer runs out it stops it and prints
+"SWITCH TO <level>". Open that level in GD (Auto-Retry ON), then press
+ENTER here. The policy only sees entity boxes, so rotation changes WHICH
+boxes appear -- forcing reactive jumping over layout memory.
+
+Every run resumes ./checkpoints/preview_boxes.pt (the previous version
+started each level from a blank brain because it never passed --model).
 """
 from __future__ import annotations
 
 import argparse
-import time
+import os
+import subprocess
+import sys
+
+CKPT = "./checkpoints/preview_boxes.pt"
 
 
 def main() -> int:
@@ -19,29 +26,25 @@ def main() -> int:
     p.add_argument("--levels", nargs="+", required=True,
                    help="level names in rotation order, e.g. stereo jumper finger")
     p.add_argument("--rotate-min", type=float, default=10.0)
-    p.add_argument("--timesteps", type=int, default=5000000)
+    p.add_argument("--rounds", type=int, default=3, help="times through the level list")
+    p.add_argument("--eps", type=float, default=0.05,
+                   help="exploration when starting a level with an existing brain")
     args = p.parse_args()
-    print(f"GENERAL DATA rotation: {args.levels} x{args.rotate_min}min")
-    print("Per level: `python preview_boxes.py --backend heuristic`")
-    print("When the timer prints SWITCH, change GD level, SPACE in the GUI.")
-    print("Same checkpoint (`preview_boxes.zip`) carries the brain across levels.")
-    # Thin scheduler over preview_boxes.py runs (one brain, many layouts).
-    import subprocess, sys
     per = int(args.rotate_min * 60)
-    for lv in args.levels:
-        print(f"\n=== LEVEL {lv} ({args.rotate_min}min) ===")
-        print(f"python preview_boxes.py --backend heuristic --model ./checkpoints/preview_boxes.zip (delete flag for first)")
-        t0 = time.perf_counter()
-        try:
-            subprocess.run([sys.executable, "preview_boxes.py", "--backend", "heuristic"],
-                          timeout=per)
-        except subprocess.TimeoutExpired:
-            print(f"SWITCH TO NEXT LEVEL")
-        except KeyboardInterrupt:
-            print("stopped; brain saved in ./checkpoints/preview_boxes.zip")
-            return 0
-        if time.perf_counter() - t0 < per:
-            print("level ended early; brain saved.")
+    for rnd in range(args.rounds):
+        for lv in args.levels:
+            print(f"\n=== round {rnd + 1}: LEVEL {lv} ({args.rotate_min} min) ===")
+            input(f"Open '{lv}' in GD (Auto-Retry ON), click into the game window, then press ENTER here... ")
+            cmd = [sys.executable, "preview_boxes.py"]
+            if os.path.exists(CKPT):
+                cmd += ["--model", CKPT, "--eps", str(args.eps)]
+            try:
+                subprocess.run(cmd, timeout=per)
+            except subprocess.TimeoutExpired:
+                print("time up -> SWITCH TO NEXT LEVEL (brain is saved after every update)")
+            except KeyboardInterrupt:
+                print(f"stopped; brain saved in {CKPT}")
+                return 0
     return 0
 
 
