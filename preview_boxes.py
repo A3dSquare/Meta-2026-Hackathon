@@ -85,10 +85,14 @@ def main() -> int:
     cap, base, env, cfg = build(args)
     cv2.namedWindow("BOX policy view", cv2.WINDOW_NORMAL)
     state = {"n": 0}
+    t_end = time.time() + args.minutes * 60 if args.minutes > 0 else None
 
     def on_step(tr, obs, a, info):
         tr._last_obs = obs
         state["n"] += 1
+        if t_end is not None and time.time() >= t_end:
+            print(f"--minutes {args.minutes} reached: saving and stopping")
+            return False
         if state["n"] % max(1, args.render_every):
             return True
         cv2.imshow("BOX policy view", render(env, tr, a, info, args.scale))

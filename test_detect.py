@@ -36,7 +36,10 @@ def _hit(gt, e, pad=0.25) -> bool:
     gcx, gcy = (gx0 + gx1) / 2, (gy0 + gy1) / 2
     in_det = ex0 - 0.004 <= gcx <= ex1 + 0.004 and ey0 - 0.006 <= gcy <= ey1 + 0.006
     in_gt = gx0 - pad * gw <= e.x <= gx1 + pad * gw and gy0 - pad * gh <= e.y <= gy1 + pad * gh
-    return in_gt and (in_det or (e.w < 2.5 * gw))
+    # found = the object's centre is inside a detected box (merged spike strips /
+    # joined platforms are one box), or the box's centre is inside the object;
+    # and the box isn't wildly taller than the object
+    return (in_det or in_gt) and (ey1 - ey0) < 2.5 * gh + 0.02
 
 
 fp_sp = [0]

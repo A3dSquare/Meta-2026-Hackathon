@@ -240,9 +240,18 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False)
     med_v = float(np.median(V[::4, ::4]))
     dark_v = int(min(75, 0.55 * med_v))
     dark = (V < dark_v).astype(np.uint8)
-    bright = ((V >= 185) & (S <= 75)).astype(np.uint8)
+    # outlines: white, or tinted by the level colour (e.g. lavender on purple) --
+    # so "bright" = clearly brighter AND clearly less saturated than the background
+    med_s = float(np.median(S[::4, ::4]))
+    bright = (((V >= 185) & (S <= 75))
+              | ((V >= max(215.0, med_v + 35)) & (S <= min(170.0, 0.75 * med_s)))).astype(np.uint8)
     dark[:ui_cut] = 0
     bright[:ui_cut] = 0
+    # the ground line is one long bright row: remove it, or every pillar and
+    # spike standing on the ground merges into one screen-wide outline blob
+    rows = bright.mean(axis=1) > 0.7
+    for yy in np.nonzero(rows)[0]:
+        bright[max(0, yy - 1):yy + 2] = 0
     if player_box is not None:
         px0, py0, px1, py1 = player_box
         pad_x, pad_y = 0.25 * blk / W, 0.25 * blk / H
@@ -291,14 +300,89 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False)
                         if tot <= 0 or filled / tot < 0.70:
                             continue
                     else:
-                        # bright outline: the inside of a real spike is dark
-                        cx0 = l + (r - l) // 4; cx1 = r - (r - l) // 4 + 1
-                        cy0 = ya + (yb - ya) // 3; cy1 = yb - 1
-                        inner = V[cy0:cy1, cx0:cx1]
-                        if inner.size == 0 or float(inner.mean()) > max(95, 0.75 * med_v):
+                        # bright outline: the inside of a real spike is dark, at
+                        # least near the tip (GD spikes fade from black at the tip
+                        # to the level colour at the base)
+                        if flip:
+                            cy0 = yb - (yb - ya) * 2 // 3; cy1 = yb - (yb - ya) // 4
+                        else:
+                            cy0 = ya + (yb - ya) // 4; cy1 = ya + (yb - ya) * 2 // 3
+                        cx0 = x + l + (r - l) * 3 // 8; cx1 = x + r - (r - l) * 3 // 8 + 1
+                        inner = V[cy0:max(cy0 + 1, cy1), cx0:max(cx0 + 1, cx1)]
+                        if inner.size == 0 or float(inner.mean()) > 0.75 * med_v:
                             continue
                     spikes_here.append((0, x + l, ya, x + r + 1, yb + 1, conf))
+            if solid_check and bw >= 1.0 * blk and bh <= 0.8 * blk and area / float(bw * bh) < 0.75:
+                # a row of ground thorns: one wide, short, jagged black band
+                tv = top[colv]
+                if tv.size >= 4:
+                    peaks = int(np.sum((tv[1:-1] < tv[:-2]) & (tv[1:-1] <= tv[2:])))
+                    if peaks >= 3 and (y + bh / 2) < 0.94 * H:
+                        spikes_here.append((0, x, y, x + bw, y + bh, 0.8))
+            if not solid_check and max(bw, bh) >= min_w:
+                # spikes pointing left / right (on the sides of pillars): the same
+                # peak search on the left / right edge of the outline
+                rowv = sub.any(axis=1)
+                left = np.where(rowv, sub.argmax(axis=1), 10**6) + x
+                right = np.where(rowv, bw - 1 - sub[:, ::-1].argmax(axis=1), -1) + x
+                for flip, prof in ((False, left), (True, (W - 1) - right)):
+                    for (t0, t1, apex, base) in profile_peaks(prof.astype(np.int64), rowv, **kw):
+                        xa, xb = ((W - 1) - base, (W - 1) - apex) if flip else (apex, base)
+                        ya0, ya1 = y + t0, y + t1
+                        mid = (ya0 + ya1) // 2
+                        cx0 = xa + (xb - xa) // 4 if not flip else xa + (xb - xa) // 3
+                        cx1 = xa + (xb - xa) * 2 // 3 if not flip else xb - (xb - xa) // 4
+                        inner = V[max(0, mid - 1):mid + 2, cx0:max(cx0 + 1, cx1)]
+                        if inner.size and float(inner.mean()) <= 0.75 * med_v:
+                            spikes_here.append((0, xa, ya0, xb + 1, ya1 + 1, 0.75))
             found.extend(spikes_here)
+            if not solid_check and bw >= 0.5 * blk and bh >= 1.2 * blk:
+                # pillar: two long vertical outline edges (its top may carry a spike,
+                # so there's no flat top to find)
+                colsum = sub.sum(axis=0)
+                cols = np.nonzero(colsum >= max(1.0 * blk, 0.45 * bh))[0]
+                groups = []      # long vertical edges, grouped (an edge is a few px wide)
+                for c in cols:
+                    if groups and c - groups[-1][-1] <= 3:
+                        groups[-1].append(int(c))
+                    else:
+                        groups.append([int(c)])
+                for ga, gb in zip(groups, groups[1:]):
+                    c0, c1 = ga[0], gb[-1]
+                    if not (0.5 * blk <= c1 - c0 <= 2.5 * blk):
+                        continue
+                    ys_a = np.nonzero(sub[:, ga[len(ga) // 2]])[0]
+                    ys_b = np.nonzero(sub[:, gb[len(gb) // 2]])[0]
+                    ytop = int(max(ys_a[0], ys_b[0]))
+                    ybot = int(min(ys_a[-1], ys_b[-1]))
+                    if ybot - ytop < 1.0 * blk:
+                        continue
+                    band = sub[max(0, ytop - int(0.4 * blk)):ytop + int(0.3 * blk) + 1, c0:c1 + 1]
+                    if band.size and band.any(axis=0).mean() >= 0.6:   # a top edge joins them
+                        walls.append((6, x + c0, y + ytop, x + c1 + 1, y + ybot + 1, 0.8))
+            if not solid_check and bw >= 0.5 * blk and bh >= 0.35 * blk:
+                # outlined block / platform: a flat bright top edge with the
+                # outline going down from it (GD blocks have a white border;
+                # their fill is often a black-to-colour gradient or a grid)
+                # split the outline into flat-topped stretches: a pillar joined to
+                # the ground line, or a platform with a spike on it, still gives
+                # one wall per flat top
+                tops_rel = np.where(colv, top - y, -10**6)
+                c0 = 0
+                ncol = len(tops_rel)
+                while c0 < ncol:
+                    if tops_rel[c0] < 0:
+                        c0 += 1
+                        continue
+                    c1 = c0
+                    while c1 + 1 < ncol and tops_rel[c1 + 1] >= 0 and abs(int(tops_rel[c1 + 1]) - int(tops_rel[c0])) <= 2:
+                        c1 += 1
+                    if c1 - c0 + 1 >= 0.5 * blk:
+                        t0 = int(np.median(tops_rel[c0:c1 + 1]))
+                        depth = int(bot[c0:c1 + 1].max() - (y + t0))
+                        if depth >= 0.35 * blk:
+                            walls.append((6, x + c0, y + t0, x + c1 + 1, y + t0 + depth + 1, 0.85))
+                    c0 = c1 + 1
             if solid_check and bw >= 0.4 * blk and bh >= 0.4 * blk:
                 sp_area = sum((s[3] - s[1]) * (s[4] - s[2]) * 0.5 for s in spikes_here)
                 if area / float(bw * bh) >= 0.55 and sp_area < 0.5 * area:
@@ -306,23 +390,80 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False)
                     tops = [s[4] for s in spikes_here if s[2] <= y + 1]
                     if tops:  # spikes standing on the block: wall starts at their base
                         wy0 = max(tops)
-                    if y + bh - wy0 >= 0.3 * blk:
+                    if y + bh - wy0 >= 0.3 * blk and not (y + bh >= H - 2 and y > 0.85 * H):
                         walls.append((6, x, wy0, x + bw, y + bh, 0.8))
         found.extend(walls)
 
     _scan(dark, True, 0.9)
-    if med_v < 120 or force_bright:
-        # dark level: black spike bodies blend into the background, so find
-        # them by their bright outline instead
-        _scan(bright, False, 0.75)
+    # white outlines: full spike shapes (the black fill often only covers the
+    # tip) and outlined blocks/platforms
+    _scan(bright, False, 0.75)
+    return _merge_hazards(found, W, H, blk)
 
-    # de-duplicate (bright-outline path finds the same spikes again)
-    out: list = []
-    for d in sorted(found, key=lambda t: -t[5]):
-        box = (d[1] / W, d[2] / H, d[3] / W, d[4] / H)
-        if any(o[0] == d[0] and _iou(box, o[1:5]) > 0.3 for o in out):
-            continue
-        out.append((d[0], *box, d[5]))
+
+def _merge_hazards(found: list, W: int, H: int, blk: float) -> list:
+    """Same object seen twice (dark fill + bright outline) -> one box (the union);
+    rows of touching spikes / ground thorns -> one strip; walls nested in a
+    bigger wall -> dropped. Fewer, truer boxes = the 8 policy slots go to
+    things that matter."""
+    def contains(a, b, tol=0.15):   # centre of b inside a (with tolerance)
+        cx, cy = (b[1] + b[3]) / 2, (b[2] + b[4]) / 2
+        tx, ty = min(tol * (a[3] - a[1]), 0.15 * blk), min(tol * (a[4] - a[2]), 0.15 * blk)
+        return a[1] - tx <= cx <= a[3] + tx and a[2] - ty <= cy <= a[4] + ty
+    out = []
+    for cls in (0, 6):
+        boxes = [list(f) for f in found if f[0] == cls]
+        boxes.sort(key=lambda b: -(b[3] - b[1]) * (b[4] - b[2]))
+        merged: list = []
+        for b in boxes:
+            hit = next((m for m in merged if contains(m, b) or contains(b, m)), None)
+            if hit is None:
+                merged.append(b)
+            elif cls == 0:      # union of fill + outline views of one spike
+                hit[1], hit[2] = min(hit[1], b[1]), min(hit[2], b[2])
+                hit[3], hit[4] = max(hit[3], b[3]), max(hit[4], b[4])
+                hit[5] = max(hit[5], b[5])
+        if cls == 6:            # one platform split by a spike standing on it -> rejoin
+            merged.sort(key=lambda b: b[1])
+            joined: list = []
+            for b in merged:
+                if joined and abs(b[2] - joined[-1][2]) <= 0.15 * blk and b[1] - joined[-1][3] <= 1.2 * blk:
+                    j = joined[-1]
+                    j[3], j[4] = max(j[3], b[3]), max(j[4], b[4])
+                    continue
+                joined.append(b)
+            stacked: list = []   # pieces of one pillar split by the icon mask -> rejoin
+            for b in sorted(joined, key=lambda b: b[2]):
+                hit = None
+                for s in stacked:
+                    ov = min(s[3], b[3]) - max(s[1], b[1])
+                    if ov >= 0.7 * min(s[3] - s[1], b[3] - b[1]) and b[2] - s[4] <= 0.4 * blk:
+                        hit = s
+                        break
+                if hit is not None:
+                    hit[1], hit[3] = min(hit[1], b[1]), max(hit[3], b[3])
+                    hit[4] = max(hit[4], b[4])
+                else:
+                    stacked.append(b)
+            merged = stacked
+        if cls == 0:            # strips: same base line, (nearly) touching
+            merged.sort(key=lambda b: b[1])
+            strips: list = []
+            for b in merged:
+                if strips:
+                    s = strips[-1]
+                    small = (b[4] - b[2]) < 0.6 * blk and (s[4] - s[2]) < 0.6 * blk
+                    gap = b[1] - s[3]
+                    same_base = (abs(b[4] - s[4]) <= 0.25 * blk and abs(b[2] - s[2]) <= 0.3 * blk
+                                 and abs((b[4] - b[2]) - (s[4] - s[2])) <= 0.3 * blk)
+                    if same_base and gap <= (1.0 if small else 0.35) * blk:
+                        s[2], s[3], s[4] = min(s[2], b[2]), max(s[3], b[3]), max(s[4], b[4])
+                        s[5] = max(s[5], b[5])
+                        continue
+                strips.append(b)
+            merged = strips
+        for b in merged:
+            out.append((b[0], b[1] / W, b[2] / H, b[3] / W, b[4] / H, b[5]))
     return out
 
 
@@ -374,22 +515,23 @@ def detect_specials(bgr: np.ndarray, player_box=None) -> list:
     pad_x0 = pad_x1 = pad_y0 = pad_y1 = None
     if player_box is not None:
         px0, py0, px1, py1 = player_box
-        pad_x0 = max(0, int((px0 - 0.2 * blk / W) * W)); pad_x1 = min(W, int((px1 + 0.2 * blk / W) * W) + 1)
-        pad_y0 = max(0, int((py0 - 0.2 * blk / H) * H)); pad_y1 = min(H, int((py1 + 0.2 * blk / H) * H) + 1)
+        # icons are bigger than their coloured core (wings, robot legs, ship)
+        pad_x0 = max(0, int((px0 - 0.6 * blk / W) * W)); pad_x1 = min(W, int((px1 + 0.6 * blk / W) * W) + 1)
+        pad_y0 = max(0, int((py0 - 0.6 * blk / H) * H)); pad_y1 = min(H, int((py1 + 0.6 * blk / H) * H) + 1)
     out = []
     # two separate masks: a bright background patch in the "glow" mask must not
     # swallow an orb that the "different hue" mask already isolates cleanly
-    for raw in (colour, glow):
+    for which, raw in (("colour", colour), ("glow", glow)):
         mask = raw.astype(np.uint8)
         mask[: int(0.065 * H)] = 0
         if pad_x0 is not None:
             mask[pad_y0:pad_y1, pad_x0:pad_x1] = 0
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
         n, lab, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
-        for i in range(1, n):
+        for i in sorted(range(1, n), key=lambda k: -int(stats[k][4])):
             x, y, bw, bh, area = (int(v) for v in stats[i])
             wb, hb = bw / blk, bh / blk
-            if area < 0.06 * blk * blk or wb > 5 or hb > 5:
+            if area < 0.008 * blk * blk or wb > 5 or hb > 5:
                 continue
             m = lab[y:y + bh, x:x + bw] == i
             hue_vals = Hh[y:y + bh, x:x + bw][m]
@@ -399,7 +541,21 @@ def detect_specials(bgr: np.ndarray, player_box=None) -> list:
             det = None
             if hb >= 1.7 and hb >= 1.6 * wb and wb >= 0.3:
                 det = (CLS_ID["portal"], *box, 0.8, hue / 180.0)
-            elif 0.45 <= wb <= 1.5 and 0.45 <= hb <= 1.5 and 0.7 <= wb / max(hb, 1e-6) <= 1.4:
+            elif (which == "colour" and min(wb, hb) >= 0.1 and max(wb, hb) < 0.45 and min(wb, hb) < 0.3
+                  and 0.5 <= wb / max(hb, 1e-6) <= 2.0 and m[bh // 2, bw // 2]):
+                # small orb core (e.g. a used/pulsing yellow orb) inside a bright ring
+                r = (bw + bh) / 4.0
+                cx_, cy_ = x + bw / 2.0, y + bh / 2.0
+                R = int(round(2.0 * r))
+                yy, xx = np.ogrid[-R:R + 1, -R:R + 1]
+                ann = (xx * xx + yy * yy <= R * R) & (xx * xx + yy * yy > (1.2 * r) ** 2)
+                y0_, x0_ = int(cy_) - R, int(cx_) - R
+                if y0_ >= 0 and x0_ >= 0 and y0_ + 2 * R + 1 <= H and x0_ + 2 * R + 1 <= W:
+                    ring = V[y0_:y0_ + 2 * R + 1, x0_:x0_ + 2 * R + 1][ann]
+                    if ring.size and float((ring >= 235).mean()) >= 0.3:
+                        h2 = 0.4 * blk
+                        det = (_orb_class(hue), (cx_ - h2) / W, (cy_ - h2) / H, (cx_ + h2) / W, (cy_ + h2) / H, 0.7, hue / 180.0)
+            elif 0.3 <= wb <= 1.5 and 0.3 <= hb <= 1.5 and 0.7 <= wb / max(hb, 1e-6) <= 1.4 and m[bh // 2, bw // 2]:
                 cnts, _ = cv2.findContours(m.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 if cnts:
                     c = max(cnts, key=cv2.contourArea)
@@ -407,8 +563,14 @@ def detect_specials(bgr: np.ndarray, player_box=None) -> list:
                     circ = 4 * np.pi * cv2.contourArea(c) / max(1e-6, per * per)
                     if circ >= 0.6 and area >= 0.45 * bw * bh:
                         det = (_orb_class(hue), *box, 0.8, hue / 180.0)
-            elif hb <= 0.5 and wb >= 0.45 and wb <= 1.8 and wb >= 1.8 * hb:
+            elif which == "colour" and hb <= 1.0 and 0.45 <= wb <= 2.0 and wb >= 1.25 * hb:
+                # pad: flat colour strip, often under a big glow dome
                 det = (CLS_ID["pad"], *box, 0.7, hue / 180.0)
+            if det is not None and det[0] in (1, 2, 3):
+                cxd, cyd = (det[1] + det[3]) / 2 * W, (det[2] + det[4]) / 2 * H
+                if any(o[0] in (1, 2, 3) and abs((o[1] + o[3]) / 2 * W - cxd) < 0.7 * blk
+                       and abs((o[2] + o[4]) / 2 * H - cyd) < 0.7 * blk for o in out):
+                    det = None   # particles around an orb already found
             if det is not None and not any(_iou(det[1:5], o[1:5]) > 0.3 for o in out):
                 out.append(det)
     return out
@@ -509,9 +671,11 @@ class HeuristicDetector:
             bg_h = int(np.argmax(hist))
             lo, hi = self.icon_hue
             if lo - 8 <= bg_h <= hi + 8:
-                # background has the icon's colour: keep only clearly brighter pixels
+                # background has the icon's colour: keep pixels clearly brighter
+                # than it, or clearly a different hue
                 bg_v = float(np.median(sub[:, 2]))
-                mask_p[hsv[:, :, 2] < min(250, bg_v + 35)] = 0
+                same = _hue_dist(hsv[:, :, 0], bg_h) < 10
+                mask_p[same | (hsv[:, :, 2] < min(250, bg_v + 35)) & ~(_hue_dist(hsv[:, :, 0], bg_h) >= 14)] = 0
         cnts_p, _ = cv2.findContours(mask_p, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cands = []
         for c in cnts_p:
@@ -521,14 +685,16 @@ class HeuristicDetector:
             x, y, bw, bh = cv2.boundingRect(c)
             cx, cy = (x + bw / 2) / w, (y + bh / 2) / h
             # whole height: ships fly high, upside-down cubes run on the ceiling
-            if not (0.15 <= cx <= 0.50 and 0.07 <= cy <= 0.97):
+            # GD's camera keeps the icon at a fixed x (~0.37 of the screen)
+            if not (0.25 <= cx <= 0.48 and 0.07 <= cy <= 0.97):
                 continue
             if not (0.3 <= bw / max(1, bh) <= 3.5):
                 continue
             if _PL_LAST[0] is not None:
                 if abs(cx - _PL_LAST[0][0]) > 0.08 or abs(cy - _PL_LAST[0][1]) > 0.15:
                     continue
-            d = abs(cx - _PL_LAST[0][0]) + abs(cy - _PL_LAST[0][1]) if _PL_LAST[0] else -area
+            d = (abs(cx - _PL_LAST[0][0]) + abs(cy - _PL_LAST[0][1]) if _PL_LAST[0]
+                 else 3 * abs(cx - 0.37) - 0.002 * area)
             cands.append((d, Entity(CLS_ID["player"], cx, cy, max(bw / w, 0.03), max(bh / h, 0.05), 0.9)))
         if cands:
             cands.sort(key=lambda t: t[0])
@@ -566,6 +732,8 @@ class HeuristicDetector:
         # coloured sprites near the icon's last spot are the icon (or its trail)
         sbox = (pl.x - pl.w / 2, pl.y - pl.h / 2, pl.x + pl.w / 2, pl.y + pl.h / 2) if pl is not None else None
         dets = detect_hazards(src, player_box=pbox)
+        specials = detect_specials(src, player_box=sbox)
+        dets = [h for h in dets if not any(_iou(h[1:5], s[1:5]) > 0.3 for s in specials)]
         scroll = None
         if self.temporal:
             ents.extend(self._tracker.update(dets))
@@ -574,7 +742,7 @@ class HeuristicDetector:
             ents.extend(Entity(int(d[0]), (d[1] + d[3]) / 2, (d[2] + d[4]) / 2,
                                d[3] - d[1], d[4] - d[2], d[5]) for d in dets)
         # orbs / pads / portals: colour + shape (see detect_specials)
-        for s in detect_specials(src, player_box=sbox):
+        for s in specials:
             ents.append(Entity(int(s[0]), (s[1] + s[3]) / 2, (s[2] + s[4]) / 2,
                                s[3] - s[1], s[4] - s[2], s[5], s[6]))
         return Entities(ents, scroll)

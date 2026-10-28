@@ -29,19 +29,19 @@ def main() -> int:
     p.add_argument("--rounds", type=int, default=3, help="times through the level list")
     p.add_argument("--eps", type=float, default=0.05,
                    help="exploration when starting a level with an existing brain")
+    p.add_argument("--extra", default="", help='extra preview_boxes.py arguments, e.g. "--icon-hue 20 35"')
     args = p.parse_args()
-    per = int(args.rotate_min * 60)
     for rnd in range(args.rounds):
         for lv in args.levels:
             print(f"\n=== round {rnd + 1}: LEVEL {lv} ({args.rotate_min} min) ===")
             input(f"Open '{lv}' in GD (Auto-Retry ON), click into the game window, then press ENTER here... ")
-            cmd = [sys.executable, "preview_boxes.py"]
+            cmd = [sys.executable, "preview_boxes.py", "--minutes", str(args.rotate_min)]
             if os.path.exists(CKPT):
                 cmd += ["--model", CKPT, "--eps", str(args.eps)]
+            cmd += args.extra.split()
             try:
-                subprocess.run(cmd, timeout=per)
-            except subprocess.TimeoutExpired:
-                print("time up -> SWITCH TO NEXT LEVEL (brain is saved after every update)")
+                subprocess.run(cmd)   # stops itself cleanly after --minutes (or q / level complete)
+                print("time up -> SWITCH TO NEXT LEVEL")
             except KeyboardInterrupt:
                 print(f"stopped; brain saved in {CKPT}")
                 return 0
