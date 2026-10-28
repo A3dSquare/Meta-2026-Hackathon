@@ -88,7 +88,8 @@ def main() -> int:
     os.makedirs("./checkpoints", exist_ok=True)
     tr = Trainer(env, cfg, model_path=args.model)
     if args.eps is not None and cfg.algo == "dqn":
-        tr.learner.steps_seen = 0  # restart the exploration schedule from --eps
+        tr.learner.steps_seen = 0
+        tr.best_prog = -1.0   # --eps = new level: start a fresh best %  # restart the exploration schedule from --eps
     try:
         tr.run()
     finally:

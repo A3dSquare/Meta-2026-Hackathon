@@ -430,10 +430,20 @@ class Trainer:
         self.learner = learner if learner is not None else make_learner(env, self.cfg, model_path)
         self.on_step = on_step
         self.on_attempt = on_attempt
+        self.best_prog = -1.0
+        if model_path:
+            # keep the record across runs, so the first attempt of a new run
+            # doesn't overwrite best_boxes with a worse brain
+            try:
+                import torch as _th
+                bp = checkpoint_path(self.cfg, best=True)
+                if os.path.exists(bp) and self.cfg.algo == "dqn":
+                    self.best_prog = float(_th.load(bp, map_location="cpu", weights_only=False).get("best_pct", -100)) / 100
+            except Exception:
+                pass
         self.steps = 0
         self.updates = 0
         self.attempts = 0
-        self.best_prog = -1.0
         self.best_steps = -1
         self.recent: list = []           # (survived_steps, peak_prog), last 50 attempts
         self.new_steps = 0               # env steps since the last update

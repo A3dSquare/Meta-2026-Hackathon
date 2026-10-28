@@ -110,6 +110,7 @@ def main() -> int:
     tr = Trainer(env, cfg, model_path=args.model, on_step=on_step)
     if args.eps is not None and cfg.algo == "dqn":
         tr.learner.steps_seen = 0
+        tr.best_prog = -1.0   # --eps = new level: start a fresh best %
     print("BOX live: Double DQN on detector boxes. q = quit+save, p = pause.")
     try:
         tr.run()
