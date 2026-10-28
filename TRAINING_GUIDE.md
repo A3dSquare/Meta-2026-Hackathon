@@ -89,6 +89,9 @@ every level (the old version started each level from scratch).
   `detect_probe.png`) or `python detect.py --probe recs/<level>.mp4 --show`.
   Level art the heuristic can't read -> YOLO (below).
 - **Lots of `fallback` lags**: see section 2.
+- **Jumps constantly**: it only jumps when it's confident (`--jump-margin`,
+  default 0.3) and pays a tiny cost per held step (`--hold-cost`, default 0.02).
+  Raise `--jump-margin` to 0.5 for even fewer jumps; 0 turns it off.
 - **Training pauses feel long**: `--replay-ratio 2` halves them; learning is
   a bit slower per attempt.
 - **Player not found (no green box)**: the icon detector looks for a

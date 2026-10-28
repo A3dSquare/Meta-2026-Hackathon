@@ -108,6 +108,7 @@ def main() -> int:
         return True
 
     tr = Trainer(env, cfg, model_path=args.model, on_step=on_step)
+    tr.on_train_tick = lambda: cv2.waitKey(1)   # keep the window responsive while training
     if args.eps is not None and cfg.algo == "dqn":
         tr.learner.steps_seen = 0
         tr.best_prog = -1.0   # --eps = new level: start a fresh best %

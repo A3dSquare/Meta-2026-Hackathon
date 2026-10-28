@@ -44,6 +44,8 @@ class TrainConfig:
     gamma: float = 0.98
     lr: float = 5e-4
     alive_reward: float = 0.1
+    hold_cost: float = 0.02        # tiny price per step SPACE is held: makes "release" win when holding
+                                   # doesn't matter (mid-air), so it stops bunny-hopping by default
     death_penalty: float = -10.0
     complete_bonus: float = 50.0
     net_arch: tuple = (256, 256)
@@ -59,7 +61,7 @@ class TrainConfig:
     verbose: int = 1
     # --- DQN --------------------------------------------------------------
     n_step: int = 4
-    buffer_size: int = 200_000
+    buffer_size: int = 100_000
     batch_size: int = 128
     replay_ratio: float = 4.0      # gradient steps per new environment step
     max_grad_steps: int = 1000     # cap per update (bounds the pause length)
@@ -69,6 +71,9 @@ class TrainConfig:
     eps_end: float = 0.01
     eps_decay_steps: int = 20_000   # ~11 min of play
     explore_hold: float = 0.5      # P(hold) for a random action
+    jump_margin: float = 0.3       # only hold SPACE when Q(hold) beats Q(release) by this much:
+                                   # "don't jump until confident". Used when acting AND in the
+                                   # learning target, so the two agree.
     # --- PPO --------------------------------------------------------------
     epochs: int = 10
     minibatch: int = 64
@@ -151,7 +156,12 @@ class DQNLearner:
             self.steps_seen += 1
             if self.rng.random() < self.epsilon():
                 return int(self.rng.random() < self.cfg.explore_hold), {"q": qv}
-        return int(np.argmax(qv)), {"q": qv}
+        return self._greedy(qv), {"q": qv}
+
+    def _greedy(self, qv) -> int:
+        if len(qv) == 2:
+            return int(qv[1] - qv[0] > self.cfg.jump_margin)
+        return int(np.argmax(qv))
 
     def hold_prob(self, obs: np.ndarray) -> float:
         qv = self.q_values(obs)
@@ -189,7 +199,7 @@ class DQNLearner:
         return upto
 
     # -- learning --------------------------------------------------------------
-    def train(self, new_steps: int) -> dict:
+    def train(self, new_steps: int, tick=None) -> dict:
         th, c = self.th, self.cfg
         n = self.size()
         if n < c.warmup:
@@ -197,7 +207,9 @@ class DQNLearner:
         k = int(min(c.max_grad_steps, max(1, c.replay_ratio * new_steps)))
         losses, qs = [], []
         self.q.train()
-        for _ in range(k):
+        for j in range(k):
+            if tick is not None and j % 50 == 0:
+                tick()   # e.g. pump the GUI window so Windows doesn't flag it "Not Responding"
             idx = self.rng.integers(0, n, size=c.batch_size)
             o = th.as_tensor(self.b_obs[idx], device=self.dev)
             a = th.as_tensor(self.b_act[idx], device=self.dev)
@@ -205,7 +217,11 @@ class DQNLearner:
             d = th.as_tensor(self.b_disc[idx], device=self.dev)
             nx = th.as_tensor(self.b_nxt[idx], device=self.dev)
             with th.no_grad():
-                a_star = self.q(nx).argmax(dim=1, keepdim=True)
+                qn = self.q(nx)
+                if qn.shape[1] == 2:   # same "confident jump" rule as when acting
+                    a_star = ((qn[:, 1] - qn[:, 0]) > c.jump_margin).long()[:, None]
+                else:
+                    a_star = qn.argmax(dim=1, keepdim=True)
                 tq = self.qt(nx).gather(1, a_star).squeeze(1)
                 y = R + d * tq
             q = self.q(o).gather(1, a[:, None]).squeeze(1)
@@ -312,7 +328,7 @@ class PPOLearner:
         boot = 0.0 if terminal else self.value(next_obs_last)
         self.segs.append((obs, act, rew, logp, val, terminal, boot))
 
-    def train(self, new_steps: int) -> dict:
+    def train(self, new_steps: int, tick=None) -> dict:
         th, cfg = self.th, self.cfg
         if not self.segs:
             return {}
@@ -430,6 +446,9 @@ class Trainer:
         self.learner = learner if learner is not None else make_learner(env, self.cfg, model_path)
         self.on_step = on_step
         self.on_attempt = on_attempt
+        self.on_train_tick = None     # called every 50 gradient steps during an update
+        self._step_t0 = time.perf_counter()
+        self._step_n0 = 0
         self.best_prog = -1.0
         if model_path:
             # keep the record across runs, so the first attempt of a new run
@@ -488,7 +507,7 @@ class Trainer:
             self.env.pause()
         except Exception as e:
             print(f"PAUSE FAILED: {e}")
-        st = self.learner.train(self.new_steps)
+        st = self.learner.train(self.new_steps, tick=self.on_train_tick)
         self.new_steps = 0
         if st:
             self.updates += 1
@@ -501,10 +520,34 @@ class Trainer:
         dt = time.perf_counter() - t0
         self.pause_s += dt
         if self.cfg.verbose and st:
+            self._health(dt)
+        if self.cfg.verbose and st:
             mean_s = np.mean([r[0] for r in self.recent[-20:]]) if self.recent else 0
             extra = "  ".join(f"{k}={v:.3g}" if isinstance(v, float) else f"{k}={v}" for k, v in st.items())
             print(f"[update {self.updates}] {why}: {extra}  avg survive (last 20)={mean_s / 30:.1f}s  "
                   f"(paused {dt:.2f}s)")
+
+    def _health(self, pause_dt: float) -> None:
+        """One status line per update: if the run degrades, this shows what grew."""
+        now = time.perf_counter()
+        n = self.steps - self._step_n0
+        play = max(1e-6, now - self._step_t0 - pause_dt)
+        ms = 1000.0 * play / max(1, n)
+        self._step_t0, self._step_n0 = now, self.steps
+        mem = ""
+        try:
+            import psutil
+            mem = f"  RAM {psutil.Process().memory_info().rss / 1e6:.0f} MB"
+        except Exception:
+            pass
+        cap = ""
+        try:
+            h = self.env.base.cap.health
+            cap = f"  capture restarts {h['restarts']} overruns {h['overruns']}"
+        except Exception:
+            pass
+        slow = "  <-- SLOW (target ~33 ms)" if ms > 45 else ""
+        print(f"[health] {ms:.1f} ms/decision{mem}{cap}{slow}")
 
     def _finish_attempt(self, seg: _Seg, info: dict, peak: float, next_obs) -> None:
         cfg = self.cfg
@@ -551,7 +594,7 @@ class Trainer:
                 nobs, _r, _term, _trunc, info = self.env.step(a)
                 self.steps += 1
                 self.new_steps += 1
-                seg.obs.append(obs); seg.act.append(a); seg.rew.append(cfg.alive_reward)
+                seg.obs.append(obs); seg.act.append(a); seg.rew.append(cfg.alive_reward - cfg.hold_cost * a)
                 if "logp" in extra:
                     seg.logp.append(extra["logp"]); seg.val.append(extra["v"])
                 p = info.get("prog")
