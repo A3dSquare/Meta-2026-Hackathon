@@ -52,9 +52,18 @@ N_ENT = 8                         # nearest entities ahead of the player
 ENT_CLASSES = 7                   # spike, orb_y, orb_b, orb_p, pad, portal, wall
 ENT_FEAT = 7 + ENT_CLASSES        # present, x0, x1, y0, y1, hue cos, hue sin, one-hot
 N_HIST = 8                        # past decision steps of (vertical speed, action)
-N_GLOBAL = 7 + 2 * N_HIST         # y, vy, hold, found, speed, icon w, icon h, history
+from gd_physics import MODES, MODE_ID, N_PLANS, Body, ModeEstimator, Phys, simulate_plans
+N_MODE = len(MODES) + 3            # mode one-hot, gravity (+1/-1), mini, confidence
+N_PLAN = 3 * N_PLANS + 1           # per action plan: hits?, time to hit, clearance; + time to ledge
+N_RESERVED = 12                    # spare inputs (zero today) so future features don't need a new brain
+OFF_HIST = 7
+OFF_MODE = OFF_HIST + 2 * N_HIST
+OFF_PLAN = OFF_MODE + N_MODE
+OFF_RES = OFF_PLAN + N_PLAN
+N_GLOBAL = OFF_RES + N_RESERVED
 OBS_DIM = N_GLOBAL + N_ENT * ENT_FEAT
-OBS_VERSION = 3
+OBS_VERSION = 5
+RESERVED = slice(OFF_RES, OFF_RES + N_RESERVED)
 
 ASPECT = 16.0 / 9.0
 BLOCK_W = BLOCK_FRAC_H / ASPECT   # one block as a fraction of screen width
@@ -71,9 +80,52 @@ def player_vy(ents: Entities, prev_py: float | None) -> float:
     return float(np.clip((prev_py - ents.player_pos()[1]) / BLOCK_H, -3.0, 3.0))
 
 
+def preview_boxes(ents: Entities, horizon_blocks: float):
+    """Hazard / solid boxes in blocks relative to the icon centre (+y = up)."""
+    px, py = ents.player_pos()
+    haz, solid, portals = [], [], []
+    for e in ents.items:
+        c = int(e.cls)
+        x0 = (e.x - e.w / 2 - px) / BLOCK_W
+        x1 = (e.x + e.w / 2 - px) / BLOCK_W
+        if x1 < -0.6 or x0 > horizon_blocks:
+            continue
+        top = (py - (e.y - e.h / 2)) / BLOCK_H
+        bot = (py - (e.y + e.h / 2)) / BLOCK_H
+        if c == 0:   # spike hitboxes are much smaller than the sprite
+            w = x1 - x0
+            hh = top - bot
+            haz.append((x0 + 0.3 * w, x1 - 0.3 * w, bot + 0.1 * hh, top - 0.35 * hh))
+        elif c == 6:
+            solid.append((x0, x1, bot, top))
+        elif c == CLS_ID["portal"]:
+            portals.append((x0, x1, float(getattr(e, "hue", -1.0))))
+    return haz, solid, portals
+
+
+def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phys,
+                     frame_skip: int, vy_bps: float, grounded: bool, prev_hold: bool,
+                     floor_rel: float | None, ceil_rel: float | None, horizon: float = 1.5):
+    """Mode block + action-plan outcomes for the current frame.
+
+    floor_rel / ceil_rel: surface heights relative to the icon centre (None =
+    unknown). Returns (mode_feats[N_MODE], plan_feats[N_PLAN], paths).
+    """
+    haz, solid, _ = preview_boxes(ents, speed * horizon + 1)
+    body = Body(0.0, vy_bps, est.g, grounded, est.mode, est.mini, 0.0, prev_hold)
+    plan, paths = simulate_plans(body, haz, solid, floor_rel, ceil_rel, speed, phys,
+                                 frame_skip=frame_skip, horizon=horizon)
+    mf = np.zeros(N_MODE, dtype=np.float32)
+    mf[MODE_ID[est.mode]] = 1.0
+    mf[len(MODES)] = float(est.g)
+    mf[len(MODES) + 1] = 1.0 if est.mini else 0.0
+    mf[len(MODES) + 2] = est.conf
+    return mf, plan, paths
+
+
 def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
                player_found: bool | None = None, speed: float = SPEED_1X,
-               hist=None) -> np.ndarray:
+               hist=None, mode=None, plan=None) -> np.ndarray:
     """Entities -> flat (OBS_DIM,) float32. Player-relative, in block units / 8.
 
     Globals tell the policy what the boxes can't:
@@ -100,6 +152,11 @@ def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
         for k, (vy_k, a_k) in enumerate(reversed(hh)):   # newest first
             out[7 + 2 * k] = vy_k
             out[8 + 2 * k] = float(a_k)
+    if mode is not None:            # which game mode / gravity / size (from how it moves)
+        out[OFF_MODE:OFF_MODE + N_MODE] = mode
+    if plan is not None:            # physics preview: outcome of 8 fixed action plans
+        out[OFF_PLAN:OFF_PLAN + N_PLAN] = plan
+    # out[RESERVED] stays 0: room for future features without a new brain
     half_pw = 0.5 * BLOCK_W
     ahead = []
     for e in ents.items:
@@ -260,6 +317,12 @@ class EntityBoxEnv(gym.Wrapper):
         self._last_moved = True
         self._lag_hist = deque(maxlen=25)        # measured crash lags (steps)
         self._hist = deque(maxlen=N_HIST)        # (vy, action) per step this attempt
+        self.phys = Phys()                       # GD physics (cube jump self-calibrates)
+        self.mode_est = ModeEstimator()          # which mode / gravity, from how the icon moves
+        self.last_arcs: list = []                # predicted paths (for the overlay)
+        self._floor_y = None                     # screen y of the floor (lowest place stood on)
+        self._ceil_y = None                      # ... of the ceiling when upside down
+        self._portal_cool = 0
         self.speed = None                        # blocks/s, from the tracker
         self._moving: list = []
         self._prev_py: float | None = None
@@ -319,20 +382,55 @@ class EntityBoxEnv(gym.Wrapper):
         try:
             ents = self.det(frame, hi) if hi is not None else self.det(frame)
         except TypeError:
-            ents = self.det(frame)  # yolo backend takes one frame
+            ents = self.det(frame)  # a detector that takes one frame
         except Exception as ex:
             self._loud("detect", ex)
             ents = Entities([])
         self.last_ents = ents
         pl = ents.player()
+        spd = self.speed or SPEED_1X
+        dt = self.frame_skip / 60.0
+        prev_hold = bool(self._hist and self._hist[-1][1] > 0.5)
+        vy_step = player_vy(ents, self._prev_py) if pl is not None else 0.0
+        vy_bps = vy_step / dt
+        recent = [h[0] for h in list(self._hist)[-2:]] + [vy_step]
+        grounded = len(recent) >= 2 and all(abs(v) / dt < ModeEstimator.REST for v in recent)
+        floor_rel = ceil_rel = None
+        if pl is not None:
+            py = ents.player_pos()[1]
+            y_b = (0.75 - py) / BLOCK_H
+            self.mode_est.update(y_b, hold, dt, spd, self.phys)
+            if self.mode_est.mode == "cube":
+                self.phys.calibrate(y_b, vy_step, hold, grounded, dt)
+            for e in ents.items:            # portal crossing the icon: mode may change now
+                if int(e.cls) == CLS_ID["portal"] and abs(e.x - ents.player_pos()[0]) < 0.6 * BLOCK_W:
+                    if self._portal_cool <= 0:
+                        # mode / gravity portals are ~3 blocks tall; speed portals (whose colours
+                        # overlap the mode colours) are shorter -> only trust the colour of tall ones
+                        tall = e.h / BLOCK_H >= 2.4
+                        self.mode_est.portal_hint(float(getattr(e, "hue", -1.0)) if tall else -1.0)
+                        self._portal_cool = 10
+            self._portal_cool -= 1
+            if grounded:   # remember where it stood: lowest = floor, highest (upside down) = ceiling
+                if self.mode_est.g == 1:
+                    self._floor_y = py if self._floor_y is None or abs(py - self._floor_y) > 6 * BLOCK_H else max(self._floor_y, py)
+                else:
+                    self._ceil_y = py if self._ceil_y is None or abs(py - self._ceil_y) > 6 * BLOCK_H else min(self._ceil_y, py)
+            if self._floor_y is not None:
+                floor_rel = (py - self._floor_y) / BLOCK_H - 0.5
+            if self._ceil_y is not None:
+                ceil_rel = (py - self._ceil_y) / BLOCK_H + 0.5
+        mf, plan, self.last_arcs = physics_features(ents, spd, self.mode_est, self.phys, self.frame_skip,
+                                                    vy_bps, grounded, hold, floor_rel, ceil_rel)
         v = encode_obs(ents, hold=hold, prev_py=self._prev_py,
-                       speed=self.speed or SPEED_1X, hist=self._hist)
+                       speed=spd, hist=self._hist, mode=mf, plan=plan)
         self._hist.append((player_vy(ents, self._prev_py) if pl is not None else 0.0, 1.0 if hold else 0.0))
         self._prev_py = ents.player_pos()[1] if pl is not None else self._prev_py
         return v
 
     def _new_attempt(self) -> None:
         self._moving = []
+        self.mode_est.reset()      # every attempt starts as a normal cube
         self._hist.clear()
         self._last_moved = True
         self._prev_py = None

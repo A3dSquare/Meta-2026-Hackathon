@@ -121,6 +121,12 @@ class DQNLearner:
         self.obs_dim, self.n_act = obs_dim, n_act
         self.q = _QNet.build(obs_dim, n_act, cfg.net_arch).to(self.dev)
         with th.no_grad():  # fresh brain waits by default; jumps come from exploration
+            try:   # spare inputs start disconnected, so filling them later changes nothing at first
+                from env_boxes import OBS_DIM as _OD, RESERVED as _RS
+                if obs_dim == _OD:
+                    self.q.trunk[0].weight[:, _RS] = 0.0
+            except Exception:
+                pass
             self.q.a.weight.mul_(0.1)
             self.q.a.bias.copy_(th.tensor([0.25, -0.25][:n_act] + [0.0] * max(0, n_act - 2)))
         self.qt = _QNet.build(obs_dim, n_act, cfg.net_arch).to(self.dev)

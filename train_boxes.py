@@ -70,10 +70,8 @@ def build(args):
     base = GymGDEnv(EnvConfig(max_steps=10**9), cap=cap, pct_reader=rdr)
     base.settle_s = float(args.settle)
     lag = None if str(args.death_lag).lower() == "auto" else float(args.death_lag)
-    det = None
-    if args.backend == "heuristic":
-        from detect import HeuristicDetector
-        det = HeuristicDetector(icon_hue=tuple(args.icon_hue))
+    from detect import make_detector
+    det = make_detector(args.backend, icon_hue=tuple(args.icon_hue))
     env = EntityBoxEnv(base, backend=args.backend, detector=det, frame_skip=args.frame_skip,
                        hires=not args.no_hires, death_lag_s=lag)
     cfg = TrainConfig(algo=args.algo, total_steps=args.steps, device=dev, name=args.name,

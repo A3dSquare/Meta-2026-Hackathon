@@ -643,16 +643,44 @@ class _HazardTracker:
 class HeuristicDetector:
     """Hazards from the 640x360 frame (or the 320x180 one), the rest from 320x180."""
 
-    def __init__(self, temporal: bool = True, icon_hue: tuple = (55, 95)) -> None:
+    def __init__(self, temporal: bool = True, icon_hue: tuple = (55, 95), extra=None,
+                 extra_every: int = 1) -> None:
         import cv2 as _cv2
         self._cv2 = _cv2
         self.temporal = temporal
         self.icon_hue = icon_hue   # OpenCV hue range of your icon's main colour
         self._tracker = _HazardTracker()
+        # extra: a learned detector (detect_yolo.YoloDetector) whose boxes are ADDED
+        # where the built-in rules found nothing. extra_every > 1 runs it every N
+        # frames and slides its last boxes with the scroll in between (for CPUs).
+        self.extra = extra
+        self.extra_every = max(1, int(extra_every))
+        self._extra_cache: list = []
+        self._extra_n = 0
 
     def reset(self) -> None:
         """New attempt: forget hazard tracks (the screen jumped back to 0%)."""
         self._tracker.reset()
+        self._extra_cache = []
+        self._extra_n = 0
+
+    def _extra_dets(self, src, pbox) -> list:
+        n, self._extra_n = self._extra_n, self._extra_n + 1
+        if n % self.extra_every == 0 or not self._extra_cache:
+            try:
+                out = self.extra.detect(src)
+            except Exception as e:
+                if not getattr(self, "_extra_err", False):
+                    self._extra_err = True
+                    print(f"[yolo] detection failed, continuing without it: {e}")
+                out = []
+            if pbox is not None:   # the icon itself is never a hazard
+                out = [o for o in out if not _overlaps(o, (0, *pbox))]
+            self._extra_cache = out
+            return out
+        sc = self._tracker.last_scroll or 0.0   # slide cached boxes with the scroll
+        self._extra_cache = [(c, x0 + sc, y0, x1 + sc, y1, p) for (c, x0, y0, x1, y1, p) in self._extra_cache]
+        return self._extra_cache
 
     def _player(self, hsv, w, h) -> Entity | None:
         """Icon = blob of the icon colour in the left half, tracked frame to frame.
@@ -734,6 +762,23 @@ class HeuristicDetector:
         dets = detect_hazards(src, player_box=pbox)
         specials = detect_specials(src, player_box=sbox)
         dets = [h for h in dets if not any(_iou(h[1:5], s[1:5]) > 0.3 for s in specials)]
+        if self.extra is not None:
+            ydets = self._extra_dets(src, pbox)
+            hsv_e = None
+            for yd in ydets:
+                c = int(yd[0])
+                if c in (0, 6):
+                    if not any(_overlaps(yd, h) for h in dets):
+                        dets.append(tuple(yd[:6]))
+                else:
+                    if not any(_overlaps(yd, s) for s in specials):
+                        if hsv_e is None:
+                            hsv_e = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
+                        Hs, Ws = src.shape[:2]
+                        reg = hsv_e[int(yd[2] * Hs):int(yd[4] * Hs) + 1, int(yd[1] * Ws):int(yd[3] * Ws) + 1].reshape(-1, 3)
+                        reg = reg[reg[:, 1] > 80]
+                        hue = float(np.median(reg[:, 0])) / 180.0 if len(reg) else -1.0
+                        specials.append((c, yd[1], yd[2], yd[3], yd[4], yd[5], hue))
         scroll = None
         if self.temporal:
             ents.extend(self._tracker.update(dets))
@@ -748,11 +793,32 @@ class HeuristicDetector:
         return Entities(ents, scroll)
 
 
-def make_detector(backend: str = "heuristic"):
+def _overlaps(a, b) -> bool:
+    """Same object? (IoU, or one box's centre inside the other)"""
+    if _iou(a[1:5], b[1:5]) > 0.3:
+        return True
+    for p, q in ((a, b), (b, a)):
+        cx, cy = (p[1] + p[3]) / 2, (p[2] + p[4]) / 2
+        if q[1] <= cx <= q[3] and q[2] <= cy <= q[4]:
+            return True
+    return False
+
+
+def make_detector(backend: str = "heuristic", icon_hue: tuple = (55, 95)):
+    """heuristic = built-in rules; yolo = built-in rules + YOLO for what they miss."""
     if backend == "yolo":
         from detect_yolo import YoloDetector
-        return YoloDetector()
-    return HeuristicDetector()
+        y = YoloDetector()
+        every = 1
+        try:
+            import torch
+            every = 1 if torch.cuda.is_available() else 3
+        except Exception:
+            every = 3
+        if every > 1:
+            print("YOLO on CPU: running it every 3rd frame (a CUDA GPU lets it run every frame)")
+        return HeuristicDetector(icon_hue=icon_hue, extra=y, extra_every=every)
+    return HeuristicDetector(icon_hue=icon_hue)
 
 
 def draw(bgr: np.ndarray, ents: Entities) -> np.ndarray:

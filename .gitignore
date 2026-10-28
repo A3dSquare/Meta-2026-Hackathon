@@ -57,3 +57,8 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# --- YOLO dataset / training runs (regenerated) ---
+yolo_ds/
+runs_yolo/
+yolo_check_*.png

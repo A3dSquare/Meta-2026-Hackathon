@@ -9,6 +9,9 @@ Window: the 640x360 frame the detector sees, with
   magenta = portal (labelled), green = player,
   thick box = nearest hazard ahead, bar on the left = how much the policy
   wants to jump right now, green border = SPACE held.
+  Predicted paths: thick line = if it jumps now, thin = if it jumps in 4
+  steps, dots = if it doesn't jump (follows ledges / falls); red = that path
+  hits something.
 Keys in the window: q / ESC quit (saves).  p pause/unpause training (GD
 gets ESC; click back into GD within 2 s after unpausing).
 
@@ -48,6 +51,27 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
         cv2.rectangle(img, (x0, y0), (x1, y1), c, 3 if e is near else 1)
         if e is near or int(e.cls) in (1, 2, 3, 4, 5):
             cv2.putText(img, CLASSES[int(e.cls)], (x0, max(12, y0 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, c, 1)
+    # physics preview (in the current mode): thick = tap now, thin yellow = tap in 4 steps,
+    # thin magenta = keep holding (ship / wave / robot), dots = don't press
+    # green = safe, red = that path hits something
+    try:
+        from env_boxes import BLOCK_W, BLOCK_H
+        ppx, ppy = ents.player_pos()
+        for name, hit, pts in getattr(env, "last_arcs", []):
+            if name not in ("tap now", "tap in 4", "release", "hold") or len(pts) < 2:
+                continue
+            if name == "hold" and getattr(getattr(env, "mode_est", None), "mode", "cube") not in ("ship", "wave", "robot"):
+                continue
+            P = np.array([[(ppx + x * BLOCK_W) * W, (ppy - y * BLOCK_H) * H] for x, y in pts], np.int32)
+            col = (0, 0, 255) if hit else ((0, 255, 0) if name == "tap now" else (0, 255, 255) if name == "tap in 4" else
+                                           (255, 0, 255) if name == "hold" else (255, 255, 255))
+            if name == "release":
+                for q in P[::4]:
+                    cv2.circle(img, tuple(int(v) for v in q), 1, col, -1)
+            else:
+                cv2.polylines(img, [P], False, col, 2 if name == "tap now" else 1, cv2.LINE_AA)
+    except Exception:
+        pass
     if a == 1:
         cv2.rectangle(img, (0, 0), (W - 1, H - 1), (0, 255, 0), 3)
     # jump-urge bar
@@ -63,7 +87,9 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
     spd = (env.speed or 10.38) / 10.38
     pl = ents.player()
     icon = f"{pl.w / 0.0527:.1f}x{pl.h / 0.0938:.1f}" if pl is not None else "--"
-    txt = (f"att {tr.attempts + 1}  best {max(tr.best_prog, 0) * 100:.0f}%  spikes {ns}  "
+    me = getattr(env, "mode_est", None)
+    mtxt = (me.mode + (" mini" if me.mini else "") + (" UPSIDE-DOWN" if me.g < 0 else "")) if me else "?"
+    txt = (f"att {tr.attempts + 1}  best {max(tr.best_prog, 0) * 100:.0f}%  {mtxt}  spikes {ns}  "
            f"speed {spd:.1f}x  icon {icon}  eps {eps:.2f}  "
            f"{'MOVING' if info.get('moving') else 'FROZEN'}  upd {tr.updates}")
     cv2.rectangle(img, (0, 0), (W, 22), (0, 0, 0), -1)
