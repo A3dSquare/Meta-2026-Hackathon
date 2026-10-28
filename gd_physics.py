@@ -113,6 +113,7 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
     press = hold and not b.prev_hold
     m = b.mode
     floors, ceils = surfaces
+    was_grounded = b.grounded
     dv = 0.0   # velocity lost to gravity / thrust this step (for an exact position update)
     if m == "cube":
         if b.grounded and hold:
@@ -181,6 +182,11 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
             if b.g == -1 or m in ("ship", "wave", "ufo"):
                 b.grounded = b.g == -1 and m not in ("ship", "wave")
             b.vy = 0.0 if m != "wave" else b.vy
+    if b.grounded and hold and m in ("cube", "robot") and not was_grounded:
+        # holding SPACE as it lands: GD jumps again straight away (no frame on the ground)
+        b.vy, b.grounded = b.g * (p.robot_v0 if m == "robot" else p.cube_v0) * s, False
+        if m == "robot":
+            b.boost = p.robot_boost
     if b.grounded and m not in ("ship", "wave"):
         on = floors if b.g == 1 else ceils
         if not any(abs(y_new - f) < 0.07 for f in on):
@@ -206,9 +212,24 @@ PLANS = [
 N_PLANS = len(PLANS)
 
 
+def surfaces_at(x: float, solid, floor, ceil, half: float = 0.4):
+    """Heights the icon's centre can rest at (floors, from above) / hang at
+    (ceilings, from below) when the icon is at distance x ahead."""
+    floors, ceils = [], []
+    for s0, s1, sb, st in solid:
+        if s0 < x + half - 0.05 and s1 > x - half + 0.05:
+            floors.append(st + 0.5)          # centre height standing on top
+            ceils.append(sb - 0.5)           # centre height hanging under it
+    if floor is not None:
+        floors.append(floor + 0.5)
+    if ceil is not None:
+        ceils.append(ceil - 0.5)
+    return floors, ceils
+
+
 def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                    frame_skip: int = 2, horizon: float = 1.5, half: float = 0.4,
-                   dec_dt: float | None = None, lag: int = 0, pending=()):
+                   dec_dt: float | None = None, lag: int = 0, pending=(), motion=None):
     """Run every plan forward; return (features [N_PLANS*3 + 1], paths).
 
     haz / solid: boxes (x0, x1, bottom, top) in blocks relative to the icon.
@@ -218,65 +239,338 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
     dec_dt: real seconds per decision; lag: input delay in decisions --
     the next `lag` steps still play the already-sent actions in `pending`
     (oldest first), so "tap now" really takes effect `lag` steps later.
+    motion: optional MotionLearner; its learned correction is added to every
+    simulated step once it has proven itself (all plans step together so the
+    network runs once per step).
     """
     dt = 1.0 / 30.0
     steps = int(horizon / dt)
     dec_dt = dec_dt or frame_skip / 60.0
     pending = list(pending)[-lag:] if lag > 0 else []
+    use_m = motion is not None and motion.active_for(body.mode)   # off = zero cost
     feats = np.zeros(N_PLANS * 3 + 1, dtype=np.float32)
-    paths = []
+    B = [Body(body.y, body.vy, body.g, body.grounded, body.mode, body.mini, body.boost, body.prev_hold)
+         for _ in PLANS]
+    pts = [[(0.0, body.y)] for _ in PLANS]
+    hit_t = [None] * N_PLANS
+    clear = [3.0] * N_PLANS
+    live = list(range(N_PLANS))
     t_ledge = None
-    for pi, (_name, plan) in enumerate(PLANS):
-        b = Body(body.y, body.vy, body.g, body.grounded, body.mode, body.mini, body.boost, body.prev_hold)
-        pts = [(0.0, b.y)]
-        hit_t, clear = None, 3.0
-        x_prev = 0.0
-        for i in range(1, steps + 1):
-            t = i * dt
-            x = speed * t
-            j = int((t - dt) / dec_dt + 1e-9)          # decision index during this step (0 = now)
-            if j < len(pending):
-                hold = bool(pending[j])                # already sent, still in the pipeline
-            else:
-                hold = plan(j - len(pending))
-            floors, ceils = [], []
-            for s0, s1, sb, st in solid:
-                if s0 < x + half - 0.05 and s1 > x - half + 0.05:
-                    floors.append(st + 0.5)          # centre height standing on top
-                    ceils.append(sb - 0.5)           # centre height hanging under it
-            if floor is not None:
-                floors.append(floor + 0.5)
-            if ceil is not None:
-                ceils.append(ceil - 0.5)
+    x_prev = 0.0
+    corr_by: dict = {}
+    corr_key: dict = {}
+    for i in range(1, steps + 1):
+        if not live:
+            break
+        t = i * dt
+        x = speed * t
+        jd = int((t - dt) / dec_dt + 1e-9)          # decision index during this step (0 = now)
+        if jd < len(pending):
+            holds = [bool(pending[jd])] * len(live)  # already sent, still in the pipeline
+        else:
+            holds = [bool(PLANS[pi][1](jd - len(pending))) for pi in live]
+        floors, ceils = surfaces_at(x, solid, floor, ceil, half)
+        corr = None
+        if use_m:
+            # smooth motion: reuse the correction for 3 steps; but anything event-like
+            # (press, release, landing / leaving a surface) gets a fresh one that step only
+            keys = [(h, h and not B[pi].prev_hold, B[pi].grounded) for pi, h in zip(live, holds)]
+            if (i - 1) % 3 == 0 or any(corr_key.get(pi) != k_ for pi, k_ in zip(live, keys)):
+                c_ = motion.predict(MotionLearner.feats_batch([B[pi] for pi in live], holds,
+                                                              floors, ceils, speed))
+                corr_by = {pi: float(c_[k]) for k, pi in enumerate(live)}
+                corr_key = dict(zip(live, keys))
+            corr = [corr_by[pi] for pi in live]
+        lo, hi = x_prev - half, x + half                 # swept horizontally (no tunnelling)
+        still = []
+        for k, pi in enumerate(live):
+            b = B[pi]
             was = b.grounded
-            b = advance(b, hold, dt, speed, p, (floors, ceils))
+            advance(b, holds[k], dt, speed, p, (floors, ceils))
+            if corr is not None and not b.grounded:
+                b.y += float(corr[k]) * dt                # learned leftover error
+                b.vy += float(corr[k])
             if pi == 0 and was and not b.grounded and t_ledge is None and b.mode not in ("ship", "wave", "ufo"):
                 t_ledge = t
             y = b.y
-            pts.append((x, y))
-            lo, hi = x_prev - half, x + half               # swept horizontally (no tunnelling)
+            pts[pi].append((x, y))
             for h0, h1, hb, ht in haz:
                 if h0 < hi and h1 > lo:
                     gap = (y - half) - ht if y > (hb + ht) / 2 else hb - (y + half)
-                    clear = min(clear, gap)
+                    clear[pi] = min(clear[pi], gap)
                     if hb < y + half and ht > y - half:
-                        hit_t = t
-            if hit_t is None:
+                        hit_t[pi] = t
+            if hit_t[pi] is None:
                 for s0, s1, sb, st in solid:
                     if s0 < hi - 0.05 and s1 > lo + 0.05 and sb < y + half - 0.12 and st > y - half + 0.12:
-                        hit_t = t                  # into the side of a block
+                        hit_t[pi] = t                  # into the side of a block
                         break
-            if hit_t is None and (y < -12 or y > 14):
-                hit_t = t                          # out of the world
-            if hit_t is not None:
-                break
-            x_prev = x
-        feats[3 * pi] = 1.0 if hit_t is not None else 0.0
-        feats[3 * pi + 1] = (hit_t if hit_t is not None else horizon) / horizon
-        feats[3 * pi + 2] = float(np.clip(clear, -2.0, 3.0)) / 2.0
-        paths.append((PLANS[pi][0], hit_t is not None, pts))
+            if hit_t[pi] is None and (y < -12 or y > 14):
+                hit_t[pi] = t                          # out of the world
+            if hit_t[pi] is None:
+                still.append(pi)
+        live = still
+        x_prev = x
+    paths = []
+    for pi in range(N_PLANS):
+        h = hit_t[pi]
+        feats[3 * pi] = 1.0 if h is not None else 0.0
+        feats[3 * pi + 1] = (h if h is not None else horizon) / horizon
+        feats[3 * pi + 2] = float(np.clip(clear[pi], -2.0, 3.0)) / 2.0
+        paths.append((PLANS[pi][0], h is not None, pts[pi]))
     feats[-1] = (t_ledge if t_ledge is not None else horizon) / horizon
     return feats, paths
+
+
+def inst_vy(mode: str, g: int, mini: bool, v_avg: float, hold: bool, grounded: bool,
+            dt: float, p: Phys) -> float:
+    """Measured speed is the AVERAGE over the last step; the simulation wants the
+    speed at the END of it (they differ by half a step of gravity / thrust)."""
+    if grounded or mode == "wave":
+        return v_avg
+    s = p.mini if mini else 1.0
+    if mode == "ship":
+        a = g * (p.ship_a if hold else -p.ship_a) * s
+        return max(-p.ship_vmax * s, min(p.ship_vmax * s, v_avg + a * dt / 2))
+    G = {"ball": p.ball_g, "ufo": p.ufo_g}.get(mode, p.cube_g)
+    return v_avg - g * G * dt / 2
+
+
+# --------------------------------------------------------------------------- #
+# Learned correction: what the formulas get wrong, learned from real motion
+# --------------------------------------------------------------------------- #
+class MotionLearner:
+    """A small network that learns the LEFTOVER error of the physics formulas.
+
+    Every step of real play is a free example: the formulas predicted the
+    icon would move at speed v_pred, the screen showed v_obs; the network
+    learns v_obs - v_pred from the icon's state (mode, gravity, speed, held,
+    near a floor / ceiling...). Its output is added to every simulated step.
+
+    Safety: it is only used once it beats the plain formulas on NEW examples
+    (checked before training on them), and its weight ("trust") follows that
+    margin -- so it can't make the preview worse than the formulas alone.
+    Plain numpy, ~2k weights, trained online a little every step.
+    """
+
+    N_IN = 16
+    H = 32
+    CLIP = 15.0          # largest correction it may learn (blocks/s)
+
+    def __init__(self, seed: int = 0, buf: int = 20000) -> None:
+        r = np.random.default_rng(seed)
+        self.W1 = r.normal(0, 1 / np.sqrt(self.N_IN), (self.N_IN, self.H))
+        self.b1 = np.zeros(self.H)
+        self.W2 = r.normal(0, 1 / np.sqrt(self.H), (self.H, self.H))
+        self.b2 = np.zeros(self.H)
+        self.W3 = np.zeros((self.H, 1))          # starts as "no correction"
+        self.b3 = np.zeros(1)
+        self._params = ["W1", "b1", "W2", "b2", "W3", "b3"]
+        self._m = {k: np.zeros_like(getattr(self, k)) for k in self._params}
+        self._v = {k: np.zeros_like(getattr(self, k)) for k in self._params}
+        self._t = 0
+        self.X = np.zeros((buf, self.N_IN), np.float32)
+        self.Y = np.zeros(buf, np.float32)
+        self.n = 0                                # examples seen (ever)
+        # per game mode: running |error| of the formulas alone / with the correction,
+        # examples seen, and how much the correction is used ("trust")
+        self.m_err_phys = np.zeros(len(MODES))
+        self.m_err_corr = np.zeros(len(MODES))
+        self.m_n = np.zeros(len(MODES), np.int64)
+        self.m_trust = np.zeros(len(MODES))
+        self._rng = r
+
+    # -- features of a simulated / observed state ------------------------------
+    @staticmethod
+    def feats(b: Body, hold: bool, floors, ceils, speed: float) -> np.ndarray:
+        f = np.zeros(MotionLearner.N_IN, np.float32)
+        f[MODE_ID.get(b.mode, 0)] = 1.0
+        f[7] = float(b.g)
+        f[8] = 1.0 if b.mini else 0.0
+        f[9] = max(-2.0, min(2.0, b.vy / 20.0))
+        f[10] = 1.0 if hold else 0.0
+        f[11] = 1.0 if (hold and not b.prev_hold) else 0.0
+        f[12] = 1.0 if b.grounded else 0.0
+        below = [b.y - q for q in floors if q <= b.y + 0.06]
+        above = [q - b.y for q in ceils if q >= b.y - 0.06]
+        f[13] = min(4.0, max(0.0, min(below))) / 4.0 if below else 1.0
+        f[14] = min(4.0, max(0.0, min(above))) / 4.0 if above else 1.0
+        f[15] = speed / 20.0
+        return f
+
+    # -- network ----------------------------------------------------------------
+    def _fwd(self, X):
+        h1 = np.tanh(X @ self.W1 + self.b1)
+        h2 = np.tanh(h1 @ self.W2 + self.b2)
+        return h1, h2, (h2 @ self.W3 + self.b3)[:, 0]
+
+    def raw(self, X) -> np.ndarray:
+        return np.clip(self._fwd(np.atleast_2d(X))[2], -self.CLIP, self.CLIP)
+
+    # overall numbers (for the console): example-weighted over modes
+    @property
+    def trust(self) -> float:
+        n = self.m_n.sum()
+        return float((self.m_trust * self.m_n).sum() / n) if n else 0.0
+
+    @property
+    def err_phys(self) -> float:
+        n = self.m_n.sum()
+        return float((self.m_err_phys * self.m_n).sum() / n) if n else 0.0
+
+    @property
+    def err_corr(self) -> float:
+        n = self.m_n.sum()
+        return float((self.m_err_corr * self.m_n).sum() / n) if n else 0.0
+
+    def active(self) -> bool:
+        return bool((self.m_trust > 0.05).any())
+
+    def active_for(self, mode: str) -> bool:
+        return bool(self.m_trust[MODE_ID.get(mode, 0)] > 0.05)
+
+    @staticmethod
+    def feats_batch(bodies, holds, floors, ceils, speed: float) -> np.ndarray:
+        """feats() for many bodies at once (same surfaces), without per-row numpy calls."""
+        n = len(bodies)
+        F = np.zeros((n, MotionLearner.N_IN), np.float32)
+        rows = []
+        for b, h in zip(bodies, holds):
+            lo = hi = None
+            for q in floors:
+                if q <= b.y + 0.06:
+                    d = b.y - q
+                    lo = d if lo is None or d < lo else lo
+            for q in ceils:
+                if q >= b.y - 0.06:
+                    d = q - b.y
+                    hi = d if hi is None or d < hi else hi
+            v = b.vy / 20.0
+            rows.append((MODE_ID.get(b.mode, 0), float(b.g), 1.0 if b.mini else 0.0,
+                         -2.0 if v < -2.0 else (2.0 if v > 2.0 else v), 1.0 if h else 0.0,
+                         1.0 if (h and not b.prev_hold) else 0.0, 1.0 if b.grounded else 0.0,
+                         1.0 if lo is None else min(4.0, max(0.0, lo)) / 4.0,
+                         1.0 if hi is None else min(4.0, max(0.0, hi)) / 4.0))
+        R = np.array(rows, np.float32)
+        F[np.arange(n), R[:, 0].astype(int)] = 1.0
+        F[:, 7:15] = R[:, 1:]
+        F[:, 15] = speed / 20.0
+        return F
+
+    def predict(self, X) -> np.ndarray:
+        """Correction to add (blocks/s), scaled by how much it has earned in each row's mode."""
+        X = np.atleast_2d(X)
+        return self.raw(X) * self.m_trust[np.argmax(X[:, :len(MODES)], axis=1)]
+
+    # -- learning ---------------------------------------------------------------
+    def add(self, x: np.ndarray, resid: float, train: bool = True) -> None:
+        resid = float(np.clip(resid, -self.CLIP, self.CLIP))
+        # judge on the new example BEFORE learning from it (honest score), per mode
+        mi = int(np.argmax(x[:len(MODES)]))
+        e_p = abs(resid)
+        e_c = abs(resid - float(self.raw(x)[0]))
+        k = max(0.003, 1.0 / (self.m_n[mi] + 1))          # running mean, then a slow moving average
+        self.m_err_phys[mi] += k * (e_p - self.m_err_phys[mi])
+        self.m_err_corr[mi] += k * (e_c - self.m_err_corr[mi])
+        self.m_n[mi] += 1
+        if self.m_n[mi] >= 300 and self.m_err_phys[mi] > 1e-6:
+            gain = (self.m_err_phys[mi] - self.m_err_corr[mi]) / self.m_err_phys[mi]   # error removed
+            self.m_trust[mi] = float(np.clip((gain - 0.1) * 4.0, 0.0, 1.0))   # must remove >10% first
+        i = self.n % len(self.Y)
+        self.X[i], self.Y[i] = x, resid
+        self.n += 1
+        if train and self.n >= 64:
+            self.train_step()
+
+    WD = 0.0             # weight decay (keeps it from memorising detector jitter)
+
+    def train_step(self, batch: int = 64, lr: float = 1e-3) -> None:
+        m = min(self.n, len(self.Y))
+        idx = self._rng.integers(0, m, batch)
+        X, Y = self.X[idx].astype(np.float64), self.Y[idx].astype(np.float64)
+        h1, h2, out = self._fwd(X)
+        d = np.clip(out - Y, -3.0, 3.0)[:, None] / batch   # Huber-ish: big outliers can't dominate
+        g = {"W3": h2.T @ d, "b3": d.sum(0)}
+        dh2 = (d @ self.W3.T) * (1 - h2 ** 2)
+        g["W2"], g["b2"] = h1.T @ dh2, dh2.sum(0)
+        dh1 = (dh2 @ self.W2.T) * (1 - h1 ** 2)
+        g["W1"], g["b1"] = X.T @ dh1, dh1.sum(0)
+        self._t += 1
+        for k_ in self._params:
+            self._m[k_] = 0.9 * self._m[k_] + 0.1 * g[k_]
+            self._v[k_] = 0.999 * self._v[k_] + 0.001 * g[k_] ** 2
+            mh = self._m[k_] / (1 - 0.9 ** self._t)
+            vh = self._v[k_] / (1 - 0.999 ** self._t)
+            w = getattr(self, k_)
+            setattr(self, k_, w - lr * (mh / (np.sqrt(vh) + 1e-8) + self.WD * w))
+
+    # -- one observed step --------------------------------------------------------
+    def observe(self, body: Body, hold: bool, floors, ceils, speed: float, dt: float,
+                p: Phys, v_obs: float) -> None:
+        """body: the icon's state at the START of the step just played (as the
+        preview saw it); hold: what reached the game during it; v_obs: the
+        icon's measured vertical speed over that step (blocks/s)."""
+        b = Body(body.y, body.vy, body.g, body.grounded, body.mode, body.mini, body.boost, body.prev_hold)
+        x = self.feats(b, hold, floors, ceils, speed)
+        advance(b, hold, dt, speed, p, (floors, ceils))
+        v_pred = (b.y - body.y) / dt
+        if b.grounded:
+            return      # resting, or the formulas land it this step: landings are timing
+                        # artefacts (where in the step it touches down), not physics to learn
+        y_end = body.y + v_obs * dt
+        if any(abs(y_end - q) < 0.15 for q in floors) or any(abs(y_end - q) < 0.15 for q in ceils):
+            return      # it really touched a surface this step: same reason
+        self.add(x, v_obs - v_pred)
+
+    # -- persistence ----------------------------------------------------------------
+    def state(self) -> dict:
+        d = {k: getattr(self, k) for k in self._params}
+        m = min(self.n, len(self.Y))
+        d.update(X=self.X[:m], Y=self.Y[:m], n=np.array([self.n]), t=np.array([self._t]),
+                 m_err=np.stack([self.m_err_phys, self.m_err_corr, self.m_n, self.m_trust]))
+        for k in self._params:
+            d["m_" + k], d["v_" + k] = self._m[k], self._v[k]
+        return d
+
+    def load_state(self, d) -> None:
+        for k in self._params:
+            setattr(self, k, np.array(d[k], np.float64))
+            self._m[k], self._v[k] = np.array(d["m_" + k]), np.array(d["v_" + k])
+        m = len(d["Y"])
+        self.X[:m], self.Y[:m] = d["X"], d["Y"]
+        self.n, self._t = int(d["n"][0]), int(d["t"][0])
+        e = d["m_err"]
+        self.m_err_phys, self.m_err_corr = np.array(e[0]), np.array(e[1])
+        self.m_n, self.m_trust = np.array(e[2]).astype(np.int64), np.array(e[3])
+
+
+def save_motion(path: str, learner: MotionLearner, phys: Phys, est) -> None:
+    """Learned correction + tuned jump + measured input delay, in one small file
+    shared by every brain and level (it's the game's physics, not a level's)."""
+    import os
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    d = learner.state()
+    d["phys"] = np.array([phys.cube_v0, phys.cube_g, phys.n_cal, getattr(est, "lag", 0)], np.float64)
+    tmp = path + ".tmp.npz"
+    np.savez_compressed(tmp, **d)
+    os.replace(tmp, path)
+
+
+def load_motion(path: str, learner: MotionLearner, phys: Phys, est) -> bool:
+    import os
+    if not os.path.exists(path):
+        return False
+    try:
+        with np.load(path) as d:
+            learner.load_state(d)
+            v0, g, n_cal, lag = d["phys"]
+        if n_cal > 0:
+            phys.cube_v0, phys.cube_g, phys.n_cal = float(v0), float(g), int(n_cal)
+        est.lag = int(lag)
+        return True
+    except Exception as ex:
+        print(f"[motion] couldn't load {path}: {ex!r} -- starting it fresh")
+        return False
 
 
 # --------------------------------------------------------------------------- #
@@ -323,6 +617,8 @@ class ModeEstimator:
         self.mode, self.g, self.mini = "cube", 1, False   # GD attempts start as a normal cube
         self.conf = 0.0
         self._cand_streak = (None, 0)
+        self._hint, self._hint_t = None, 0     # the last attempt's portal doesn't carry over
+        self._rest = []                        # (the measured input delay does carry over)
 
     def portal_hint(self, hue: float) -> None:
         self._hint_t = 30              # a portal was crossed: allow a fast switch
@@ -424,6 +720,8 @@ class ModeEstimator:
             self._lag_votes = (None, 0)
 
     def update(self, y: float, hold: bool, dt: float, speed: float, p: Phys) -> None:
+        if self.hist and abs(y - self.hist[-1][0]) > 3.0 and self.mode != "spider" and self._hint != "spider":
+            self.hist.clear()          # respawn / camera jump: not motion, start the window fresh
         self.hist.append((y, bool(hold)))
         if len(self.hist) < 6:
             return

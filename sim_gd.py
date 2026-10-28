@@ -181,8 +181,13 @@ class SimGD(gym.Env):
 
     def __init__(self, level=None, frame_skip: int = 2, dead_ticks: int = 60, signal_delay: int = 2,
                  p_miss: float = 0.03, pos_noise: float = 0.002, seed: int = 0, use_jump: bool = True,
-                 input_lag: int = 0) -> None:
+                 input_lag: int = 0, world_phys: "gp.Phys | None" = None, motion_fix: bool = True) -> None:
         self.use_jump = use_jump
+        # the simulated game's true physics; the preview's formulas (self.phys) can differ,
+        # which is what the learned correction (motion_fix) is there to make up for
+        self.world = world_phys if world_phys is not None else gp.Phys()
+        self.motion_fix = gp.MotionLearner(seed) if motion_fix else None
+        self._mstate = None
         self.input_lag = int(input_lag)   # decisions between sending SPACE and the icon reacting
         self._sent: list = []
         self.phys = gp.Phys()
@@ -259,14 +264,14 @@ class SimGD(gym.Env):
             elif (o.kind == "orb" and hold and self.mode in ("cube", "robot", "ball", "spider")
                   and abs(o.x + 0.5 - (self.x + 0.5)) < 0.9 and abs(o.y + 0.5 - (self.y + 0.5)) < 0.9):
                 self.used.add(i)
-                self.vy, self.grounded = self.phys.cube_v0 * self.gdir, False
+                self.vy, self.grounded = self.world.cube_v0 * self.gdir, False
         floors, ceils = [0.5], [CEIL - 0.5]
         for o in self.objs:
             if o.kind == "wall" and o.x < px1 - 0.05 and o.x + o.w > px0 + 0.05:
                 floors.append(o.y + o.h + 0.5)
                 ceils.append(o.y - 0.5)
         b = gp.Body(self.y + 0.5, self.vy, self.gdir, self.grounded, self.mode, False, self.boost, self.prev_hold)
-        b = gp.advance(b, hold, DT, self.speed, self.phys, (floors, ceils))
+        b = gp.advance(b, hold, DT, self.speed, self.world, (floors, ceils))
         self.y, self.vy, self.gdir, self.grounded = b.y - 0.5, b.vy, b.g, b.grounded
         self.boost, self.prev_hold = b.boost, b.prev_hold
         if self.y > CEIL + 3 or self.y < -0.5:
@@ -334,9 +339,17 @@ class SimGD(gym.Env):
                 if o.kind == "portal" and abs(o.x + 0.5 - (self.x + 0.5)) < 0.6 and id(o) not in self._hinted:
                     self._hinted.add(id(o))
                     self.est.portal_hint(PORTAL_HUE.get(o.what, -1.0))
-            mf, plan, self.last_arcs = physics_features(
-                ents, speed, self.est, self.phys, self.frame_skip, vy_step / dt, grounded, hold,
-                -(self.y + 0.5), CEIL - (self.y + 0.5))
+            e = self.est
+            key = (e.mode, e.g, e.mini)
+            if self.motion_fix is not None and self._mstate is not None and self._mstate[3] == key \
+                    and self.dead == 0 and e._hint_t < 25 and abs(vy_step / dt) < 40:
+                b0, (f0, c0), s0, _ = self._mstate
+                self.motion_fix.observe(b0, e.eff_hold(0), f0, c0, s0, dt, self.phys, vy_step / dt)
+            out: dict = {}
+            self._pf_args = (ents, speed, self.est, self.phys, self.frame_skip, vy_step / dt, grounded, hold,
+                             -(self.y + 0.5), CEIL - (self.y + 0.5))   # (tests: redo the preview)
+            mf, plan, self.last_arcs = physics_features(*self._pf_args, motion=self.motion_fix, out=out)
+            self._mstate = (out["body"], out["surf"], speed, key) if self.dead == 0 else None
         else:
             mf = plan = None
             self.last_arcs = []
@@ -378,6 +391,7 @@ class SimGD(gym.Env):
             self.moving_hist = []
             self.prev_py = None
             self.hist = []
+            self._mstate = None
             self.est.reset()
             self._hinted = set()
         if complete:
@@ -425,6 +439,7 @@ def main() -> int:
     p.add_argument("--no-trim", action="store_true", help="ablation: no death-time correction")
     p.add_argument("--eval", default=None, help="evaluate a checkpoint instead of training")
     p.add_argument("--quiet", action="store_true")
+    p.add_argument("--no-motion-fix", action="store_true", help="don't learn a correction of the physics preview")
     p.add_argument("--input-lag", type=int, default=0,
                    help="decisions between pressing and the icon reacting (real GD + capture: ~1)")
     a = p.parse_args()
@@ -438,7 +453,8 @@ def main() -> int:
         level = ([Obj("spike", 16, 0, 1, 0.95)], 40.0)
     else:
         level = random_level(a.seed)
-    env = SimGD(level, frame_skip=a.frame_skip, seed=a.seed, input_lag=a.input_lag)
+    env = SimGD(level, frame_skip=a.frame_skip, seed=a.seed, input_lag=a.input_lag,
+                motion_fix=not a.no_motion_fix)
     cfg = TrainConfig(algo=a.algo, total_steps=a.steps, name=f"sim_{a.level}", log_dir="./logs_sim",
                       trim_death=not a.no_trim, verbose=0 if a.quiet else 1,
                       stop_on_complete=False)

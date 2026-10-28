@@ -54,7 +54,8 @@ N_ENT = 8                         # nearest entities ahead of the player
 ENT_CLASSES = 7                   # spike, orb_y, orb_b, orb_p, pad, portal, wall
 ENT_FEAT = 7 + ENT_CLASSES        # present, x0, x1, y0, y1, hue cos, hue sin, one-hot
 N_HIST = 8                        # past decision steps of (vertical speed, action)
-from gd_physics import MODES, MODE_ID, N_PLANS, Body, ModeEstimator, Phys, simulate_plans
+from gd_physics import (MODES, MODE_ID, N_PLANS, Body, ModeEstimator, MotionLearner, Phys, inst_vy,
+                        load_motion, save_motion, simulate_plans, surfaces_at)
 N_MODE = len(MODES) + 3            # mode one-hot, gravity (+1/-1), mini, confidence
 N_PLAN = 3 * N_PLANS + 1           # per action plan: hits?, time to hit, clearance; + time to ledge
 N_RESERVED = 12                    # spare inputs (zero today) so future features don't need a new brain
@@ -108,19 +109,31 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
 def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phys,
                      frame_skip: int, vy_bps: float, grounded: bool, prev_hold: bool,
                      floor_rel: float | None, ceil_rel: float | None, horizon: float = 1.5,
-                     dec_dt: float | None = None):
+                     dec_dt: float | None = None, motion: MotionLearner | None = None,
+                     out: dict | None = None):
     """Mode block + action-plan outcomes for the current frame.
 
     floor_rel / ceil_rel: surface heights relative to the icon centre (None =
     unknown). Returns (mode_feats[N_MODE], plan_feats[N_PLAN], paths).
     """
     haz, solid, _ = preview_boxes(ents, speed * horizon + 1)
+    # just landed? Standing level with a known surface and not moving counts as on the
+    # ground right away (the 3-still-frames rule alone misses taps right after a landing)
+    if not grounded and est.mode not in ("ship", "wave") and est.g * vy_bps < 1.5 * ModeEstimator.REST:
+        # (the landing step's measured speed is still the fall speed; "not rising" is enough)
+        fl, ce = surfaces_at(0.0, solid, floor_rel, ceil_rel)
+        grounded = any(abs(q) < 0.12 for q in (fl if est.g == 1 else ce))
     # input delay: the icon is still reacting to actions sent `est.lag` steps ago
     eff_prev = est.eff_hold(0) if est.lag > 0 else prev_hold
-    body = Body(0.0, vy_bps, est.g, grounded, est.mode, est.mini, 0.0, eff_prev)
+    dtd = dec_dt or frame_skip / 60.0
+    vy0 = inst_vy(est.mode, est.g, est.mini, vy_bps, eff_prev, grounded, dtd, phys)
+    body = Body(0.0, vy0, est.g, grounded, est.mode, est.mini, 0.0, eff_prev)
     plan, paths = simulate_plans(body, haz, solid, floor_rel, ceil_rel, speed, phys,
                                  frame_skip=frame_skip, horizon=horizon, dec_dt=dec_dt,
-                                 lag=est.lag, pending=est.pending())
+                                 lag=est.lag, pending=est.pending(), motion=motion)
+    if out is not None:   # the state the preview started from (to learn from what happens next)
+        out["body"] = body
+        out["surf"] = surfaces_at(0.0, solid, floor_rel, ceil_rel)
     mf = np.zeros(N_MODE, dtype=np.float32)
     mf[MODE_ID[est.mode]] = 1.0
     mf[len(MODES)] = float(est.g)
@@ -306,7 +319,8 @@ class EntityBoxEnv(gym.Wrapper):
 
     def __init__(self, env: gym.Env, backend: str = "heuristic", detector: Any | None = None,
                  frame_skip: int = 2, hires: bool = True, death_lag_s: float | None = None,
-                 fallback_lag_s: float = 0.6, move_px: float = 0.6) -> None:
+                 fallback_lag_s: float = 0.6, move_px: float = 0.6,
+                 motion_path: str | None = None) -> None:
         super().__init__(env)
         self.base = _find_base(env)
         self.det = detector if detector is not None else make_detector(backend)
@@ -325,6 +339,20 @@ class EntityBoxEnv(gym.Wrapper):
         self._hist = deque(maxlen=N_HIST)        # (vy, action) per step this attempt
         self.phys = Phys()                       # GD physics (cube jump self-calibrates)
         self.mode_est = ModeEstimator()          # which mode / gravity, from how the icon moves
+        # learned correction of the physics preview (+ tuned jump + input delay), shared
+        # by all brains and levels; trains itself on every step of play
+        self.motion_fix = MotionLearner()
+        self.motion_path = motion_path
+        self._mstate = None
+        self._motion_t = time.time()
+        self._n_deaths = 0
+        if motion_path and load_motion(motion_path, self.motion_fix, self.phys, self.mode_est):
+            m = self.motion_fix
+            print(f"[motion] loaded {motion_path}: {m.n} examples, correction trust {m.trust:.0%}, "
+                  f"jump {self.phys.apex:.2f} blocks / {self.phys.airtime:.2f}s, input delay {self.mode_est.lag}")
+        if motion_path:
+            import atexit
+            atexit.register(self.save_motion)
         self.last_arcs: list = []                # predicted paths (for the overlay)
         self._floor_y = None                     # screen y of the floor (lowest place stood on)
         self._ceil_y = None                      # ... of the ceiling when upside down
@@ -444,15 +472,48 @@ class EntityBoxEnv(gym.Wrapper):
                 floor_rel = (py - self._floor_y) / BLOCK_H - 0.5
             if self._ceil_y is not None:
                 ceil_rel = (py - self._ceil_y) / BLOCK_H + 0.5
+        # learn from the step that just happened: what the preview expected vs what the icon did
+        me = self.mode_est
+        key = (me.mode, me.g, me.mini)
+        sc_ = getattr(ents, "scroll", None)
+        cam_moving = sc_ is not None and abs(sc_) > 0.0025 * self.frame_skip
+        if (self._mstate is not None and pl is not None and cam_moving and self._mstate[3] == key
+                and me._hint_t < 25 and abs(vy_bps) < 40):
+            body0, (fl0, ce0), spd0 = self._mstate[:3]
+            try:
+                self.motion_fix.observe(body0, me.eff_hold(0), fl0, ce0, spd0, dt, self.phys, vy_bps)
+            except Exception as ex:
+                self._loud("motion-learn", ex)
+        out: dict = {}
         mf, plan, self.last_arcs = physics_features(ents, spd, self.mode_est, self.phys, self.frame_skip,
-                                                    vy_bps, grounded, hold, floor_rel, ceil_rel, dec_dt=dt)
+                                                    vy_bps, grounded, hold, floor_rel, ceil_rel, dec_dt=dt,
+                                                    motion=self.motion_fix, out=out)
+        self._mstate = (out["body"], out["surf"], spd, key) if (pl is not None and "body" in out) else None
         v = encode_obs(ents, hold=hold, prev_py=self._prev_py,
                        speed=spd, hist=self._hist, mode=mf, plan=plan)
         self._hist.append((player_vy(ents, self._prev_py) if pl is not None else 0.0, 1.0 if hold else 0.0))
         self._prev_py = ents.player_pos()[1] if pl is not None else self._prev_py
         return v
 
+    def save_motion(self) -> None:
+        if not self.motion_path or self.motion_fix.n == 0:
+            return
+        try:
+            save_motion(self.motion_path, self.motion_fix, self.phys, self.mode_est)
+        except Exception as ex:
+            self._loud("motion-save", ex)
+
     def _new_attempt(self) -> None:
+        self._mstate = None
+        self._n_deaths += 1
+        m = self.motion_fix
+        if self._n_deaths % 10 == 0 and m.n:
+            print(f"[motion] {m.n} examples  formulas off by {m.err_phys:.2f} blocks/s, "
+                  f"with learned fix {m.err_corr:.2f}  -> using it at {m.trust:.0%}  "
+                  f"(jump {self.phys.apex:.2f}b/{self.phys.airtime:.2f}s, delay {self.mode_est.lag})")
+        if time.time() - self._motion_t > 30:
+            self._motion_t = time.time()
+            self.save_motion()
         self._moving = []
         self.mode_est.reset()      # every attempt starts as a normal cube
         self._hist.clear()

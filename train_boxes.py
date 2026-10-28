@@ -38,6 +38,9 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                    help="only jump when it's this confident jumping beats not jumping (0 = off)")
     p.add_argument("--hold-cost", type=float, default=0.02,
                    help="tiny penalty per step SPACE is held (0 = off)")
+    p.add_argument("--motion-model", default="checkpoints/motion_model.npz",
+                   help="learned physics correction + tuned jump + input delay (shared by all "
+                        "brains and levels); 'none' = don't load or save one")
     p.add_argument("--icon-hue", type=int, nargs=2, default=(55, 95), metavar=("LO", "HI"),
                    help="OpenCV hue range (0-179) of your icon's main colour; default green/cyan. "
                         "e.g. yellow 20 35, orange 8 20, blue 95 125, pink 140 170, red 0 8")
@@ -73,7 +76,8 @@ def build(args):
     from detect import make_detector
     det = make_detector(args.backend, icon_hue=tuple(args.icon_hue))
     env = EntityBoxEnv(base, backend=args.backend, detector=det, frame_skip=args.frame_skip,
-                       hires=not args.no_hires, death_lag_s=lag)
+                       hires=not args.no_hires, death_lag_s=lag,
+                       motion_path=None if str(args.motion_model).lower() == "none" else args.motion_model)
     cfg = TrainConfig(algo=args.algo, total_steps=args.steps, device=dev, name=args.name,
                       update_steps=args.update_steps, replay_ratio=args.replay_ratio,
                       jump_margin=args.jump_margin, hold_cost=args.hold_cost)

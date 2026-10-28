@@ -34,6 +34,7 @@ _COL = {0: (0, 0, 255), 1: (0, 255, 255), 2: (255, 160, 0), 3: (255, 0, 255),
 
 def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
     from detect import CLASSES
+    from gd_physics import MODE_ID
     hi = env.last_hires
     if hi is not None:
         img = hi.copy()
@@ -99,6 +100,9 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
     ph_ = getattr(env, "phys", None)
     if ph_ is not None and me is not None:   # tuned jump (blocks / seconds) + measured input delay (steps)
         mtxt += f"  jump {ph_.apex:.1f}b/{ph_.airtime:.2f}s{'*' if ph_.n_cal else ''}  delay {me.lag}"
+        mfx = getattr(env, "motion_fix", None)
+        if mfx is not None and mfx.n:   # how much the learned correction is used in this mode
+            mtxt += f"  fix {mfx.m_trust[MODE_ID.get(me.mode, 0)]:.0%}"
     txt = (f"att {tr.attempts + 1}  best {max(tr.best_prog, 0) * 100:.0f}%  {mtxt}  spikes {ns}  "
            f"speed {spd:.1f}x  icon {icon}  eps {eps:.2f}  "
            f"{'MOVING' if info.get('moving') else 'FROZEN'}  upd {tr.updates}")

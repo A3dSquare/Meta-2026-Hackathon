@@ -25,6 +25,16 @@ draws the paths and shows the mode in the header (e.g. `ship UPSIDE-DOWN`),
 plus `jump 2.2b/0.43s* delay 1` (the * appears once it has tuned the jump from
 your own jumps; `delay` is the measured input delay in steps, 0-3).
 
+**Learned correction:** on top of the formulas, a small network learns what
+they get wrong, from every step of play (no deaths needed). Per mode, it is
+only used once it beats the plain formulas on new examples, so it can't make
+the preview worse. It is saved, with the tuned jump and the input delay, in
+`checkpoints/motion_model.npz`. That file is shared by every brain and level
+(it's the game's physics). Delete it to start the physics learning over;
+`--motion-model none` turns it off. The console prints a `[motion]` line every
+10 deaths, and the header shows `fix NN%` = how much it is used in the current
+mode (0% is normal where the formulas are already right, like the cube).
+
 **Future-proofing:** the brain has 12 spare inputs that are wired in but
 switched off. New features can be added there later without starting a new
 brain. **Brains from before this update (v4 and older) can't be resumed** --
@@ -169,6 +179,8 @@ wave parts) don't fit boxes well; spikes, saws, monsters, blocks do.
 
 - `checkpoints/preview_boxes.pt` — latest brain (resume this)
 - `checkpoints/best_boxes.pt` — brain at the best % so far (keep this safe)
+- `checkpoints/motion_model.npz` — learned physics correction + tuned jump +
+  input delay (shared by all brains; safe to delete, it relearns)
 - `logs_boxes/attempts.csv` — per-attempt survival / peak % / crash-lag
 - v1 `.zip` box checkpoints are not compatible (the observation changed)
 - `--algo ppo` still exists for comparison; DQN learns several times faster
