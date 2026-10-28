@@ -229,6 +229,7 @@ class EntityBoxEnv(gym.Wrapper):
         from collections import deque
         self._scroll_hist = deque(maxlen=120)   # |tracker scroll| on moving steps
         self._last_moved = True
+        self._lag_hist = deque(maxlen=25)        # measured crash lags (steps)
         self._moving: list = []
         self._prev_py: float | None = None
         self._prev_attempts = 1
@@ -381,7 +382,20 @@ class EntityBoxEnv(gym.Wrapper):
                 lag = min(int(round(self.death_lag_s * 60 / self.frame_skip)), max(0, len(self._moving) - 1))
                 src = "fixed"
             else:
-                lag, src = estimate_death_lag(self._moving, self.fallback_steps)
+                raw, src = estimate_death_lag(self._moving, self.fallback_steps)
+                out_info["death_lag_raw"] = raw
+                if src == "measured":
+                    self._lag_hist.append(raw)
+                # GD's crash -> respawn delay is the same every death, but a single
+                # measurement is noisy (explosion over the hazard, % read jitter):
+                # live logs showed 15..42 steps around a true ~24. Over-cutting
+                # removes the very jump that caused the death, so once a few deaths
+                # are measured use their running median for every death.
+                if len(self._lag_hist) >= 5:
+                    lag, src = int(np.median(self._lag_hist)), "median"
+                else:
+                    lag = raw
+                lag = min(lag, max(0, len(self._moving) - 1))
             out_info["death_lag"], out_info["death_lag_src"] = lag, src
             out_info["attempt_steps"] = len(self._moving)
             self._new_attempt()

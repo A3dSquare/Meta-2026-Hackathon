@@ -67,7 +67,7 @@ class TrainConfig:
     target_every: int = 250        # hard target-net sync, in gradient steps
     eps_start: float = 0.15
     eps_end: float = 0.01
-    eps_decay_steps: int = 40_000
+    eps_decay_steps: int = 20_000   # ~11 min of play
     explore_hold: float = 0.5      # P(hold) for a random action
     # --- PPO --------------------------------------------------------------
     epochs: int = 10
@@ -518,7 +518,9 @@ class Trainer:
             tag = "COMPLETE" if info.get("complete") else "died"
             print(f"[attempt {self.attempts}] {tag} after {survived / 30:.1f}s  peak={peak * 100:.0f}%  "
                   f"best={max(self.best_prog, 0) * 100:.0f}%  (cut {lag} post-crash steps, "
-                  f"{info.get('death_lag_src', '')})" + ("  NEW BEST" if improved else ""))
+                  f"{info.get('death_lag_src', '')}"
+                  + (f", this one read {info['death_lag_raw']}" if info.get("death_lag_src") == "median" else "")
+                  + ")" + ("  NEW BEST" if improved else ""))
         if self.on_attempt is not None:
             self.on_attempt(self, survived, peak, info)
 

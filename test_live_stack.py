@@ -139,7 +139,7 @@ def main() -> int:
     print("peak % by attempt (first 40):", [round(p) for p in peaks[:40]])
     print("peak % by attempt (last 20): ", [round(p) for p in peaks[-20:]])
     deaths = [r for r in rows if float(r["peak_pct"]) < 99]
-    meas = sum(1 for r in deaths if r["lag_src"] == "measured")
+    meas = sum(1 for r in deaths if r["lag_src"] in ("measured", "median"))
     completed = len(rows) > len(deaths)
     print(f"deaths: {len(deaths)}  crash time measured on {meas}/{len(deaths)}  completed level: {completed}")
     ok = (abs(len(deaths) - game.crashes) <= 1 and meas >= 0.8 * max(1, len(deaths))

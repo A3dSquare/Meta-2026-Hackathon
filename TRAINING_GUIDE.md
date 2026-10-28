@@ -44,10 +44,12 @@ Console:
 [update 21] after death: grad_steps=880 loss=0.21 q=4.1 eps=0.13 buffer=5210 ...
 ```
 
-- `measured` = crash time found from the camera freeze. If you mostly see
+- `measured` = crash time found from the camera freeze. After 5 measured
+  deaths it switches to `median` (the running median of those measurements,
+  since GD's respawn delay is constant and single readings are noisy). If you mostly see
   `fallback`, the freeze isn't being detected on your setup: pass
   `--death-lag 1.0` (seconds from crash to % reset; time it once by hand).
-- `eps` = exploration (random actions), decays 0.15 -> 0.01 over ~40k steps.
+- `eps` = exploration (random actions), decays 0.15 -> 0.01 over ~20k steps (~11 min of play).
 - Learning curve: `logs_boxes/attempts.csv`, one row per attempt.
 
 Window keys: `q`/ESC quit (saves), `p` pause/unpause (click back into GD
