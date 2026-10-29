@@ -40,6 +40,10 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                    help="only jump when it's this confident jumping beats not jumping (0 = off)")
     p.add_argument("--hold-cost", type=float, default=0.02,
                    help="tiny penalty per step SPACE is held (0 = off)")
+    p.add_argument("--play", action="store_true",
+                   help="beat the level with what it knows: NO training -- every attempt follows the "
+                        "best run saved for this level, practises the spot it died at, and the brain "
+                        "(no random moves) plays past it. Needs --model (and the route memory)")
     p.add_argument("--no-route", action="store_true",
                    help="turn off the route memory (per-level practice of spots it keeps dying at, routes/)")
     p.add_argument("--routes", default="routes", help="folder the route memory keeps its levels in")
@@ -109,7 +113,14 @@ def build(args):
     cfg = TrainConfig(algo=args.algo, total_steps=args.steps, device=dev, name=args.name,
                       update_steps=args.update_steps, replay_ratio=args.replay_ratio,
                       jump_margin=args.jump_margin, hold_cost=args.hold_cost,
-                      shield=not args.no_shield, route=not args.no_route, route_dir=args.routes)
+                      shield=not args.no_shield, route=not args.no_route or args.play, route_dir=args.routes,
+                      play=bool(args.play))
+    if args.play:
+        if args.no_route:
+            print("--play uses the route memory: ignoring --no-route")
+        if not args.model:
+            print("--play without --model: a fresh brain only plays where the route doesn't reach yet")
+        print("--play: beating the level, NOT training (no learning, no pauses after deaths)")
     if args.eps is not None:
         cfg.eps_start = float(args.eps)
     print(f"algo={cfg.algo} device={dev} frame_skip={args.frame_skip} hires={not args.no_hires} "

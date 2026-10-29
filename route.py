@@ -79,7 +79,10 @@ class RouteMemory:
     SHIFTS = (-1, 1, -2, 2, -3, 3, -4, 4, -6, 6)
 
     def __init__(self, folder: str = "routes", dt: float = 1 / 30, seed: int = 0, verbose: bool = True,
-                 fixed_level: str | None = None) -> None:
+                 fixed_level: str | None = None, play: bool = False) -> None:
+        # play: --play (beat the level, no training): EVERY attempt follows the best run, and
+        # the stuck spot is practised from the first death there
+        self.play = play
         self.folder = folder
         self.dt = dt
         self.rng = random.Random(seed)
@@ -172,9 +175,23 @@ class RouteMemory:
             return
         self._parity ^= 1
         key, sp = self._stuck_spot(lv)
+        w0 = max(0.0, lv["best_T"] - self.WINDOW)
+        if self.play:
+            # every attempt: follow the best run; at the spot it died last time try the next
+            # change (the brain gets the first go at a new spot); replays that keep drifting
+            # leave the last second to the brain
+            sp = sp or lv["spots"].setdefault(key, {"deaths": 0, "tried": [], "worked": None, "drift": 0})
+            if sp.get("drift", 0) >= 4:
+                change, iv = "the brain (replay timing drifts here)", None
+            else:
+                base = [iv for iv in lv["best"] if iv[1] > w0 and iv[0] < lv["best_T"] + self.AFTER]
+                change, iv = self._next_change(sp, base, w0, lv["best_T"])
+            self.plan = (w0, lv["best_T"] + self.AFTER, iv, change)
+            if self.verbose:
+                print(f"[play] following the best run to {w0:.2f} s, then: {change}")
+            return
         if sp is None or not self._parity or sp.get("drift", 0) >= 4:
             return                                  # the brain plays this one
-        w0 = max(0.0, lv["best_T"] - self.WINDOW)
         base = [iv for iv in lv["best"] if iv[1] > w0 and iv[0] < lv["best_T"] + self.AFTER]
         change, iv = self._next_change(sp, base, w0, lv["best_T"])
         self.plan = (w0, lv["best_T"] + self.AFTER, iv, change)
@@ -194,6 +211,8 @@ class RouteMemory:
         tried = set(sp.get("tried", []))
         dt = self.dt
         cands = []
+        if self.play:
+            cands.append(("the brain", None))        # a new spot: the brain's own go first
         latest = sorted(base, key=lambda iv: -iv[0])[:2]
         for k, (s, e) in enumerate(latest):
             rest = [iv for iv in base if iv != [s, e]]
@@ -208,7 +227,7 @@ class RouteMemory:
             cands.append((f"an extra tap {j} steps before the spot", base + [[t, t + 2 * dt]]))
         for desc, iv in cands:
             if desc not in tried:
-                return desc, _merge(iv)
+                return desc, (_merge(iv) if iv is not None else None)
         iv, t = [], w0                                   # out of ideas: random presses
         while t < T:
             if self.rng.random() < 0.15:
@@ -235,10 +254,11 @@ class RouteMemory:
         w0, w1, iv, _ = self.plan
         if t < w0:
             out = int(any(s <= t < e for s, e in self.level["best"]))
-        elif t < w1:
+        elif t < w1 and iv is not None:
             out = int(any(s <= t < e for s, e in iv))
         else:
-            return a, False
+            self.controlled = self.controlled or self.play
+            return a, False                 # the brain (past the spot, or its turn at it)
         self.controlled = True
         return out, True
 

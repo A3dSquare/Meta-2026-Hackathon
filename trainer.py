@@ -60,6 +60,7 @@ class TrainConfig:
     route: bool = True             # per-level practice of stuck spots, kept out of the brain's learning (route.py)
     route_dir: str = "./routes"    # one file per level it has seen (kept forever)
     route_level: str | None = None # tests only: skip recognising the level
+    play: bool = False             # --play: beat the level -- no training, best route + practice, brain past it
     save_dir: str = "./checkpoints"
     name: str = "preview_boxes"
     log_dir: str = "./logs_boxes"
@@ -556,7 +557,8 @@ class Trainer:
         if self.cfg.route:
             from route import RouteMemory
             self.route = RouteMemory(self.cfg.route_dir, dt=getattr(env, "frame_skip", 2) / 60.0,
-                                     verbose=bool(self.cfg.verbose), fixed_level=self.cfg.route_level)
+                                     verbose=bool(self.cfg.verbose), fixed_level=self.cfg.route_level,
+                                     play=bool(self.cfg.play))
         self._att_k = 0                  # decisions since the attempt started (clock fallback)
         self._att_times: list = []
         self._csv_path = os.path.join(self.cfg.log_dir, "attempts.csv")
@@ -696,16 +698,19 @@ class Trainer:
         fpd = f"  ({fpd:.1f} game frames/decision, target {getattr(self.env, 'frame_skip', 2)})" if fpd else ""
         print(f"[health] {ms:.1f} ms/decision{fpd}{parts}{mem}{cap}{slow}{warn}")
 
-    def _log_route_attempt(self, seg: _Seg, info: dict, peak: float) -> None:
-        """A route-memory practice attempt: counted and logged, never learned from."""
+    def _log_route_attempt(self, seg: _Seg, info: dict, peak: float, tag: str = "route") -> None:
+        """A route-memory practice attempt (or any --play attempt): counted and logged, never
+        learned from."""
         self.attempts += 1
         lag = int(info.get("death_lag", 0)) if self.cfg.trim_death else 0
         survived = int(info.get("attempt_total", len(seg)))
         self._w.writerow([f"{time.time():.1f}", self.attempts, self.steps, survived,
-                          f"{peak * 100:.1f}", lag, info.get("death_lag_src", ""), self.updates, "route"])
+                          f"{peak * 100:.1f}", lag, info.get("death_lag_src", ""), self.updates, tag])
         self._csv.flush()
+        self.best_prog = max(self.best_prog, peak) if tag == "play" else self.best_prog
         if self.cfg.verbose:
-            print(f"[attempt {self.attempts}] (route practice, not learned from) "
+            what = "--play, not learned from" if tag == "play" else "route practice, not learned from"
+            print(f"[attempt {self.attempts}] ({what}) "
                   f"{'COMPLETE' if info.get('complete') else 'died'} peak={peak * 100:.0f}%")
 
     def _finish_attempt(self, seg: _Seg, info: dict, peak: float, next_obs) -> None:
@@ -750,7 +755,7 @@ class Trainer:
         try:
             while self.steps < cfg.total_steps and not self.stop:
                 _ta = time.perf_counter()
-                a, extra = self.act(obs)
+                a, extra = self.act(obs, deterministic=cfg.play)     # (--play: no random moves)
                 if self.route is not None:
                     if not self._att_times:
                         self.route.start_attempt()
@@ -798,13 +803,19 @@ class Trainer:
                     self._att_times = []
                     # after a death the env's step already ran into the new attempt: count it
                     self._att_k = 1 if info.get("died") else 0
-                    if self.route is not None and self.route.attempt_was_route:
+                    if cfg.play:
+                        self._log_route_attempt(seg, info, peak, tag="play")   # nothing is learned
+                    elif self.route is not None and self.route.attempt_was_route:
                         # practice run of the route memory: NOT for the brain (no learning from
                         # it, no "best brain" save) -- just logged
                         self._log_route_attempt(seg, info, peak)
                     else:
                         self._finish_attempt(seg, info, peak, nobs)
                     seg, peak, flushed = _Seg(), 0.0, 0
+                    if info.get("complete") and cfg.play:
+                        print(f"LEVEL COMPLETE on attempt {self.attempts} (--play: the route is saved in "
+                              f"{cfg.route_dir}; the brain wasn't changed)")
+                        break
                     if info.get("complete") and cfg.stop_on_complete:
                         self.learner.train(self.new_steps)
                         self.save(best=True)
@@ -812,11 +823,11 @@ class Trainer:
                               f"{checkpoint_path(cfg, best=True)}. Restart the level (or pick a new one) "
                               f"and resume with --model.")
                         break
-                    if self.new_steps >= cfg.update_steps:
+                    if self.new_steps >= cfg.update_steps and not cfg.play:
                         self._do_update("after death")
                     if info.get("complete"):
                         obs, _ = self.env.reset()
-                elif len(seg) >= cfg.max_rollout and self.route is not None and self.route.controlled:
+                elif len(seg) >= cfg.max_rollout and (cfg.play or (self.route is not None and self.route.controlled)):
                     n = len(seg) - keep                      # route practice: keep it out of the brain
                     seg.drop_front(n)
                     flushed += n
@@ -834,6 +845,10 @@ class Trainer:
         except KeyboardInterrupt:
             print("interrupted")
         finally:
-            self.save()
-            print(f"saved {checkpoint_path(cfg)}")
+            if cfg.play:
+                print("--play: the brain wasn't changed (nothing saved); the route memory is in "
+                      f"{cfg.route_dir}")
+            else:
+                self.save()
+                print(f"saved {checkpoint_path(cfg)}")
             self._csv.close()

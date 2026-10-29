@@ -318,5 +318,16 @@ count for best_boxes.pt; the console marks them `(route practice, not learned
 from)`. Rename a level by editing `"name"` in its file. Back up `routes/` if you
 care about it (it isn't the brain, it's per-level practice).
 
+### --play: beat a level with what it knows (no training)
+
+    python preview_boxes.py --backend yolo-only --model checkpoints/preview_boxes.pt --play
+
+Nothing is learned and there are no training pauses. Every attempt follows the best
+run saved for this level up to the spot it died at last; there it first lets the brain
+try, then the route memory's next untried change, one per attempt; past that spot the
+brain plays (no random moves). New progress is saved in routes/ as usual; the brain
+file is not touched. The first attempt of a session is the brain's own while the level
+is recognised.
+
 Inputs are also only sent while a level is on screen (its % showing, nothing
 paused / frozen): on the menus SPACE is never pressed.
