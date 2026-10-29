@@ -97,8 +97,10 @@ Console:
 - `eps` = exploration (random actions), decays 0.15 -> 0.01 over ~20k steps (~11 min of play).
 - Learning curve: `logs_boxes/attempts.csv`, one row per attempt.
 
-Window keys: `q`/ESC quit (saves), `p` pause/unpause (click back into GD
-within 2 s after unpausing). Ctrl+C in the console also saves.
+Keys: **F8 = pause / resume, F9 = save + quit** -- these work from ANY window
+(GD is kept in front automatically, so the overlay rarely has focus). In the
+overlay window `q`/ESC (quit, saves) and `p` (pause) also work. Space is GD's
+jump key, so it can't be used. Ctrl+C in the console also saves.
 
 ## 3. Other levels, same brain
 

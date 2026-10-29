@@ -127,11 +127,36 @@ def main() -> int:
     state = {"n": 0}
     t_end = time.time() + args.minutes * 60 if args.minutes > 0 else None
 
+    import winfocus
+
+    def pause_until_resumed() -> bool:
+        """Pause GD + training until F8 (any window) or p (this window). False = quit."""
+        env.pause()
+        print("PAUSED -- press F8 (from any window) or p (in this window) to continue, F9 / q to quit")
+        while True:
+            k = cv2.waitKey(50) & 0xFF
+            cmd = winfocus.user_command()
+            if cmd == "quit" or k in (ord("q"), 27):
+                return False
+            if cmd == "pause" or k == ord("p"):
+                break
+        print("resuming in 1 s (Geometry Dash is brought back to the front automatically)")
+        time.sleep(1.0)
+        env.mark_trained()
+        env.resume()
+        return True
+
     def on_step(tr, obs, a, info):
         tr._last_obs = obs
         state["n"] += 1
         if t_end is not None and time.time() >= t_end:
             print(f"--minutes {args.minutes} reached: saving and stopping")
+            return False
+        cmd = winfocus.user_command()          # F8 / F9 work from any window
+        if cmd == "quit":
+            print("F9: saving and stopping")
+            return False
+        if cmd == "pause" and not pause_until_resumed():
             return False
         if state["n"] % max(1, args.render_every):
             return True
@@ -139,16 +164,8 @@ def main() -> int:
         k = cv2.waitKey(1) & 0xFF
         if k in (ord("q"), 27):
             return False
-        if k == ord("p"):
-            env.pause()
-            print("PAUSED by user (press p in this window to continue)")
-            while True:
-                if (cv2.waitKey(50) & 0xFF) == ord("p"):
-                    break
-            print("resuming in 2 s -- click into Geometry Dash now")
-            time.sleep(2.0)
-            env.mark_trained()
-            env.resume()
+        if k == ord("p") and not pause_until_resumed():
+            return False
         return True
 
     tr = Trainer(env, cfg, model_path=args.model, on_step=on_step)
@@ -156,7 +173,8 @@ def main() -> int:
     if args.eps is not None and cfg.algo == "dqn":
         tr.learner.steps_seen = 0
         tr.best_prog = -1.0   # --eps = new level: start a fresh best %
-    print("BOX live: Double DQN on detector boxes. q = quit+save, p = pause.")
+    print("BOX live: Double DQN on detector boxes. F8 = pause / resume, F9 = save + quit "
+          "(both work from any window; q / p also work in the overlay window).")
     try:
         tr.run()
     finally:
