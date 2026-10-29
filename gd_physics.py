@@ -379,7 +379,7 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
     times = [k * dt for k in range(1, fine + 1)]
     while times[-1] + 1e-9 < horizon:
         times.append(min(horizon, times[-1] + 2 * dt))
-    root_node = (0.0, body.y, None)
+    root_node = (0.0, body.y, None, 0.0)          # path node: (x, y, parent, effort so far)
     ALL, B1, B00, B01 = 7, 1, 2, 4
     # a state: [Body, root mask, hold this step, path node]
     states = [(Body(body.y, body.vy, body.g, body.grounded, body.mode, body.mini, body.boost, body.prev_hold),
@@ -389,7 +389,8 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
 
     def credit(mask: int, t_frac: float, node) -> None:
         for i in range(3):
-            if mask >> i & 1 and t_frac > best[i]:
+            if mask >> i & 1 and (t_frac > best[i] or (want_path and t_frac == best[i]
+                                                         and node[3] < best_node[i][3])):
                 best[i] = t_frac
                 best_node[i] = node
 
@@ -427,9 +428,13 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         alive: list = []
         index: dict = {}
         for b, m, h, nd in states:
+            pressed = h and not b.prev_hold
             advance(b, h, dt_i, speed, p, (floors, ceils))
             y = b.y
-            node = (x, y, nd) if want_path else nd
+            # the drawn line = the surviving path with the LEAST effort (presses, holding):
+            # with nothing dangerous ahead every path survives, and an arbitrary one was
+            # drawn -- full of pointless jumps
+            node = (x, y, nd, nd[3] + (1.0 if pressed else 0.0) + (0.05 if h else 0.0)) if want_path else nd
             dead = y < -12 or y > 14
             if not dead:
                 yt, yb_ = y + half, y - half
@@ -449,8 +454,9 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
             j = index.get(key)
             if j is not None:                       # same state reached by other first actions
                 s0 = alive[j]
-                if m & ~s0[1]:
-                    alive[j] = (s0[0], s0[1] | m, s0[2], s0[3])
+                keep_node = node if (want_path and node[3] < s0[3][3]) else s0[3]
+                if m & ~s0[1] or keep_node is not s0[3]:
+                    alive[j] = (s0[0], s0[1] | m, s0[2], keep_node)
                 continue
             index[key] = len(alive)
             alive.append((b, m, h, node))
