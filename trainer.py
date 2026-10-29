@@ -61,6 +61,7 @@ class TrainConfig:
     route_dir: str = "./routes"    # one file per level it has seen (kept forever)
     route_level: str | None = None # tests only: skip recognising the level
     play: bool = False             # --play: beat the level -- no training, best route + practice, brain past it
+    frontier: bool = False         # --frontier: every other attempt replays to just before the furthest point, brain learns from there
     save_dir: str = "./checkpoints"
     name: str = "preview_boxes"
     log_dir: str = "./logs_boxes"
@@ -449,6 +450,24 @@ def make_learner(env, cfg: TrainConfig, model_path: str | None = None):
     return PPOLearner(env.observation_space, env.action_space, cfg, model)
 
 
+def replay_shield(obs: np.ndarray, a: int) -> int:
+    """The safety net over a REPLAYED run: a lighter touch than safety_shield. The run being
+    replayed got past here, so only step in when the replayed action crashes even as
+    measured and the other one is safe even with worse timing (the full shield also swapped "fine, a bit tight"
+    actions; in the sim that changed replays that would have worked and killed them)."""
+    try:
+        from env_boxes import OFF_SEARCH, OBS_DIM
+        from gd_physics import safety_level
+    except Exception:
+        return a
+    if obs is None or len(obs) != OBS_DIM or obs[OFF_SEARCH + 3] <= 0.5:
+        return a
+    p1, w00, w01 = (float(v) for v in obs[OFF_SEARCH:OFF_SEARCH + 3])
+    mine, other = (safety_level(p1), max(safety_level(w00), safety_level(w01))) if int(a) == 1 else \
+        (max(safety_level(w00), safety_level(w01)), safety_level(p1))
+    return 1 - int(a) if (mine == 0 and other >= 2) else int(a)
+
+
 def safety_shield(obs: np.ndarray, a: int) -> int:
     """Use the physics preview as a safety net.
 
@@ -558,7 +577,7 @@ class Trainer:
             from route import RouteMemory
             self.route = RouteMemory(self.cfg.route_dir, dt=getattr(env, "frame_skip", 2) / 60.0,
                                      verbose=bool(self.cfg.verbose), fixed_level=self.cfg.route_level,
-                                     play=bool(self.cfg.play))
+                                     play=bool(self.cfg.play), frontier=bool(self.cfg.frontier))
         self._att_k = 0                  # decisions since the attempt started (clock fallback)
         self._clock_ok = False           # the first attempt after starting isn't timed from a respawn
         self._att_times: list = []
@@ -710,11 +729,13 @@ class Trainer:
         self._csv.flush()
         self.best_prog = max(self.best_prog, peak) if tag == "play" else self.best_prog
         if self.cfg.verbose:
-            what = "--play, not learned from" if tag == "play" else "route practice, not learned from"
+            what = {"play": "--play, not learned from",
+                    "frontier": "frontier: died in the replay, before the brain's turn"}.get(
+                tag, "route practice, not learned from")
             print(f"[attempt {self.attempts}] ({what}) "
                   f"{'COMPLETE' if info.get('complete') else 'died'} peak={peak * 100:.0f}%")
 
-    def _finish_attempt(self, seg: _Seg, info: dict, peak: float, next_obs) -> None:
+    def _finish_attempt(self, seg: _Seg, info: dict, peak: float, next_obs, tag: str = "") -> None:
         cfg = self.cfg
         lag = int(info.get("death_lag", 0)) if cfg.trim_death else 0
         seg.trim(lag)
@@ -728,8 +749,14 @@ class Trainer:
         self.recent.append((survived, peak))
         self.recent = self.recent[-50:]
         self._w.writerow([f"{time.time():.1f}", self.attempts, self.steps, survived,
-                          f"{peak * 100:.1f}", lag, info.get("death_lag_src", ""), self.updates])
+                          f"{peak * 100:.1f}", lag, info.get("death_lag_src", ""), self.updates, tag])
         self._csv.flush()
+        if tag == "frontier":
+            # (the brain only played the end of it: doesn't count as the brain's own best)
+            if self.cfg.verbose:
+                print(f"[attempt {self.attempts}] (frontier: brain from the hand-over, learned from) "
+                      f"{'COMPLETE' if info.get('complete') else 'died'} peak={peak * 100:.0f}%")
+            return
         improved = (peak > self.best_prog + 1e-6) if peak > 0 else (survived > self.best_steps)
         self.best_prog = max(self.best_prog, peak)
         self.best_steps = max(self.best_steps, survived)
@@ -765,7 +792,7 @@ class Trainer:
                     if forced and getattr(self.route, "phase", None) == "replay" and cfg.shield and cfg.algo == "dqn":
                         # replaying the best run: the safety shield still watches -- a replay a
                         # frame off can walk into what the recorded run just missed
-                        a_sh = safety_shield(obs, a2)
+                        a_sh = replay_shield(obs, a2)
                         if a_sh != a2:
                             self.shield_n += 1
                             a2 = a_sh
@@ -787,7 +814,10 @@ class Trainer:
                 # menus / loading screens before an attempt: nothing to learn (inside an attempt
                 # every step is kept, so the post-crash trimming still lines up)
                 in_level = info.get("in_level", True) or len(seg) > 0 or info.get("died") or info.get("complete")
-                if in_level:
+                # --frontier: the replayed part isn't the brain's -- it learns from the hand-over on
+                replaying = (cfg.frontier and self.route is not None and self.route.frontier_attempt
+                             and getattr(self.route, "phase", None) == "replay")
+                if in_level and not (replaying and not info.get("died") and not info.get("complete")):
                     self.new_steps += 1
                     seg.obs.append(obs); seg.act.append(a); seg.rew.append(cfg.alive_reward - cfg.hold_cost * a)
                     if "logp" in extra:
@@ -814,6 +844,11 @@ class Trainer:
                     self._clock_ok = bool(info.get("died"))   # the next attempt starts at a respawn
                     if cfg.play:
                         self._log_route_attempt(seg, info, peak, tag="play")   # nothing is learned
+                    elif cfg.frontier and self.route is not None and self.route.frontier_attempt:
+                        if len(seg) >= 2:       # learn from the brain's part (from the hand-over)
+                            self._finish_attempt(seg, info, peak, nobs, tag="frontier")
+                        else:                   # died during the replay: nothing of the brain's
+                            self._log_route_attempt(seg, info, peak, tag="frontier")
                     elif self.route is not None and self.route.attempt_was_route:
                         # practice run of the route memory: NOT for the brain (no learning from
                         # it, no "best brain" save) -- just logged
@@ -836,7 +871,8 @@ class Trainer:
                         self._do_update("after death")
                     if info.get("complete"):
                         obs, _ = self.env.reset()
-                elif len(seg) >= cfg.max_rollout and (cfg.play or (self.route is not None and self.route.controlled)):
+                elif len(seg) >= cfg.max_rollout and (cfg.play or (self.route is not None and self.route.controlled
+                                                                   and not self.route.frontier_attempt)):
                     n = len(seg) - keep                      # route practice: keep it out of the brain
                     seg.drop_front(n)
                     flushed += n

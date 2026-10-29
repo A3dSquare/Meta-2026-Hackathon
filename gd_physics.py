@@ -18,6 +18,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass, field
 
+import math
 import numpy as np
 
 MODES = ["cube", "ship", "ball", "ufo", "wave", "robot", "spider"]
@@ -407,10 +408,31 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
 SEARCH_KEYS = ("1", "00", "01")      # press now / release now + next / release now, press next
 
 
+def _fine_times(D: float, dec_dt: float, n_pend: int, dt: float, horizon: float) -> list:
+    """The search's time points: every moment an action reaches the icon (D + k * dec_dt,
+    the measured delay is NOT a whole number of 1/30 s steps) is a step boundary, the gaps
+    split into steps of at most ~1/30 s, for the first 0.5 s; then 1/15 s steps."""
+    fine_end = min(horizon, 0.5)
+    b = [D + k * dec_dt for k in range(-n_pend, int((fine_end - D) / dec_dt) + 2)]
+    pts = [0.0]
+    for q in sorted(q for q in b if 0.003 < q < fine_end - 0.003):
+        if q - pts[-1] > 0.003:             # (a boundary a hair from the last: no 0-length step)
+            pts.append(q)
+    pts.append(fine_end)
+    times: list = []
+    for a_, b_ in zip(pts[:-1], pts[1:]):
+        m = max(1, int(math.ceil((b_ - a_) / dt - 0.25)))
+        times.extend(a_ + (b_ - a_) * i / m for i in range(1, m + 1))
+    while times[-1] + 1e-9 < horizon:
+        times.append(min(horizon, times[-1] + 2 * dt))
+    return times
+
+
 def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                 dec_dt: float, lag: int = 0, pending=(), horizon: float = 1.5,
                 half: float = 0.5, beam: int = 10, want_path: bool = False,
-                late_every: float = 0.0, portals=None, specials=None, prefer=None) -> dict:
+                late_every: float = 0.0, portals=None, specials=None, prefer=None,
+                delay: float | None = None) -> dict:
     """Longest survival (fraction of `horizon`, 1.0 = survives it all) for each first
     action ("1" = press now, "00" = release now and at the next decision, "01" =
     release now, press at the next decision), with every later decision chosen well.
@@ -418,14 +440,22 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
 
     Each state carries the SET of first actions that can reach it (bit 0 = "1",
     bit 1 = "00", bit 2 = "01"), so lines that end up in the same state (e.g. back on
-    the ground) are simulated once."""
+    the ground) are simulated once.
+
+    delay: the input delay in SECONDS (measured in ms, not rounded to whole steps): the
+    action chosen now reaches the icon `delay` s from now, the already-sent ones in
+    `pending` (oldest first, one per decision) before that. None = `lag` whole decisions."""
     dt = 1.0 / 30.0
-    pending = list(pending)[-lag:] if lag > 0 else []
+    if delay is None:
+        pending = list(pending)[-lag:] if lag > 0 else []
+        D = len(pending) * dec_dt
+    else:
+        D = max(0.0, float(delay))
+        need = int(math.ceil(D / dec_dt - 1e-6))
+        pending = list(pending)[-need:] if need > 0 else []
+        pending = [0.0] * (need - len(pending)) + pending
     n_pend = len(pending)
-    fine = int(round(0.5 / dt))
-    times = [k * dt for k in range(1, fine + 1)]
-    while times[-1] + 1e-9 < horizon:
-        times.append(min(horizon, times[-1] + 2 * dt))
+    times = _fine_times(D, dec_dt, n_pend, dt, horizon)
     root_node = (0.0, body.y, None, 0.0)          # path node: (x, y, parent, effort so far)
     pref_x = pref_y = None
     if want_path and prefer and len(prefer) >= 3:
@@ -453,12 +483,15 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         if not states:
             break
         x = x_prev + spd_now * (t - t_prev)        # (speed portals change spd_now)
-        jd = int(t_prev / dec_dt + 1e-9)            # decision index during this step (0 = now)
-        if jd < n_pend:
-            hp = bool(pending[jd])
+        # which decision's action reaches the icon during this step: the free decision k
+        # (0 = the one chosen now) once its delay has passed, an already-sent one before
+        k_ = int(math.floor((t_prev - D) / dec_dt + 1e-6))
+        jd = k_ + n_pend
+        if k_ < 0:
+            hp = bool(pending[max(0, n_pend + k_)]) if n_pend else bool(body.prev_hold)
             states = [(b, m, hp, nd) for b, m, _h, nd in states]
         elif jd != last_jd and (t_prev < 0.5 or jd % every == 0):
-            k = jd - n_pend                         # which free decision this is (0 = now)
+            k = k_                                  # which free decision this is (0 = now)
             new = []
             for b, m, _h, nd in states:
                 for h in (True, False):
@@ -596,7 +629,7 @@ PREFER_W = 0.15   # path effort per step for being 1 block off last step's line 
 def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, dec_dt: float,
                   lag: int, pending, pending_long=None, horizon: float = 1.5, half: float = 0.5,
                   want_path: bool = False, lag_alt: int | None = None, portals=None, specials=None,
-                  prefer=None) -> dict:
+                  prefer=None, delay: float | None = None, delay_alt: float | None = None) -> dict:
     """search_best in the measured world AND a slightly different one: the press arrives
     one step EARLIER or LATER (lag_alt: whichever the measured delays say is likely --
     live they split between 1 and 2 steps, so with "2" a jump often started a step early
@@ -613,9 +646,16 @@ def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, de
         a.update(nominal=dict(a), worse=dict(a), path=[], path_hit=False)
         return a
     a = search_best(body, haz, solid, floor, ceil, speed, p, dec_dt, lag, pending, horizon, half,
-                    want_path=want_path, portals=portals, specials=specials, prefer=prefer)
+                    want_path=want_path, portals=portals, specials=specials, prefer=prefer, delay=delay)
     if all(a[k] < 1.0 for k in SEARCH_KEYS):
         b = {k: 0.0 for k in SEARCH_KEYS}   # crashes as measured -> the worse world can't help
+    elif delay is not None:
+        # delay measured in ms: the worse world's press arrives `delay_alt` s after (the far
+        # end of the measured spread, at least a step off)
+        da = delay + dec_dt if delay_alt is None else max(0.0, float(delay_alt))
+        b = search_best(body, haz, solid, floor, ceil, speed * 1.04, p, dec_dt, lag,
+                        list(pending_long) if pending_long is not None else list(pending),
+                        horizon, half, portals=portals, specials=specials, delay=da)
     else:
         alt = lag + 1 if lag_alt is None else max(0, int(lag_alt))
         pl = list(pending_long) if pending_long is not None else [False] * max(0, alt - len(pending)) + list(pending)
@@ -1242,6 +1282,8 @@ def save_motion(path: str, learner: MotionLearner, phys: Phys, est, calib=None, 
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     d = learner.state()
     d["phys"] = np.array([phys.cube_v0, phys.cube_g, phys.n_cal, getattr(est, "lag", 0)], np.float64)
+    if getattr(est, "delay_s", None) is not None:
+        d["delay"] = np.array([est.delay_s, est.delay_alt_s if est.delay_alt_s is not None else -1.0], np.float64)
     if calib is not None:
         d["modes"] = calib.state()
     if launch is not None:
@@ -1259,6 +1301,9 @@ def load_motion(path: str, learner: MotionLearner, phys: Phys, est, calib=None, 
         with np.load(path) as d:
             learner.load_state(d)
             v0, g, n_cal, lag = d["phys"]
+            if "delay" in d.files:
+                ds, da = (float(q) for q in d["delay"])
+                est.delay_s, est.delay_alt_s = ds, (da if da >= 0 else None)
             if calib is not None and "modes" in d.files:
                 calib.load_state(d["modes"], phys)
             if launch is not None and "launch" in d.files:
@@ -1296,6 +1341,8 @@ class ModeEstimator:
         self._hint, self._hint_t = None, 0
         self.lag = 0                  # input delay (decisions) between a press and the icon reacting
         self.lag_alt = None           # the other likely delay (measured presses split between two)
+        self.delay_s = None           # measured input delay in SECONDS (the blue line uses this)
+        self.delay_alt_s = None       # the worse world's delay (the far end of the measured spread)
         self._lag_votes = (None, 0)
         self._lag_ok = 0              # checks in a row that confirmed the current delay
         self._n_upd = 0

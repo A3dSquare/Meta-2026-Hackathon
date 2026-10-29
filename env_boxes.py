@@ -38,6 +38,7 @@ from typing import Any
 import time
 from collections import deque
 
+import math
 import numpy as np
 
 try:
@@ -248,10 +249,20 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     if search:
         try:
             alt = est.lag_alt if getattr(est, "lag_alt", None) is not None else est.lag + 1
-            sr = robust_search(body, haz, solid, floor_rel, ceil_rel, speed, phys, dtd, est.lag, pend,
-                               pending_long=est.pending(alt), horizon=horizon, half=half,
-                               want_path=True, lag_alt=alt, portals=portals, specials=specials,
-                               prefer=prefer)
+            D = getattr(est, "delay_s", None)
+            if D is not None:              # the input delay measured in ms (not whole steps)
+                Da = getattr(est, "delay_alt_s", None)
+                Da = D + dtd if Da is None else Da
+                sr = robust_search(body, haz, solid, floor_rel, ceil_rel, speed, phys, dtd, est.lag,
+                                   est.pending(int(np.ceil(D / dtd - 1e-6))),
+                                   pending_long=est.pending(int(np.ceil(Da / dtd - 1e-6))), horizon=horizon,
+                                   half=half, want_path=True, portals=portals, specials=specials,
+                                   prefer=prefer, delay=D, delay_alt=Da)
+            else:
+                sr = robust_search(body, haz, solid, floor_rel, ceil_rel, speed, phys, dtd, est.lag, pend,
+                                   pending_long=est.pending(alt), horizon=horizon, half=half,
+                                   want_path=True, lag_alt=alt, portals=portals, specials=specials,
+                                   prefer=prefer)
             paths = list(paths) + [("best", bool(sr.get("path_hit")), sr.get("path") or [])]
             if out is not None:
                 out["search"] = sr
@@ -498,6 +509,7 @@ class EntityBoxEnv(gym.Wrapper):
         self._press_pending: list = []
         self._press_ok: deque = deque(maxlen=10)
         self._press_delay: deque = deque(maxlen=15)
+        self._press_delay_s: deque = deque(maxlen=21)   # the same presses' delays in seconds
         self._lag_vote = (None, 0)
         self._last_yb = None
         self._air: list = []             # (time, height) since leaving the ground (arc fit)
@@ -519,7 +531,7 @@ class EntityBoxEnv(gym.Wrapper):
                                        self.launch_cal):
             m = self.motion_fix
             print(f"[motion] loaded {motion_path}: {m.n} examples, correction trust {m.trust:.0%}, "
-                  f"jump {self.phys.apex:.2f} blocks / {self.phys.airtime:.2f}s, input delay {self.mode_est.lag}; "
+                  f"jump {self.phys.apex:.2f} blocks / {self.phys.airtime:.2f}s, input delay {self._delay_txt()}; "
                   f"{self.mode_cal.summary(self.phys)}")
         if motion_path:
             import atexit
@@ -636,6 +648,11 @@ class EntityBoxEnv(gym.Wrapper):
             self._dt_frame = float(ts - last)
         if ts is not None:
             self._ts_last = ts
+        # when THIS observation's picture was on screen (perf_counter seconds): the capture's
+        # own frame time if it is on that clock, else now -- for the input delay in ms
+        now = time.perf_counter()
+        t_obs = float(ts) if ts is not None and abs(float(ts) - now) < 0.5 else now
+        self._obs_ts_prev, self._obs_ts = getattr(self, "_obs_ts", None), t_obs
 
     def _surface_lines(self, frame) -> tuple:
         """(floor, ceiling) screen heights (fractions, None = not seen). GD draws a bright,
@@ -964,12 +981,12 @@ class EntityBoxEnv(gym.Wrapper):
         m = self.motion_fix
         if self._n_deaths % 10 == 0:
             print(f"[physics] jump {self.phys.apex:.2f}b/{self.phys.airtime:.2f}s ({self.phys.n_cal} jumps), "
-                  f"delay {self.mode_est.lag}; {self.mode_cal.summary(self.phys)}  (? = not enough yet)")
+                  f"delay {self._delay_txt()}; {self.mode_cal.summary(self.phys)}  (? = not enough yet)")
             print(f"[physics] pads / orbs (x cube jump): {self.launch_cal.summary()}")
         if self._n_deaths % 10 == 0 and m.n:
             print(f"[motion] {m.n} examples  formulas off by {m.err_phys:.2f} blocks/s, "
                   f"with learned fix {m.err_corr:.2f}  -> using it at {m.trust:.0%}  "
-                  f"(jump {self.phys.apex:.2f}b/{self.phys.airtime:.2f}s, delay {self.mode_est.lag})")
+                  f"(jump {self.phys.apex:.2f}b/{self.phys.airtime:.2f}s, delay {self._delay_txt()})")
         if time.time() - self._motion_t > 30:
             self._motion_t = time.time()
             self.save_motion()
@@ -1306,6 +1323,49 @@ class EntityBoxEnv(gym.Wrapper):
         except Exception as ex:
             self._loud("focus", ex)
 
+    def _delay_txt(self) -> str:
+        d = getattr(self.mode_est, "delay_s", None)
+        return f"{d * 1000:.0f} ms" if d is not None else f"{self.mode_est.lag} step(s)"
+
+    def _measure_delay_ms(self, dy: float, t_dec, t_still, t_now) -> None:
+        """One press's input delay in SECONDS: from when the picture it was decided on was
+        shown to when the icon started to move. The first moving picture shows the icon
+        already `dy` up; for a cube, the jump's own arc says how long ago it started
+        (else: halfway between the last still picture and this one)."""
+        if t_dec is None or t_still is None or t_now is None or not (t_dec <= t_still < t_now):
+            return
+        me = self.mode_est
+        start = 0.5 * (t_still + t_now)
+        if me.mode in ("cube", "robot") and not me.mini:
+            v0, g = self.phys.cube_v0, self.phys.cube_g
+            disc = v0 * v0 - 2.0 * g * dy
+            tau = (v0 - math.sqrt(disc)) / g if disc > 0 else v0 / g
+            start = min(t_now, max(t_still, t_now - tau))
+        d = start - t_dec
+        if 0.0 <= d <= 0.4:
+            self._press_delay_s.append(d)
+
+    def _publish_delay_ms(self) -> None:
+        """The blue line's input delay: the median of the measured ones, in ms -- not
+        rounded to whole steps (live: rounding 1.5 steps up to 2 made it expect every jump
+        later than it really started, so its presses came early). The worse world uses the
+        far end of the spread, at least a whole step off (as before)."""
+        q = list(self._press_delay_s)
+        if len(q) < 5:
+            return
+        q = np.asarray(q, np.float64)
+        d = float(np.median(q))
+        lo, hi = float(np.percentile(q, 15)), float(np.percentile(q, 85))
+        nom = self._step_dt(peek=True)
+        off = max(nom, 1.5 * max(d - lo, hi - d))     # (at least a step: as safe as before)
+        alt = d - off if (d - lo) > (hi - d) and d - off >= 0 else d + off
+        me = self.mode_est
+        old = getattr(me, "delay_s", None)
+        me.delay_s, me.delay_alt_s = d, alt
+        if old is None or abs(old - d) > 0.008:
+            print(f"[input] input delay {d * 1000:.0f} ms ({d / nom:.2f} steps; spread "
+                  f"{lo * 1000:.0f}-{hi * 1000:.0f} ms) -- the blue line uses it as is")
+
     def _watch_press(self, y_b, hold: bool, resting: bool, alive: bool) -> None:
         """Did SPACE do anything? After a press from rest, the icon should move
         within ~0.4 s in every mode. If most presses do nothing, the key isn't
@@ -1321,17 +1381,22 @@ class EntityBoxEnv(gym.Wrapper):
             # only isolated presses from rest: a press soon after another one can catch the
             # first one's (delayed) jump starting and look like "no delay"
             if resting and y_before is not None and not self._press_pending and self._since_press >= 5:
-                self._press_pending.append((0, y_before))  # (steps since the press, height before it)
+                # (steps since the press, height before it, when the picture the press was
+                #  decided on was shown, when the last still picture was shown)
+                t_dec = getattr(self, "_obs_ts_prev", None)
+                self._press_pending.append((0, y_before, t_dec, t_dec))
             self._since_press = 0
         still = []
-        for age, y0 in self._press_pending:
+        t_now = getattr(self, "_obs_ts", None)
+        for age, y0, t_dec, t_still in self._press_pending:
             if abs(y_b - y0) > 0.3:
                 self._press_ok.append(True)
                 self._press_delay.append(age)             # 0 = it reacted during the press step
+                self._measure_delay_ms(abs(y_b - y0), t_dec, t_still, t_now)
             elif age >= 11:
                 self._press_ok.append(False)
             else:
-                still.append((age + 1, y0))
+                still.append((age + 1, y0, t_dec, t_now))
         self._press_pending = still
         if len(self._press_delay) >= 5:
             # the measured input delay beats inferring it from motion. Live it sits between
@@ -1351,6 +1416,7 @@ class EntityBoxEnv(gym.Wrapper):
             L = self.mode_est.lag
             lo = float(np.mean([d < L for d in self._press_delay]))
             self.mode_est.lag_alt = L - 1 if (L >= 1 and lo >= 0.25) else L + 1
+        self._publish_delay_ms()
         r = list(self._press_ok)
         if len(r) >= 8 and sum(r) <= 1:
             now = time.time()

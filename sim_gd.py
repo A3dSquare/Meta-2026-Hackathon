@@ -181,7 +181,8 @@ class SimGD(gym.Env):
 
     def __init__(self, level=None, frame_skip: int = 2, dead_ticks: int = 60, signal_delay: int = 2,
                  p_miss: float = 0.03, pos_noise: float = 0.002, seed: int = 0, use_jump: bool = True,
-                 input_lag: int = 0, world_phys: "gp.Phys | None" = None, motion_fix: bool = False) -> None:
+                 input_lag: int = 0, world_phys: "gp.Phys | None" = None, motion_fix: bool = False,
+                 lag_frames: int | None = None) -> None:
         self.use_jump = use_jump
         # the simulated game's true physics; the preview's formulas (self.phys) can differ,
         # which is what the learned correction (motion_fix) is there to make up for
@@ -190,12 +191,19 @@ class SimGD(gym.Env):
         self._mstate = None
         self.input_lag = int(input_lag)   # decisions between sending SPACE and the icon reacting
         self._sent: list = []
+        # lag_frames: the delay in 60 Hz FRAMES instead (live it's ~1.5 decisions: 3 frames
+        # at 2 frames per decision); the estimator is given it in seconds, as live measures it
+        self.lag_frames = None if lag_frames is None else int(lag_frames)
+        self._fq: list = []
         self.phys = gp.Phys()
         self.mode_cal = gp.ModeCalibrator()
         self.est = gp.ModeEstimator()
         # the live env MEASURES the delay from isolated presses (env_boxes._watch_press) and
         # locks it; the sim has no such watcher, so it starts from the true one, locked
         self.est.lag, self.est.lag_locked = self.input_lag, True
+        if self.lag_frames is not None:
+            self.est.delay_s = self.lag_frames / 60.0
+            self.est.delay_alt_s = self.est.delay_s + frame_skip / 60.0
         self._hinted: set = set()
         self.objs, self.length = level if level is not None else stereo_like()
         self.objs.sort(key=lambda o: o.x)
@@ -389,6 +397,9 @@ class SimGD(gym.Env):
         moved = False
         died = complete = False
         for _ in range(self.frame_skip):
+            if self.lag_frames is not None:
+                self._fq = (self._fq + [sent])[-(self.lag_frames + 1):]
+                hold = self._fq[0] if len(self._fq) > self.lag_frames else False
             moved = self._tick(hold) or moved
             if self.signal == 0:
                 died = True

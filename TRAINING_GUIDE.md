@@ -34,7 +34,13 @@ by every brain and level; delete it to re-measure).
 
 **Input delay:** measured from your own presses (steps from pressing to the icon
 moving; the console prints `[input] measured input delay: N step(s)`). Live it
-was 1 step.
+was 1 step. Since fix49 it is also measured in **milliseconds** (from when the
+picture the press was decided on was shown to when the jump started, using the
+jump's own arc), and the blue line / search use that exact value:
+`[input] input delay 52 ms (1.56 steps; spread 45-60 ms)`. Before, 1.5 steps was
+rounded up to 2, so the line expected every jump ~17 ms (about 0.2 blocks) later
+than it really started. The "worse world" check still uses a delay at least a
+whole step off, so the shield is as careful as before.
 
 **Safety shield:** before every action (chosen or random), a SEARCH asks
 "is there any way to survive the next 1.5 s if I press now / if I wait?",
@@ -328,6 +334,23 @@ try, then the route memory's next untried change, one per attempt; past that spo
 brain plays (no random moves). New progress is saved in routes/ as usual; the brain
 file is not touched. The first attempt of a session is the brain's own while the level
 is recognised.
+
+### --frontier: train AND play (learn where it's stuck)
+
+    python preview_boxes.py --backend yolo-only --model checkpoints/preview_boxes.pt --frontier
+
+Training, but every other attempt skips the part it can already do: it replays the
+best run saved for this level (shield watching) to 3 s before that run's end, then the
+brain takes over and plays -- and learns -- from there. The replayed part is never
+learned from. The other attempts are normal training from the start, so the brain
+still learns the whole level. Only those full attempts count for best_boxes.pt; the
+console marks the others `(frontier: ...)`, attempts.csv column 9 says `frontier`.
+If a replay keeps dying before the hand-over (timing doesn't hold), that spot goes
+back to normal attempts. (Replays in --play / --frontier / route practice have a
+lighter safety net than the brain: it only changes a replayed press when that press
+crashes even as measured and the other choice is safe. The full shield also
+"corrected" presses that were fine and killed good replays.) Getting past the best run's end on a frontier attempt saves
+the new, longer best run, so the hand-over point moves forward with it.
 
 Inputs are also only sent while a level is on screen (its % showing, nothing
 paused / frozen): on the menus SPACE is never pressed.

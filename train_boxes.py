@@ -44,6 +44,11 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                    help="beat the level with what it knows: NO training -- every attempt follows the "
                         "best run saved for this level, practises the spot it died at, and the brain "
                         "(no random moves) plays past it. Needs --model (and the route memory)")
+    p.add_argument("--frontier", action="store_true",
+                   help="train where it gets stuck: every other attempt replays the best run saved for "
+                        "this level to ~3 s before its furthest point and the brain plays and LEARNS "
+                        "from there (the replayed part isn't learned from); the other attempts are "
+                        "normal training from the start")
     p.add_argument("--no-route", action="store_true",
                    help="turn off the route memory (per-level practice of spots it keeps dying at, routes/)")
     p.add_argument("--routes", default="routes", help="folder the route memory keeps its levels in")
@@ -113,8 +118,13 @@ def build(args):
     cfg = TrainConfig(algo=args.algo, total_steps=args.steps, device=dev, name=args.name,
                       update_steps=args.update_steps, replay_ratio=args.replay_ratio,
                       jump_margin=args.jump_margin, hold_cost=args.hold_cost,
-                      shield=not args.no_shield, route=not args.no_route or args.play, route_dir=args.routes,
-                      play=bool(args.play))
+                      shield=not args.no_shield, route=not args.no_route or args.play or args.frontier,
+                      route_dir=args.routes,
+                      play=bool(args.play), frontier=bool(args.frontier) and not args.play)
+    if args.frontier and args.play:
+        print("--frontier and --play: --play wins (no training)")
+    elif args.frontier:
+        print("--frontier: every other attempt starts the brain just before its furthest point")
     if args.play:
         if args.no_route:
             print("--play uses the route memory: ignoring --no-route")
