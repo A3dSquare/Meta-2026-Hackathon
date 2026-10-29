@@ -56,7 +56,9 @@ ENT_CLASSES = 7                   # spike, orb_y, orb_b, orb_p, pad, portal, wal
 ENT_FEAT = 7 + ENT_CLASSES        # present, x0, x1, y0, y1, hue cos, hue sin, one-hot
 N_HIST = 8                        # past decision steps of (vertical speed, action)
 from gd_physics import (MODES, MODE_ID, N_PLANS, SEARCH_KEYS, Body, ModeCalibrator, ModeEstimator,
-                        MotionLearner, Phys, inst_vy, load_motion, robust_search, save_motion, simulate_plans, surfaces_at)
+                        MotionLearner, Phys, inst_vy, load_motion, portal_effect, resolve_start, robust_search,
+                        save_motion,
+                        simulate_plans, surfaces_at)
 N_MODE = len(MODES) + 3            # mode one-hot, gravity (+1/-1), mini, confidence
 N_PLAN = 3 * N_PLANS + 1           # per action plan: hits?, time to hit, clearance; + time to ledge
 N_RESERVED = 12                    # spare inputs (zero today) so future features don't need a new brain
@@ -110,12 +112,13 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
             continue
         top = (py - (e.y - e.h / 2)) / BLOCK_H
         bot = (py - (e.y + e.h / 2)) / BLOCK_H
+        if c == 0 and x0 < 0 < x1 and bot < 0 < top:
+            continue     # on the icon's centre: the icon is alive, so it's part of the icon
         if c == 0:   # spike hitboxes are smaller than the sprite
-            # (was 0.3 / 0.35. A little bigger than GD's real hitbox on purpose: it's the
-            # safety margin. Replaying the real actions before live deaths, the old size let
-            # many fatal jumps "clear" the spike, and in the simulator the shield got further
-            # with this size (87% vs 76% avg). Much bigger and a triple spike -- which GD
-            # lets you clear at 1x -- becomes impossible for the preview.)
+            # (Size checked on a full recorded completion of a real level: with 0.25 / 0.3
+            # the preview called 23 frames 'doomed' that the player survived; at 0.3 / 0.35
+            # it's 18, and the simulator shield scores the same. Still a bit bigger than
+            # GD's real hitbox on purpose -- that's the safety margin.)
             # The hitbox sits toward the spike's BASE: which end that is depends on where
             # the tip points (the detector knows; hanging spikes used to get an upright
             # spike's hitbox -- shifted toward the tip, missing the part by the ceiling)
@@ -123,19 +126,19 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
             hh = top - bot
             pt = int(getattr(e, "pt", -1))
             if pt == 1:                                  # hanging: tip down
-                haz.append((x0 + 0.25 * w, x1 - 0.25 * w, bot + 0.3 * hh, top - 0.1 * hh))
+                haz.append((x0 + 0.3 * w, x1 - 0.3 * w, bot + 0.35 * hh, top - 0.1 * hh))
             elif pt == 2:                                # tip left (side of a pillar)
                 haz.append((x0 + 0.3 * w, x1 - 0.1 * w, bot + 0.25 * hh, top - 0.25 * hh))
             elif pt == 3:                                # tip right
                 haz.append((x0 + 0.1 * w, x1 - 0.3 * w, bot + 0.25 * hh, top - 0.25 * hh))
             elif pt == 0:                                # standing: tip up
-                haz.append((x0 + 0.25 * w, x1 - 0.25 * w, bot + 0.1 * hh, top - 0.3 * hh))
+                haz.append((x0 + 0.3 * w, x1 - 0.3 * w, bot + 0.1 * hh, top - 0.35 * hh))
             else:                                        # unknown (e.g. YOLO): centred
                 haz.append((x0 + 0.25 * w, x1 - 0.25 * w, bot + 0.2 * hh, top - 0.2 * hh))
         elif c == 6:
             solid.append((x0, x1, bot, top))
         elif c == CLS_ID["portal"]:
-            portals.append((x0, x1, float(getattr(e, "hue", -1.0))))
+            portals.append((x0, x1, bot, top, float(getattr(e, "hue", -1.0))))
     return haz, solid, portals
 
 
@@ -149,7 +152,13 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     floor_rel / ceil_rel: surface heights relative to the icon centre (None =
     unknown). Returns (mode_feats[N_MODE], plan_feats[N_PLAN], paths).
     """
-    haz, solid, _ = preview_boxes(ents, speed * horizon + 1)
+    haz, solid, portals_raw = preview_boxes(ents, speed * horizon + 1)
+    portals = []
+    for x0_, x1_, b_, t_, hue_ in portals_raw:   # real portals only (same test as the env's hint)
+        eff = portal_effect(hue_)
+        on_block = any(s0 < x1_ and s1 > x0_ and sb < t_ and st > b_ for s0, s1, sb, st in solid)
+        if eff is not None and (t_ - b_) >= 2.4 and (x1_ - x0_) >= 0.6 and not on_block:
+            portals.append((x0_, x1_, b_, t_) + eff)
     # just landed? Standing level with a known surface and not moving counts as on the
     # ground right away (the 3-still-frames rule alone misses taps right after a landing)
     if not grounded and est.mode not in ("ship", "wave") and est.g * vy_bps < 1.5 * ModeEstimator.REST:
@@ -172,6 +181,8 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
         rest = [q for q in (fl_ if est.g == 1 else ce_) if abs(q) < 0.35]
         if rest:
             y0, vy0 = min(rest, key=abs), 0.0
+    # detection is off by a few pixels: a live icon is never INSIDE a block -- move it out
+    y0 = resolve_start(y0, solid, half)
     body = Body(y0, vy0, est.g, grounded, est.mode, est.mini, 0.0, eff_prev)
     xo: list = []
     pend = est.pending()
@@ -183,7 +194,7 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
             alt = est.lag_alt if getattr(est, "lag_alt", None) is not None else est.lag + 1
             sr = robust_search(body, haz, solid, floor_rel, ceil_rel, speed, phys, dtd, est.lag, pend,
                                pending_long=est.pending(alt), horizon=horizon, half=half,
-                               want_path=True, lag_alt=alt)
+                               want_path=True, lag_alt=alt, portals=portals)
             paths = list(paths) + [("best", bool(sr.get("path_hit")), sr.get("path") or [])]
             if out is not None:
                 out["search"] = sr
@@ -576,14 +587,32 @@ class EntityBoxEnv(gym.Wrapper):
             hsv = cv2.cvtColor(np.ascontiguousarray(img[:, cols, :3]), cv2.COLOR_RGB2HSV)
             sc = hsv[:, :, 2].astype(np.int16) - (hsv[:, :, 1].astype(np.int16) >> 1)
             up, dn = np.roll(sc, 2, axis=0), np.roll(sc, -2, axis=0)
-            ridge = ((sc - np.maximum(up, dn)) > 12).mean(axis=1)
+            ridge_m = (sc - np.maximum(up, dn)) > 12
+            ridge = ridge_m.mean(axis=1)
             ridge[:2] = 0
             ridge[-2:] = 0
+            # The ground line is the LOWEST long bright row with plain ground below it.
+            # A long platform's top edge is a bright row too, but under it come the
+            # platform's own grid lines (the whole-level test on a recorded completion:
+            # platform edges taken for the ground / a ceiling "doomed" 9 frames the player
+            # survived). (GD's ground line fades toward the screen edges: don't demand them.)
             res = []
-            for lo, hi_ in ((0.45, 0.99), (0.01, 0.55)):
-                r0, r1 = int(lo * h), int(hi_ * h)
-                r = r0 + int(np.argmax(ridge[r0:r1]))
-                res.append((r + 0.5) / h if ridge[r] > 0.45 else None)
+            room = max(3, int(0.04 * h))
+            # (ceiling: not used -- a platform top above the icon looks just like one and
+            # blocked every jump in the test; ceilings come from detected blocks instead)
+            for floor_side in (True,):
+                lo, hi_ = (0.45, 0.99) if floor_side else (0.07, 0.55)
+                rows = range(int(hi_ * h) - 1, int(lo * h) - 1, -1) if floor_side else range(int(lo * h), int(hi_ * h))
+                found_r = None
+                for r in rows:
+                    if ridge[r] < 0.5:
+                        continue
+                    beyond = ridge[r + 3:] if floor_side else ridge[int(0.07 * h):max(int(0.07 * h), r - 2)]
+                    if len(beyond) >= room and float(beyond.max(initial=0.0)) < 0.4:
+                        found_r = r
+                    break                          # only the outermost long row can be it
+                res.append(None if found_r is None else (found_r + 0.5) / h)
+            res.append(None)
         except Exception as ex:
             self._loud("surface-lines", ex)
             res = [None, None]
@@ -871,7 +900,16 @@ class EntityBoxEnv(gym.Wrapper):
         px_moved = None          # pixel-shift verdict over this step's frames
         info: dict = {}
         frame = None
-        for _ in range(self.frame_skip):
+        # Frame pacing: the capture runs on a fixed 60 Hz grid and each env.step waits for
+        # the NEXT slot. Counting reads, a decision whose processing ran past one slot (> 17
+        # ms) took 3 slots (50 ms) instead of 2: live runs went at ~20 decisions/s, not 30.
+        # Count grid slots instead: once frame_skip slots have passed since the last
+        # observation, observe now.
+        cap = getattr(self.base, "cap", None) if self.base is not None else None
+        slots = (lambda: int(getattr(cap, "_ticks", 0)) + int(getattr(cap, "_overruns", 0))) \
+            if cap is not None and hasattr(cap, "_ticks") else None
+        s_mark = getattr(self, "_slot_mark", None)
+        for _k in range(self.frame_skip):
             obs, _r, term, _trunc, info = self.env.step(a)
             f = self._newest(obs)
             if f is not None:
@@ -897,6 +935,12 @@ class EntityBoxEnv(gym.Wrapper):
                 except Exception:
                     pass
                 break
+            if slots is not None and s_mark is not None and slots() - s_mark >= self.frame_skip:
+                break                          # the slots already passed (processing ran long)
+        if slots is not None:
+            self._slot_mark = slots()
+            self.frames_per_dec = 0.95 * getattr(self, "frames_per_dec", float(self.frame_skip)) + \
+                0.05 * max(1, self._slot_mark - (s_mark if s_mark is not None else self._slot_mark - self.frame_skip))
         if frame is None:
             frame = self.last_frame
         v = self._observe(frame, a == 1)

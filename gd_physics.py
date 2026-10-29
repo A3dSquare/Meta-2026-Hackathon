@@ -365,7 +365,7 @@ SEARCH_KEYS = ("1", "00", "01")      # press now / release now + next / release 
 def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                 dec_dt: float, lag: int = 0, pending=(), horizon: float = 1.5,
                 half: float = 0.5, beam: int = 10, want_path: bool = False,
-                late_every: float = 0.0) -> dict:
+                late_every: float = 0.0, portals=None) -> dict:
     """Longest survival (fraction of `horizon`, 1.0 = survives it all) for each first
     action ("1" = press now, "00" = release now and at the next decision, "01" =
     release now, press at the next decision), with every later decision chosen well.
@@ -427,6 +427,20 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         lo, hi = x_prev - half, x + half                 # swept horizontally (no tunnelling)
         hz = [(h_[2], h_[3]) for h_ in haz if h_[0] < hi and h_[1] > lo]
         so = [(s_[2], s_[3]) for s_ in solid if s_[0] < hi - 0.05 and s_[1] > lo + 0.05]
+        # portals: a path that flies through one continues in that mode / gravity
+        # (whole-level test: every jump into the ship portal "crashed" as a cube)
+        pt_here = [q for q in (portals or ()) if q[0] < hi and q[1] > lo]
+        if pt_here:
+            for b, m, h, nd in states:
+                for _x0, _x1, pb, ptop, kind, val in pt_here:
+                    if pb < b.y + half and ptop > b.y - half:
+                        if kind == "mode" and b.mode != val:
+                            b.mode, b.boost = val, 0.0
+                            if val in ("ship", "wave", "ufo"):
+                                b.grounded = False
+                            b.vy *= 0.5
+                        elif kind == "g" and b.g != val:
+                            b.g, b.grounded = val, False
         alive: list = []
         index: dict = {}
         for b, m, h, nd in states:
@@ -452,7 +466,7 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
             if dead:
                 credit(m, t / horizon, node)
                 continue
-            key = (h, b.prev_hold, round(y * 20.0), round(b.vy * 1.6667), b.grounded, b.g, round(b.boost, 2))
+            key = (h, b.prev_hold, round(y * 20.0), round(b.vy * 1.6667), b.grounded, b.g, round(b.boost, 2), b.mode)
             j = index.get(key)
             if j is not None:                       # same state reached by other first actions
                 s0 = alive[j]
@@ -494,7 +508,7 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
 
 def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, dec_dt: float,
                   lag: int, pending, pending_long=None, horizon: float = 1.5, half: float = 0.5,
-                  want_path: bool = False, lag_alt: int | None = None) -> dict:
+                  want_path: bool = False, lag_alt: int | None = None, portals=None) -> dict:
     """search_best in the measured world AND a slightly different one: the press arrives
     one step EARLIER or LATER (lag_alt: whichever the measured delays say is likely --
     live they split between 1 and 2 steps, so with "2" a jump often started a step early
@@ -511,14 +525,14 @@ def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, de
         a.update(nominal=dict(a), worse=dict(a), path=[], path_hit=False)
         return a
     a = search_best(body, haz, solid, floor, ceil, speed, p, dec_dt, lag, pending, horizon, half,
-                    want_path=want_path)
+                    want_path=want_path, portals=portals)
     if all(a[k] < 1.0 for k in SEARCH_KEYS):
         b = {k: 0.0 for k in SEARCH_KEYS}   # crashes as measured -> the worse world can't help
     else:
         alt = lag + 1 if lag_alt is None else max(0, int(lag_alt))
         pl = list(pending_long) if pending_long is not None else [False] * max(0, alt - len(pending)) + list(pending)
         b = search_best(body, haz, solid, floor, ceil, speed * 1.04, p, dec_dt, alt, pl[len(pl) - alt:] if alt else [],
-                        horizon, half)
+                        horizon, half, portals=portals)
     a["nominal"] = {k: a[k] for k in SEARCH_KEYS}
     a["worse"] = {k: b[k] for k in SEARCH_KEYS}
     for k in SEARCH_KEYS:
@@ -535,6 +549,34 @@ def safety_score(nominal: float, worse: float) -> float:
 def safety_level(v: float) -> int:
     """2 = survives even in the worse world, 1 = only as measured, 0 = crashes."""
     return 2 if v >= 1.0 - 1e-6 else (1 if v >= 0.895 else 0)
+
+
+def portal_effect(hue: float):
+    """What a portal of this colour does: ("mode", name) / ("g", +1 or -1) / None (unsure)."""
+    if hue is None or hue < 0:
+        return None
+    d = {m: min(abs(hue - h), 1 - abs(hue - h)) for m, h in {**PORTAL_HUES, **GRAVITY_HUES}.items()}
+    m = min(d, key=d.get)
+    if d[m] >= 0.04:
+        return None
+    return ("g", GRAVITY_DIR[m]) if m in GRAVITY_HUES else ("mode", m)
+
+
+def resolve_start(y: float, solid, half: float = 0.5, max_move: float = 0.45) -> float:
+    """The icon's start height, moved out of any block it overlaps (by at most max_move):
+    a live icon is never inside a block, so an overlap is detection error, and the
+    preview would call it a crash at t=0 (whole-level test on a recorded completion)."""
+    for _ in range(3):
+        hit = [(sb, st) for s0, s1, sb, st in solid
+               if s0 < half - 0.05 and s1 > -half + 0.05 and sb < y + half - 0.12 and st > y - half + 0.12]
+        if not hit:
+            return y
+        sb, st = hit[0]
+        up, down = st + half - y, y - (sb - half)        # move needed to sit on / hang under it
+        if min(up, down) > max_move:
+            return y
+        y = y + up if up <= down else y - down
+    return y
 
 
 def inst_vy(mode: str, g: int, mini: bool, v_avg: float, hold: bool, grounded: bool,

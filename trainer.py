@@ -661,7 +661,9 @@ class Trainer:
         warn = ""
         if getattr(self.env, "presses_working", True) is False:
             warn = "  <-- PRESSES AREN'T REACHING GD (click into the game window)"
-        print(f"[health] {ms:.1f} ms/decision{parts}{mem}{cap}{slow}{warn}")
+        fpd = getattr(self.env, "frames_per_dec", None)
+        fpd = f"  ({fpd:.1f} game frames/decision, target {getattr(self.env, 'frame_skip', 2)})" if fpd else ""
+        print(f"[health] {ms:.1f} ms/decision{fpd}{parts}{mem}{cap}{slow}{warn}")
 
     def _finish_attempt(self, seg: _Seg, info: dict, peak: float, next_obs) -> None:
         cfg = self.cfg

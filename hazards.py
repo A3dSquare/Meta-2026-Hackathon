@@ -127,6 +127,7 @@ class HazardMemory:
         img = np.asarray(hires_bgr)
         H, W = img.shape[:2]
         px = ents.player_pos()[0]
+        pl = ents.player()
         x_lo = max(0, int((px - 0.06) * W))               # ahead of the icon (and a bit behind)
         g = _gray(img[:, x_lo:])
         out = []
@@ -156,7 +157,11 @@ class HazardMemory:
             if self.flood.get(name, 0) >= 30:
                 continue
             for x, y in picked:
-                out.append((kind, (x_lo + x) / W, y / H, (x_lo + x + tw) / W, (y + th) / H))
+                bx0, by0, bx1, by1 = (x_lo + x) / W, y / H, (x_lo + x + tw) / W, (y + th) / H
+                if pl is not None and kind == "hazard" and bx0 < pl.x + pl.w / 2 and bx1 > pl.x - pl.w / 2 \
+                        and by0 < pl.y + pl.h / 2 and by1 > pl.y - pl.h / 2:
+                    continue                    # on the icon: it's the icon (it's alive), not a hazard
+                out.append((kind, bx0, by0, bx1, by1))
         return out
 
     # -- after a death -----------------------------------------------------------
@@ -167,6 +172,33 @@ class HazardMemory:
             self._on_death(buf, lag)
         except Exception as ex:          # never let this break training
             print(f"[hazards] couldn't learn from this death: {ex!r}")
+
+    @staticmethod
+    def _scrolls(buf: list, i: int, g, fx: float, fy: float, bw: float) -> bool:
+        """Is the picture g (top-left at fx, fy in frame fractions in buf[i]) a level object?
+        It must be found in an earlier frame, further RIGHT (the level moved left)."""
+        import cv2
+        th, tw = g.shape[:2]
+        for k in (4, 3, 6, 2):
+            j = i - k
+            if j < 0 or buf[j].get("frame") is None:
+                continue
+            fr = buf[j]["frame"]
+            H, W = fr.shape[:2]
+            fg = _gray(cv2.resize(fr, (FRAME_W, FRAME_H)) if (W, H) != (FRAME_W, FRAME_H) else fr)
+            gx, gy = int(fx * FRAME_W), int(fy * FRAME_H)
+            ya, yb = max(0, gy - th), min(FRAME_H, gy + 2 * th)
+            xa, xb = max(0, gx - tw), FRAME_W
+            band = fg[ya:yb, xa:xb]
+            if band.shape[0] <= th or band.shape[1] <= tw:
+                continue
+            r = cv2.matchTemplate(band, g, cv2.TM_CCOEFF_NORMED)
+            _mn, mx, _l, loc = cv2.minMaxLoc(r)
+            if mx < SAME:
+                return False                 # not in the earlier frame: not part of the level
+            dx = (xa + loc[0] - gx) / FRAME_W
+            return dx > 0.3 * bw             # moved left since then = scrolls with the level
+        return False
 
     def _on_death(self, buf: list, lag: int) -> None:
         import cv2
@@ -180,6 +212,12 @@ class HazardMemory:
             return
         px, py = pp
         bw, bh = BLOCK_FRAC_H * FRAME_H / FRAME_W, BLOCK_FRAC_H
+        # the icon's right edge (a ship / robot is wider than one block): the crop starts
+        # past it, so the icon itself (or its pieces flying off) is never the "hazard"
+        pr = px + 0.5 * bw
+        for b in rec["boxes"]:
+            if int(b[0]) == 7:
+                pr = max(pr, b[1] + b[3] / 2)
         # explained? a known hazard touching the icon, or a block it ran into
         for b in rec["boxes"]:
             c, x, y, w, h = b[:5]
@@ -195,7 +233,7 @@ class HazardMemory:
         if frame is None:
             return
         H, W = frame.shape[:2]
-        x0, x1 = int((px + 0.4 * bw) * W), int((px + 1.9 * bw) * W)
+        x0, x1 = int((pr + 0.05 * bw) * W), int((pr + 1.5 * bw) * W)
         y0, y1 = int((py - 0.9 * bh) * H), int((py + 0.9 * bh) * H)
         x0, y0, x1, y1 = max(0, x0), max(0, y0), min(W, x1), min(H, y1)
         if x1 - x0 < 8 or y1 - y0 < 8:
@@ -218,6 +256,16 @@ class HazardMemory:
             return                       # a line (the ground's edge...), not an object
         patch, g = patch[ty0:ty1, tx0:tx1], g[ty0:ty1, tx0:tx1]
         if float(g.std()) < 12.0:
+            return
+        # the death explosion is a white / pale flash: not an object
+        hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+        if float(((hsv[..., 2] > 200) & (hsv[..., 1] < 90)).mean()) > 0.15:
+            return
+        # a level object SCROLLS: a few steps earlier it was further right on the screen.
+        # The icon, its trail and the explosion stay where the icon is. (Live, the icon's
+        # pieces and the explosion flash got learned as "hazards" -- they then showed up
+        # as fake spikes right on the icon.)
+        if not self._scrolls(buf, i, g, (x0 + tx0) / W, (y0 + ty0) / H, bw):
             return
         # something that repeats all over its own frame (ground texture, background tiles)
         # can't be "the thing that killed it"

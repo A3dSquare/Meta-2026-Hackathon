@@ -222,8 +222,11 @@ line, the shield and the brain treat like a spike.
   safe, the picture right in front of the icon is kept in
   `hazards/candidates/`. A second unexplained death in front of something that
   looks the same makes it a learned hazard (`hazards/learned/`, the console
-  says so). Empty ground and repeating background are never learned. Wrong
-  one? Delete the file, or move it into `hazards/safe/`.
+  says so). Empty ground and repeating background are never learned, and
+  neither is anything that doesn't scroll with the level (the icon, its pieces,
+  the death flash -- older versions learned those; delete any learned picture
+  that shows bits of your icon or a white flash). Wrong one? Delete the file,
+  or move it into `hazards/safe/`.
 - `python hazards.py --list` shows what's in use. `--hazards none` turns it off.
 
 Spikes also carry which way they point now: hanging spikes (tip down) and

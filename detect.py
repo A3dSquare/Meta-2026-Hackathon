@@ -252,11 +252,41 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False,
     # the ground line is one long bright row: remove it, or every pillar and
     # spike standing on the ground merges into one screen-wide outline blob
     rows = bright.mean(axis=1) > 0.7
+    line_rows = []
     for yy in np.nonzero(rows)[0]:
+        if yy > ui_cut and yy < H - 2 and (not line_rows or yy - line_rows[-1] > 2):
+            line_rows.append(int(yy))
         bright[max(0, yy - 1):yy + 2] = 0
+    # ... but such a row IS a surface: the ground, a corridor's floor or its ceiling (the
+    # whole-level test: a corridor floor vanished with it and the cube "fell through").
+    # Which side is solid? The side that looks like a block (texture or dark fill).
+    line_walls = []
+    if line_rows:
+        import cv2 as _cv
+        _edges = _cv.Canny(_cv.cvtColor(bgr, _cv.COLOR_BGR2GRAY), 40, 120)
+        _bg = float(np.percentile(V[::4, ::4], 75))
+        band = max(3, int(0.6 * blk))
+        def _solidish(a, b):
+            a, b = max(ui_cut, a), min(H, b)
+            if b - a < 2:
+                return 0.0
+            er = (_edges[a:b] > 0).mean(axis=1) > 0.05
+            dr = V[a:b].mean(axis=1) < 0.7 * _bg
+            return float((er | dr).mean())
+        bounds = [ui_cut] + line_rows + [H]
+        for k, yy in enumerate(line_rows):
+            below, above = _solidish(yy + 3, yy + 3 + band), _solidish(yy - 2 - band, yy - 2)
+            if below >= 0.5 and below > above + 0.2:
+                line_walls.append((0, yy, W, bounds[k + 2]))          # a floor: solid down to the next line
+            elif above >= 0.5 and above > below + 0.2:
+                line_walls.append((0, bounds[k], W, yy + 1))           # a ceiling: solid up to the last one
+            elif yy > 0.5 * H:
+                line_walls.append((0, yy, W, bounds[k + 2]))          # can't tell, low: the ground
     if player_box is not None:
         px0, py0, px1, py1 = player_box
-        pad_x, pad_y = 0.25 * blk / W, 0.25 * blk / H
+        # (0.5 / 0.35: the ship's / UFO's body is much bigger than the coloured core the
+        # icon box covers, and its dark parts were found as a spike ON the icon)
+        pad_x, pad_y = 0.5 * blk / W, 0.35 * blk / H
         x0 = max(0, int((px0 - pad_x) * W)); x1 = min(W, int((px1 + pad_x) * W) + 1)
         y0 = max(0, int((py0 - pad_y) * H)); y1 = min(H, int((py1 + pad_y) * H) + 1)
         dark[y0:y1, x0:x1] = 0
@@ -270,7 +300,10 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False,
         walls = []
         for i in range(1, n):
             x, y, bw, bh, area = (int(v) for v in stats[i])
-            if area < max(6, min_h * min_w // 2) or bw * bh > 0.30 * W * H:
+            # (huge = background -- but a big platform's OUTLINE is huge too, and sparse:
+            # Stereo Madness's grid platforms were dropped, so the cube "fell through" them)
+            if area < max(6, min_h * min_w // 2) or (bw * bh > 0.30 * W * H
+                                                     and (solid_check or area > 0.25 * bw * bh)):
                 continue
             sub = lab[y:y + bh, x:x + bw] == i
             colv = sub.any(axis=0)
@@ -381,10 +414,55 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False,
                         c1 += 1
                     if c1 - c0 + 1 >= 0.5 * blk:
                         t0 = int(np.median(tops_rel[c0:c1 + 1]))
-                        depth = int(bot[c0:c1 + 1].max() - (y + t0))
-                        if depth >= 0.35 * blk:
-                            walls.append((6, x + c0, y + t0, x + c1 + 1, y + t0 + depth + 1, 0.85))
+                        # ... and by where the outline ENDS below: an L-shaped platform (a bar
+                        # with a pillar under one end) was one big box, filling the empty corner
+                        # under the bar with "solid". A column whose outline stops at the top
+                        # edge (the platform's inside isn't outlined) goes as deep as the rest.
+                        seg = np.arange(c0, c1 + 1)
+                        dmax = int(bot.max())          # deepest point of the whole outline
+                        eb = np.where(bot[c0:c1 + 1] - (y + t0) >= 0.35 * blk, bot[c0:c1 + 1], dmax)
+                        runs = []                      # [start, end, bottom]
+                        for c, e in zip(seg, eb):
+                            if runs and abs(int(e) - runs[-1][2]) <= 0.5 * blk:
+                                runs[-1][1] = c
+                                runs[-1][2] = max(runs[-1][2], int(e))
+                            else:
+                                runs.append([c, c, int(e)])
+                        merged_runs = []               # slivers (< 1 block) join a neighbour
+                        for r_ in runs:
+                            if merged_runs and (r_[1] - r_[0] + 1 < blk or merged_runs[-1][1] - merged_runs[-1][0] + 1 < blk):
+                                m_ = merged_runs[-1]
+                                m_[1], m_[2] = r_[1], max(m_[2], r_[2])
+                            else:
+                                merged_runs.append(list(r_))
+                        for d0, d1, eb_ in merged_runs:
+                            depth = int(eb_ - (y + t0))
+                            if depth >= 0.35 * blk:
+                                walls.append((6, x + d0, y + t0, x + d1 + 1, y + t0 + depth + 1, 0.85))
+                            elif d1 - d0 + 1 >= 1.5 * blk:
+                                # a long top edge on its own (its sides are off screen or
+                                # hidden behind the icon): a platform top -- 1 block deep
+                                walls.append((6, x + d0, y + t0, x + d1 + 1, y + t0 + int(blk) + 1, 0.7))
                     c0 = c1 + 1
+                # blocks hanging from above the screen (no top edge on screen): the same
+                # from their flat BOTTOM edge up to where the outline starts
+                if y <= ui_cut + 2:
+                    bots_rel = np.where(colv, bot - y, -10**6)
+                    c0 = 0
+                    while c0 < ncol:
+                        if bots_rel[c0] < 0:
+                            c0 += 1
+                            continue
+                        c1 = c0
+                        while c1 + 1 < ncol and bots_rel[c1 + 1] >= 0 and abs(int(bots_rel[c1 + 1]) - int(bots_rel[c0])) <= 2:
+                            c1 += 1
+                        if c1 - c0 + 1 >= 0.5 * blk:
+                            b0 = int(np.median(bots_rel[c0:c1 + 1]))
+                            # only a simple block (nothing of it further down): a structure that
+                            # also outlines a corridor below made a box over the corridor
+                            if b0 >= 0.35 * blk and bh - b0 <= 0.3 * blk:
+                                walls.append((6, x + c0, y, x + c1 + 1, y + b0 + 1, 0.8))
+                        c0 = c1 + 1
             if solid_check and bw >= 0.4 * blk and bh >= 0.4 * blk:
                 sp_area = sum((s[3] - s[1]) * (s[4] - s[2]) * 0.5 for s in spikes_here)
                 if area / float(bw * bh) >= 0.55 and sp_area < 0.5 * area:
@@ -400,7 +478,74 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False,
     # white outlines: full spike shapes (the black fill often only covers the
     # tip) and outlined blocks/platforms
     _scan(bright, False, 0.75)
-    return _merge_hazards(found, W, H, blk)
+    found = _trim_empty_walls(found, bgr, V, blk, player_box)
+    out = _merge_hazards(found, W, H, blk)
+    for (lx0, ly0, lx1, ly1) in line_walls:          # screen-wide surfaces (kept out of the
+        out.append((6, lx0 / W, ly0 / H, lx1 / W, ly1 / H, 0.8, -1))   # merging: not pillars)
+    return out
+
+
+def _trim_empty_walls(found: list, bgr, V, blk: float, player_box=None) -> list:
+    """Cut plain-background bands out of block boxes. A box is made from outline pieces
+    (a top edge, a bottom edge, side lines), and stray lines -- a portal's glow, a thin
+    decoration line, a corridor boundary -- stretched boxes over open space the player
+    flies / runs through (whole-level test: a ship corridor 'filled' with solid).
+    A row inside a real block has texture (grid lines, outlines) or a fill clearly
+    darker than the background; a band >= 0.7 block of neither is open space."""
+    import cv2
+    out = []
+    H, W = V.shape[:2]
+    bg = float(np.percentile(V[::4, ::4], 75))       # the (bright) background panels
+    gray = None
+    for f in found:
+        if f[0] != 6:
+            out.append(f)
+            continue
+        x0, y0, x1, y1 = int(f[1]), int(f[2]), int(f[3]), int(f[4])
+        if y1 - y0 < 0.7 * blk or x1 - x0 < 4:
+            out.append(f)
+            continue
+        if gray is None:
+            gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+            edges = cv2.Canny(gray, 40, 120)
+            if player_box is not None:     # the icon and its trail aren't the block's texture
+                px0, py0, px1, py1 = player_box
+                edges[max(0, int(py0 * H - blk)):int(py1 * H + blk),
+                      max(0, int(px0 * W - 4 * blk)):int(px1 * W + blk)] = 0
+        ix0, ix1 = min(W, x0 + 3), max(0, x1 - 3)
+        if ix1 - ix0 < 3:
+            out.append(f)
+            continue
+        e_rows = (edges[y0:y1, ix0:ix1] > 0).mean(axis=1)
+        d_rows = V[y0:y1, ix0:ix1].astype(np.float32).mean(axis=1) < 0.7 * bg     # dark fill
+        k = max(1, int(0.3 * blk))
+        solid = np.convolve((e_rows > 0.05) | d_rows, np.ones(k) / k, mode="same") > 0.3
+        need = int(0.7 * blk)
+        r = 0
+        n = len(solid)
+        segs = []                      # solid stretches split by long empty bands
+        start = 0
+        while r < n:
+            if not solid[r]:
+                r2 = r
+                while r2 < n and not solid[r2]:
+                    r2 += 1
+                if r2 - r >= need:
+                    segs.append((start, r))
+                    start = r2
+                r = r2
+            else:
+                r += 1
+        segs.append((start, n))
+        if float(solid.mean()) < 0.25:
+            continue                   # almost all open space: not a block at all
+        if len(segs) == 1:
+            out.append(f)
+            continue
+        for a, b in segs:
+            if b - a >= 0.35 * blk:
+                out.append((6, x0, y0 + a, x1, y0 + b) + tuple(f[5:]))
+    return out
 
 
 def _merge_hazards(found: list, W: int, H: int, blk: float) -> list:
@@ -429,7 +574,12 @@ def _merge_hazards(found: list, W: int, H: int, blk: float) -> list:
             merged.sort(key=lambda b: b[1])
             joined: list = []
             for b in merged:
-                if joined and abs(b[2] - joined[-1][2]) <= 0.15 * blk and b[1] - joined[-1][3] <= 1.2 * blk:
+                # (same bottom too -- not an L -- unless one piece is a lone top edge whose
+                # depth is a guess; those are often cut by the icon's mask: gap up to 1.6)
+                guess = min(b[5], joined[-1][5]) <= 0.71 if joined else False
+                if (joined and abs(b[2] - joined[-1][2]) <= 0.15 * blk
+                        and b[1] - joined[-1][3] <= (1.6 if guess else 1.2) * blk
+                        and (guess or abs(b[4] - joined[-1][4]) <= 0.5 * blk)):
                     j = joined[-1]
                     j[3], j[4] = max(j[3], b[3]), max(j[4], b[4])
                     continue
@@ -439,7 +589,9 @@ def _merge_hazards(found: list, W: int, H: int, blk: float) -> list:
                 hit = None
                 for s in stacked:
                     ov = min(s[3], b[3]) - max(s[1], b[1])
-                    if ov >= 0.7 * min(s[3] - s[1], b[3] - b[1]) and b[2] - s[4] <= 0.4 * blk:
+                    # (similar widths only: a narrow piece under a wide platform -- a portal's
+                    # glow -- extended the whole platform down over the corridor)
+                    if ov >= 0.7 * max(s[3] - s[1], b[3] - b[1]) and b[2] - s[4] <= 0.4 * blk:
                         hit = s
                         break
                 if hit is not None:
@@ -542,7 +694,9 @@ def detect_specials(bgr: np.ndarray, player_box=None, hsv=None) -> list:
             hue = (np.degrees(np.arctan2(np.sin(ang).mean(), np.cos(ang).mean())) / 2) % 180
             box = (x / W, y / H, (x + bw) / W, (y + bh) / H)
             det = None
-            if hb >= 1.7 and hb >= 1.6 * wb and wb >= 0.3:
+            # (1.25 x, was 1.6 x: the particles a portal gives off made Stereo Madness's
+            # ship portals too wide to count)
+            if hb >= 1.7 and hb >= 1.25 * wb and wb >= 0.3:
                 det = (CLS_ID["portal"], *box, 0.8, hue / 180.0)
             elif (which == "colour" and min(wb, hb) >= 0.1 and max(wb, hb) < 0.45 and min(wb, hb) < 0.3
                   and 0.5 <= wb / max(hb, 1e-6) <= 2.0 and m[bh // 2, bw // 2]):
@@ -564,7 +718,11 @@ def detect_specials(bgr: np.ndarray, player_box=None, hsv=None) -> list:
                     c = max(cnts, key=cv2.contourArea)
                     per = cv2.arcLength(c, True)
                     circ = 4 * np.pi * cv2.contourArea(c) / max(1e-6, per * per)
-                    if circ >= 0.6 and area >= 0.45 * bw * bh:
+                    # round, not square: decoration squares (Stereo Madness's pink ones)
+                    # have circularity ~0.79 and filled corners
+                    k_ = max(1, int(0.12 * min(bw, bh)))
+                    corners = [m[:k_, :k_].mean(), m[:k_, -k_:].mean(), m[-k_:, :k_].mean(), m[-k_:, -k_:].mean()]
+                    if circ >= 0.6 and area >= 0.45 * bw * bh and float(np.mean(corners)) < 0.5:
                         det = (_orb_class(hue), *box, 0.8, hue / 180.0)
             elif which == "colour" and hb <= 1.0 and 0.45 <= wb <= 2.0 and wb >= 1.25 * hb:
                 # pad: flat colour strip, often under a big glow dome
@@ -574,6 +732,9 @@ def detect_specials(bgr: np.ndarray, player_box=None, hsv=None) -> list:
                 if any(o[0] in (1, 2, 3) and abs((o[1] + o[3]) / 2 * W - cxd) < 0.7 * blk
                        and abs((o[2] + o[4]) / 2 * H - cyd) < 0.7 * blk for o in out):
                     det = None   # particles around an orb already found
+            if (det is not None and det[0] != CLS_ID["portal"] and player_box is not None
+                    and (det[1] + det[3]) / 2 < (player_box[0] + player_box[2]) / 2 - 0.3 * blk / W):
+                det = None       # behind the icon: its own trail / particles (and past anyway)
             if det is not None and not any(_iou(det[1:5], o[1:5]) > 0.3 for o in out):
                 out.append(det)
     return out
@@ -782,6 +943,10 @@ class HeuristicDetector:
                         if x1 + sc > 0.0]
         self._spec_cache = specials
         dets = [h for h in dets if not any(_iou(h[1:5], s[1:5]) > 0.3 for s in specials)]
+        # a portal's dark middle looked like a spike INSIDE the portal (whole-level test)
+        dets = [h for h in dets if not (h[0] == 0 and any(
+            s[0] == CLS_ID["portal"] and s[1] <= (h[1] + h[3]) / 2 <= s[3] and s[2] <= (h[2] + h[4]) / 2 <= s[4]
+            for s in specials))]
         if self.extra is not None:
             ydets = self._extra_dets(src, pbox)
             hsv_e = None
