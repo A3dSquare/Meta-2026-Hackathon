@@ -45,6 +45,9 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                    help="don't let the physics preview veto actions it predicts will crash")
     p.add_argument("--motion-fix", action="store_true",
                    help="also use the learned physics correction (experimental; off by default)")
+    p.add_argument("--hazards", default="hazards",
+                   help="folder of object pictures: deadly ones, learned/ (from deaths), safe/ "
+                        "(see hazards.py; 'none' = off). Learning from deaths needs --death-snaps")
     p.add_argument("--motion-model", default="checkpoints/motion_model.npz",
                    help="learned physics correction + tuned jump + input delay (shared by all "
                         "brains and levels); 'none' = don't load or save one")
@@ -89,6 +92,11 @@ def build(args):
     if args.death_snaps > 0:
         env.death_dir = os.path.join("logs_boxes", "deaths")
         env.death_keep = int(args.death_snaps)
+    if str(args.hazards).lower() != "none":
+        from hazards import HazardMemory   # pictures of deadly / harmless objects (hazards.py)
+        env.hazmem = HazardMemory(args.hazards)
+        if env.hazmem.active:
+            print(f"[hazards] {len(env.hazmem.templates)} object picture(s) in {args.hazards}/ in use")
     cfg = TrainConfig(algo=args.algo, total_steps=args.steps, device=dev, name=args.name,
                       update_steps=args.update_steps, replay_ratio=args.replay_ratio,
                       jump_margin=args.jump_margin, hold_cost=args.hold_cost,

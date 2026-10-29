@@ -59,7 +59,8 @@ def _draw(frame, rec) -> np.ndarray:
     from env_boxes import BLOCK_H, BLOCK_W
     img = frame.copy()
     H, W = img.shape[:2]
-    for cls, x, y, w, h in rec["boxes"]:
+    for bx in rec["boxes"]:
+        cls, x, y, w, h = bx[:5]
         x0, y0 = int((x - w / 2) * W), int((y - h / 2) * H)
         x1, y1 = int((x + w / 2) * W), int((y + h / 2) * H)
         cv2.rectangle(img, (x0, y0), (x1, y1), _COL.get(cls, (255, 255, 255)), 2)

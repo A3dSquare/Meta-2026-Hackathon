@@ -83,6 +83,7 @@ class Entity:
     h: float  # height 0..1
     conf: float = 1.0
     hue: float = -1.0  # mean OpenCV hue / 180 for coloured objects (orbs/pads/portals), -1 = n/a
+    pt: int = -1       # spikes: which way the tip points (0 up, 1 down, 2 left, 3 right, -1 unknown)
 
 
 @dataclass
@@ -312,14 +313,14 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False,
                         inner = V[cy0:max(cy0 + 1, cy1), cx0:max(cx0 + 1, cx1)]
                         if inner.size == 0 or float(inner.mean()) > 0.75 * med_v:
                             continue
-                    spikes_here.append((0, x + l, ya, x + r + 1, yb + 1, conf))
+                    spikes_here.append((0, x + l, ya, x + r + 1, yb + 1, conf, 1 if flip else 0))
             if solid_check and bw >= 1.0 * blk and bh <= 0.8 * blk and area / float(bw * bh) < 0.75:
                 # a row of ground thorns: one wide, short, jagged black band
                 tv = top[colv]
                 if tv.size >= 4:
                     peaks = int(np.sum((tv[1:-1] < tv[:-2]) & (tv[1:-1] <= tv[2:])))
                     if peaks >= 3 and (y + bh / 2) < 0.94 * H:
-                        spikes_here.append((0, x, y, x + bw, y + bh, 0.8))
+                        spikes_here.append((0, x, y, x + bw, y + bh, 0.8, 0))
             if not solid_check and max(bw, bh) >= min_w:
                 # spikes pointing left / right (on the sides of pillars): the same
                 # peak search on the left / right edge of the outline
@@ -335,7 +336,7 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False,
                         cx1 = xa + (xb - xa) * 2 // 3 if not flip else xb - (xb - xa) // 4
                         inner = V[max(0, mid - 1):mid + 2, cx0:max(cx0 + 1, cx1)]
                         if inner.size and float(inner.mean()) <= 0.75 * med_v:
-                            spikes_here.append((0, xa, ya0, xb + 1, ya1 + 1, 0.75))
+                            spikes_here.append((0, xa, ya0, xb + 1, ya1 + 1, 0.75, 3 if flip else 2))
             found.extend(spikes_here)
             if not solid_check and bw >= 0.5 * blk and bh >= 1.2 * blk:
                 # pillar: two long vertical outline edges (its top may carry a spike,
@@ -464,7 +465,7 @@ def _merge_hazards(found: list, W: int, H: int, blk: float) -> list:
                 strips.append(b)
             merged = strips
         for b in merged:
-            out.append((b[0], b[1] / W, b[2] / H, b[3] / W, b[4] / H, b[5]))
+            out.append((b[0], b[1] / W, b[2] / H, b[3] / W, b[4] / H, b[5], b[6] if len(b) > 6 else -1))
     return out
 
 
@@ -619,6 +620,7 @@ class _HazardTracker:
                 if t["hits"] >= 2 or t["miss"] == 0:
                     steps.append(vx)
                 t.update(x0=d[1], y0=d[2], x1=d[3], y1=d[4], conf=d[5], vx=vx,
+                         pt=d[6] if len(d) > 6 and d[6] >= 0 else t.get("pt", -1),
                          hits=t["hits"] + 1, miss=0)
             else:
                 t["miss"] += 1
@@ -628,17 +630,20 @@ class _HazardTracker:
             for t in self.tracks:
                 if t["miss"] > 0:  # coast with the scene scroll
                     t["x0"] += gvx; t["x1"] += gvx; t["vx"] = gvx
-        self.tracks = [t for t in self.tracks if t["miss"] <= 2 and t["x1"] > -0.05]
+        # a hazard seen in 3+ frames keeps coasting with the scroll through 4 missed frames
+        # (was 2 for all): one frame without the spike made the predicted path "blip" safe
+        self.tracks = [t for t in self.tracks if t["miss"] <= (4 if t["hits"] >= 3 else 2) and t["x1"] > -0.05]
         for j, d in enumerate(dets):
             if j not in used:
                 self.tracks.append(dict(cls=d[0], x0=d[1], y0=d[2], x1=d[3], y1=d[4],
-                                        conf=d[5], hits=1, miss=0, vx=-0.01))
+                                        conf=d[5], hits=1, miss=0, vx=-0.01,
+                                        pt=d[6] if len(d) > 6 else -1))
         out = []
         for t in self.tracks:
             if t["hits"] >= 2:
                 out.append(Entity(int(t["cls"]), (t["x0"] + t["x1"]) / 2, (t["y0"] + t["y1"]) / 2,
                                   t["x1"] - t["x0"], t["y1"] - t["y0"],
-                                  t["conf"] * (0.7 if t["miss"] else 1.0)))
+                                  t["conf"] * (0.7 if t["miss"] else 1.0), pt=int(t.get("pt", -1))))
         return out
 
 
@@ -800,7 +805,7 @@ class HeuristicDetector:
             scroll = self._tracker.last_scroll
         else:
             ents.extend(Entity(int(d[0]), (d[1] + d[3]) / 2, (d[2] + d[4]) / 2,
-                               d[3] - d[1], d[4] - d[2], d[5]) for d in dets)
+                               d[3] - d[1], d[4] - d[2], d[5], pt=int(d[6]) if len(d) > 6 else -1) for d in dets)
         # orbs / pads / portals: colour + shape (see detect_specials)
         for s in specials:
             ents.append(Entity(int(s[0]), (s[1] + s[3]) / 2, (s[2] + s[4]) / 2,

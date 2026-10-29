@@ -51,6 +51,17 @@ the simulator, an agent that never pressed by itself got 87% of the way
 through the Stereo-like level on the shield alone (old shield: 34%).
 `--no-shield` turns it off.
 
+**Every mode's physics is measured from your game:** like the cube jump, the
+ship's climb / fall rate and top speed, ball and UFO gravity, the UFO tap and
+the wave angle are fitted from the icon's real motion (once the input delay is
+measured), saved in `checkpoints/motion_model.npz` with the jump and the delay,
+and used by the predictions from then on. Every 10 deaths the console prints
+`[physics] jump ..., delay N; ship up .., ship down .., ...` (`?` = not enough
+seen yet; a value is used after 3 clean pieces of motion). The mode itself only
+changes at a portal now (without one it takes ~1.6 s of overwhelming evidence):
+live, glowing pillars were taken for portals and turned the cube into a
+"spider" / "robot".
+
 **Floor:** read from the bright line GD draws on top of the ground (light blue
 line in the overlay), not guessed from where the cube stood. The guess drifted
 by up to 1.2 blocks after deaths froze the cube in mid-air. If a level has no
@@ -194,6 +205,30 @@ upside-down section. `--level allmodes` has one section per game mode (cube,
 ship, ball, UFO, wave, robot, spider, then upside-down). In the simulator it learns the ship corridor within ~100
 attempts; expect the real game to be slower. Portal/orb/pad detection is
 tuned on synthetic frames -- check the overlay labels on a real level.
+
+## 5c. Teach it objects by picture (and let deaths teach it)
+
+`hazards/` holds pictures of objects (see `hazards.py`). Every other frame they
+are searched for ahead of the icon; a match becomes a hazard box that the cyan
+line, the shield and the brain treat like a spike.
+
+- `python hazards.py --grab hazard` -- with GD paused and the object on screen,
+  drag a tight box around something deadly the detector misses (a saw, a
+  coloured spike...) and press ENTER. Training picks it up within ~10 s.
+- `python hazards.py --grab safe` -- the same for something harmless that the
+  detector calls a hazard (red box on decoration): its hazard boxes are dropped.
+- **Learning from deaths** (automatic, needs death snapshots on): when it dies
+  and the detector had nothing deadly at the icon while the cyan line called it
+  safe, the picture right in front of the icon is kept in
+  `hazards/candidates/`. A second unexplained death in front of something that
+  looks the same makes it a learned hazard (`hazards/learned/`, the console
+  says so). Empty ground and repeating background are never learned. Wrong
+  one? Delete the file, or move it into `hazards/safe/`.
+- `python hazards.py --list` shows what's in use. `--hazards none` turns it off.
+
+Spikes also carry which way they point now: hanging spikes (tip down) and
+spikes on pillar sides get their hitbox at the BASE, like GD (before, every
+spike got a standing spike's hitbox, shifted toward a hanging spike's tip).
 
 ## 6. YOLO: teach the detector a level's art (e.g. Deadlocked)
 
