@@ -55,8 +55,8 @@ N_ENT = 8                         # nearest entities ahead of the player
 ENT_CLASSES = 7                   # spike, orb_y, orb_b, orb_p, pad, portal, wall
 ENT_FEAT = 7 + ENT_CLASSES        # present, x0, x1, y0, y1, hue cos, hue sin, one-hot
 N_HIST = 8                        # past decision steps of (vertical speed, action)
-from gd_physics import (MODES, MODE_ID, N_PLANS, Body, ModeEstimator, MotionLearner, Phys, inst_vy,
-                        load_motion, save_motion, simulate_plans, surfaces_at)
+from gd_physics import (MODES, MODE_ID, N_PLANS, SEARCH_KEYS, Body, ModeEstimator, MotionLearner, Phys,
+                        inst_vy, load_motion, robust_search, save_motion, simulate_plans, surfaces_at)
 N_MODE = len(MODES) + 3            # mode one-hot, gravity (+1/-1), mini, confidence
 N_PLAN = 3 * N_PLANS + 1           # per action plan: hits?, time to hit, clearance; + time to ledge
 N_RESERVED = 12                    # spare inputs (zero today) so future features don't need a new brain
@@ -68,6 +68,9 @@ N_GLOBAL = OFF_RES + N_RESERVED
 OBS_DIM = N_GLOBAL + N_ENT * ENT_FEAT
 OBS_VERSION = 5
 RESERVED = slice(OFF_RES, OFF_RES + N_RESERVED)
+# spare inputs in use: +0..+5 "tap in 1" / "tap in 3" plans; +6..+8 search: survival if
+# press now / release now then release / release now then press (1 = survives); +9 = 1
+OFF_SEARCH = OFF_RES + 6
 
 ASPECT = 16.0 / 9.0
 BLOCK_W = BLOCK_FRAC_H / ASPECT   # one block as a fraction of screen width
@@ -107,10 +110,15 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
             continue
         top = (py - (e.y - e.h / 2)) / BLOCK_H
         bot = (py - (e.y + e.h / 2)) / BLOCK_H
-        if c == 0:   # spike hitboxes are much smaller than the sprite
+        if c == 0:   # spike hitboxes are smaller than the sprite
+            # (was 0.3 / 0.35. A little bigger than GD's real hitbox on purpose: it's the
+            # safety margin. Replaying the real actions before live deaths, the old size let
+            # many fatal jumps "clear" the spike, and in the simulator the shield got further
+            # with this size (87% vs 76% avg). Much bigger and a triple spike -- which GD
+            # lets you clear at 1x -- becomes impossible for the preview.)
             w = x1 - x0
             hh = top - bot
-            haz.append((x0 + 0.3 * w, x1 - 0.3 * w, bot + 0.1 * hh, top - 0.35 * hh))
+            haz.append((x0 + 0.25 * w, x1 - 0.25 * w, bot + 0.1 * hh, top - 0.3 * hh))
         elif c == 6:
             solid.append((x0, x1, bot, top))
         elif c == CLS_ID["portal"]:
@@ -122,7 +130,7 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
                      frame_skip: int, vy_bps: float, grounded: bool, prev_hold: bool,
                      floor_rel: float | None, ceil_rel: float | None, horizon: float = 1.5,
                      dec_dt: float | None = None, motion: MotionLearner | None = None,
-                     out: dict | None = None, state=None):
+                     out: dict | None = None, state=None, search: bool = True, half: float = 0.5):
     """Mode block + action-plan outcomes for the current frame.
 
     floor_rel / ceil_rel: surface heights relative to the icon centre (None =
@@ -134,7 +142,8 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     if not grounded and est.mode not in ("ship", "wave") and est.g * vy_bps < 1.5 * ModeEstimator.REST:
         # (the landing step's measured speed is still the fall speed; "not rising" is enough)
         fl, ce = surfaces_at(0.0, solid, floor_rel, ceil_rel)
-        grounded = any(abs(q) < 0.12 for q in (fl if est.g == 1 else ce))
+        # (0.25, not 0.12: the box centre sits up to ~0.3 off the icon's real centre)
+        grounded = any(abs(q) < 0.25 for q in (fl if est.g == 1 else ce))
     # input delay: the icon is still reacting to actions sent `est.lag` steps ago
     eff_prev = est.eff_hold(0) if est.lag > 0 else prev_hold
     dtd = dec_dt or frame_skip / 60.0
@@ -142,16 +151,37 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     y0 = 0.0
     if state is not None and not grounded:      # arc fit (env): steadier than 2 frames
         y0, vy0 = float(state[0]), float(state[1])
+    if grounded and est.mode not in ("ship", "wave"):
+        # The player box is only the coloured part of the icon, so its centre sits up to
+        # ~0.3 blocks off the icon's real centre (which part depends on how it landed).
+        # Standing on a known surface, the real centre is exactly half a block above it.
+        fl_, ce_ = surfaces_at(0.0, solid, floor_rel, ceil_rel, half)
+        rest = [q for q in (fl_ if est.g == 1 else ce_) if abs(q) < 0.35]
+        if rest:
+            y0, vy0 = min(rest, key=abs), 0.0
     body = Body(y0, vy0, est.g, grounded, est.mode, est.mini, 0.0, eff_prev)
     xo: list = []
+    pend = est.pending()
     plan, paths = simulate_plans(body, haz, solid, floor_rel, ceil_rel, speed, phys,
-                                 frame_skip=frame_skip, horizon=horizon, dec_dt=dec_dt,
-                                 lag=est.lag, pending=est.pending(), motion=motion, extra_out=xo)
+                                 frame_skip=frame_skip, horizon=horizon, dec_dt=dec_dt, half=half,
+                                 lag=est.lag, pending=pend, motion=motion, extra_out=xo)
+    if search:
+        try:
+            sr = robust_search(body, haz, solid, floor_rel, ceil_rel, speed, phys, dtd, est.lag, pend,
+                               pending_long=est.pending(est.lag + 1), horizon=horizon, half=half,
+                               want_path=True)
+            paths = list(paths) + [("best", bool(sr.get("path_hit")), sr.get("path") or [])]
+            if out is not None:
+                out["search"] = sr
+        except Exception as ex:   # never let the search take the preview down
+            if out is not None:
+                out["search_error"] = repr(ex)
     if out is not None and xo:
         out["extra_plans"] = xo[0]   # "tap in 1" / "tap in 3" -> the brain's spare inputs
     if out is not None:   # the state the preview started from (to learn from what happens next)
-        out["inputs"] = {"grounded": bool(grounded), "vy0": float(vy0), "floor_rel": floor_rel, "ceil_rel": ceil_rel,
-                         "lag": int(est.lag), "pending": [bool(x) for x in est.pending()],
+        out["inputs"] = {"grounded": bool(grounded), "vy0": float(vy0), "y0": float(y0),
+                         "floor_rel": floor_rel, "ceil_rel": ceil_rel,
+                         "lag": int(est.lag), "pending": [bool(x) for x in pend],
                          "motion": bool(motion is not None and motion.active_for(est.mode)),
                          "cube_v0": float(phys.cube_v0), "cube_g": float(phys.cube_g)}
         out["body"] = body
@@ -166,7 +196,7 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
 
 def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
                player_found: bool | None = None, speed: float = SPEED_1X,
-               hist=None, mode=None, plan=None, extra=None) -> np.ndarray:
+               hist=None, mode=None, plan=None, extra=None, search=None) -> np.ndarray:
     """Entities -> flat (OBS_DIM,) float32. Player-relative, in block units / 8.
 
     Globals tell the policy what the boxes can't:
@@ -199,6 +229,9 @@ def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
         out[OFF_PLAN:OFF_PLAN + N_PLAN] = plan
     if extra is not None:           # extra plan timings, in the first spare inputs
         out[OFF_RES:OFF_RES + len(extra)] = extra
+    if search is not None:          # best survival per first action (later decisions played well)
+        out[OFF_SEARCH:OFF_SEARCH + 3] = [float(search[k]) for k in SEARCH_KEYS]
+        out[OFF_SEARCH + 3] = 1.0
     # the rest of out[RESERVED] stays 0: room for future features without a new brain
     half_pw = 0.5 * BLOCK_W
     ahead = []
@@ -407,6 +440,14 @@ class EntityBoxEnv(gym.Wrapper):
         self._ceil_y = None                      # ... of the ceiling when upside down
         self._portal_cool = 0
         self.speed = None                        # blocks/s, from the tracker
+        self._speed_hist: deque = deque(maxlen=15)
+        self._line_raw = [None, None]            # last raw ground / ceiling line (screen y)
+        self._lines = (None, None)               # confirmed lines this step
+        self.use_lines = True
+        self.use_search = True                   # the best-continuation search (shield + brain)
+        self._last_search = None
+        self._rest_true = None                   # real resting centre height (y_b) on the ground
+        self._dt_frame = None
         self._moving: list = []
         self._prev_py: float | None = None
         self._prev_attempts = 1
@@ -474,12 +515,67 @@ class EntityBoxEnv(gym.Wrapper):
         return cur
 
     def _update_speed(self, sc, moved: bool) -> None:
-        """Scroll speed from the hazard tracker (blocks/s), smoothed."""
+        """Scroll speed from the hazard tracker (blocks/s): the scroll of THIS step over
+        THIS step's real length, then the median of the last ~15 (was the average step
+        length + a fast average: live speeds wobbled 7.6..13 blocks/s around a true 10.4,
+        so where a spike would be in 1 s moved by +-2 blocks step to step)."""
         if sc is None or not moved:
             return
-        bps = abs(sc) / BLOCK_W / self._step_dt(peek=True)
+        bps = abs(sc) / BLOCK_W / max(1e-3, self._motion_dt())
         if 3.0 <= bps <= 30.0:
-            self.speed = bps if self.speed is None else 0.6 * self.speed + 0.4 * bps
+            self._speed_hist.append(bps)
+            self.speed = float(np.median(self._speed_hist))
+
+    def _motion_dt(self) -> float:
+        """Real time between the last two frames: the screen capture's own frame times
+        when it has them (dxcam 0.3+), else the time between our observations."""
+        d = getattr(self, "_dt_frame", None)
+        return d if d else (getattr(self, "_dt_raw", None) or self._step_dt(peek=True))
+
+    def _frame_time_step(self) -> None:
+        """Update _dt_frame from the capture's frame timestamps (None if unavailable)."""
+        cap = getattr(self.base, "cap", None) if self.base is not None else None
+        ts = getattr(cap, "last_frame_ts", None) if cap is not None else None
+        last = getattr(self, "_ts_last", None)
+        self._dt_frame = None
+        nom = self.frame_skip / 60.0
+        if ts is not None and last is not None and 0.4 * nom <= ts - last <= 3.0 * nom:
+            self._dt_frame = float(ts - last)
+        if ts is not None:
+            self._ts_last = ts
+
+    def _surface_lines(self, frame) -> tuple:
+        """(floor, ceiling) screen heights (fractions, None = not seen). GD draws a bright,
+        paler line along the top of the ground and the bottom of a ceiling, all the way
+        across the screen. That line is exact (live: the floor estimated from standing
+        positions was off by up to 1.2 blocks after deaths froze the icon in mid-air), and
+        it follows the camera. A line must be seen at the same height twice in a row."""
+        try:
+            import cv2
+            img = np.asarray(frame)
+            h, w = img.shape[:2]
+            cols = np.r_[int(0.05 * w):int(0.28 * w), int(0.48 * w):int(0.95 * w)]   # not the icon
+            hsv = cv2.cvtColor(np.ascontiguousarray(img[:, cols, :3]), cv2.COLOR_RGB2HSV)
+            sc = hsv[:, :, 2].astype(np.int16) - (hsv[:, :, 1].astype(np.int16) >> 1)
+            up, dn = np.roll(sc, 2, axis=0), np.roll(sc, -2, axis=0)
+            ridge = ((sc - np.maximum(up, dn)) > 12).mean(axis=1)
+            ridge[:2] = 0
+            ridge[-2:] = 0
+            res = []
+            for lo, hi_ in ((0.45, 0.99), (0.01, 0.55)):
+                r0, r1 = int(lo * h), int(hi_ * h)
+                r = r0 + int(np.argmax(ridge[r0:r1]))
+                res.append((r + 0.5) / h if ridge[r] > 0.45 else None)
+        except Exception as ex:
+            self._loud("surface-lines", ex)
+            res = [None, None]
+        out = []
+        for k, y in enumerate(res):
+            prev = self._line_raw[k]
+            self._line_raw[k] = y
+            ok = y is not None and prev is not None and abs(y - prev) < 0.012
+            out.append(y if ok else None)
+        return tuple(out)
 
     def _observe(self, frame, hold: bool) -> np.ndarray:
         self.last_frame = frame
@@ -499,7 +595,10 @@ class EntityBoxEnv(gym.Wrapper):
         pl = ents.player()
         spd = self.speed or SPEED_1X
         dt_plan = self._step_dt()                       # typical step (plan timing)
-        dt = getattr(self, "_dt_raw", None) or dt_plan  # this step's real length (motion)
+        self._frame_time_step()
+        dt = self._motion_dt()                          # this step's real length (motion)
+        line_fl, line_ce = self._surface_lines(frame) if self.use_lines else (None, None)
+        self._lines = (line_fl, line_ce)
         prev_hold = bool(self._hist and self._hist[-1][1] > 0.5)
         vy_step = player_vy(ents, self._prev_py) if pl is not None else 0.0
         vy_bps = vy_step / dt
@@ -541,7 +640,10 @@ class EntityBoxEnv(gym.Wrapper):
             # path sank through it and slid UNDER the first spike -- "safe" until too late.
             g_ = self.mode_est.g
             on_block = self._on_block(ents, py, g_)
-            if grounded and not on_block:
+            # (only while the level scrolls: a death freezes the icon wherever it died,
+            # and those "standing" heights dragged the floor up to 1.2 blocks off)
+            scrolling = sc0 is not None and abs(sc0) > 0.0025 * self.frame_skip
+            if grounded and not on_block and scrolling:
                 if g_ == 1 and (self._ceil_y is None or py - self._ceil_y > 1.5 * BLOCK_H):
                     if self._floor_hist and abs(py - float(np.median(self._floor_hist))) > 3 * BLOCK_H:
                         self._floor_hist.clear()          # the level's ground moved (new section)
@@ -554,11 +656,17 @@ class EntityBoxEnv(gym.Wrapper):
                         self._ceil_hist.clear()
                     self._ceil_hist.append(py)
                     self._ceil_y = float(np.median(self._ceil_hist))
-            if self._floor_y is not None:
+            if line_fl is not None and line_fl > py + 0.2 * BLOCK_H:
+                # the ground line: exact. Relative to the box centre, which may sit off the
+                # icon's real centre (the preview corrects for that while standing)
+                floor_rel = min(-0.15, (py - line_fl) / BLOCK_H)
+            elif self._floor_y is not None:
                 floor_rel = (py - self._floor_y) / BLOCK_H - 0.5
                 if (grounded and g_ == 1 and not on_block) or floor_rel > -0.5:
                     floor_rel = -0.5                      # standing on it / never inside the icon
-            if self._ceil_y is not None and g_ == -1:
+            if line_ce is not None and line_ce < py - 0.2 * BLOCK_H:
+                ceil_rel = max(0.15, (py - line_ce) / BLOCK_H)   # a real ceiling line
+            elif self._ceil_y is not None and g_ == -1:
                 ceil_rel = (py - self._ceil_y) / BLOCK_H + 0.5   # only matters upside down
                 if (grounded and not on_block) or ceil_rel < 0.5:
                     ceil_rel = 0.5
@@ -576,17 +684,27 @@ class EntityBoxEnv(gym.Wrapper):
             except Exception as ex:
                 self._loud("motion-learn", ex)
         out: dict = {}
+        if pl is not None and grounded and floor_rel is not None and self.mode_est.g == 1:
+            # where the icon's REAL centre rests (for the takeoff model of the next jump)
+            self._rest_true = (0.75 - ents.player_pos()[1]) / BLOCK_H + floor_rel + 0.5 \
+                if abs(floor_rel + 0.5) < 0.35 else None
+        elif grounded:
+            self._rest_true = None
         fit = self._air_fit(pl, grounded)
         mf, plan, self.last_arcs = physics_features(ents, spd, self.mode_est, self.phys, self.frame_skip,
                                                     vy_bps, grounded, hold, floor_rel, ceil_rel, dec_dt=dt_plan,
                                                     state=fit,
                                                     motion=self.motion_fix if self.use_motion_fix else None,
-                                                    out=out)
+                                                    out=out, search=self.use_search)
         self._mstate = (out["body"], out["surf"], spd, key) if (pl is not None and "body" in out) else None
         self._last_inputs = out.get("inputs")
+        self._last_search = out.get("search")
+        if "search_error" in out:
+            self._loud("search", RuntimeError(out["search_error"]))
         self.timing["physics"] += time.perf_counter() - _t1
         v = encode_obs(ents, hold=hold, prev_py=self._prev_py,
-                       speed=spd, hist=self._hist, mode=mf, plan=plan, extra=out.get("extra_plans"))
+                       speed=spd, hist=self._hist, mode=mf, plan=plan, extra=out.get("extra_plans"),
+                       search=out.get("search"))
         self._hist.append((player_vy(ents, self._prev_py) if pl is not None else 0.0, 1.0 if hold else 0.0))
         self._prev_py = ents.player_pos()[1] if pl is not None else self._prev_py
         return v
@@ -631,6 +749,9 @@ class EntityBoxEnv(gym.Wrapper):
             "dt": self._step_dt(peek=True), "speed": float(self.speed or SPEED_1X), "prog": prog,
             "floor_rel": getattr(self, "_last_floor_rel", None), "ceil_rel": getattr(self, "_last_ceil_rel", None),
             "preview_inputs": getattr(self, "_last_inputs", None),
+            "search": ({k: round(float(self._last_search[k]), 3) for k in SEARCH_KEYS}
+                       if self._last_search else None),
+            "lines": [None if q is None else round(float(q), 4) for q in self._lines],
         }
 
     def _new_attempt(self) -> None:
@@ -837,25 +958,38 @@ class EntityBoxEnv(gym.Wrapper):
         if y is None or grounded or me.mode not in ("cube", "robot", "ball", "ufo", "spider"):
             self._air = [] if y is None else [(0.0, y)]
             self._air_from_rest = y is not None and grounded     # an arc starting from the ground
+            self._air_rest = self._rest_true if (grounded and self._rest_true is not None) else y
             return None
-        t = (self._air[-1][0] + (getattr(self, "_dt_raw", None) or self.frame_skip / 60.0)) if self._air else 0.0
+        t = (self._air[-1][0] + self._motion_dt()) if self._air else 0.0
         if self._air and abs(y - self._air[-1][1]) > 3.0:
             self._air = []                       # teleport / respawn: start over
             self._air_from_rest = False
+        G = {"ball": self.phys.ball_g, "ufo": self.phys.ufo_g}.get(me.mode, self.phys.cube_g) * me.g
+        v_jump = self.phys.cube_v0 * (self.phys.mini if me.mini else 1.0) * me.g
+        if me.mode == "cube" and len(self._air) >= 2 and me.g * (
+                (y - self._air[-1][1]) / max(1e-3, t - self._air[-1][0])
+                - (self._air[-1][1] - self._air[-2][1]) / max(1e-3, self._air[-1][0] - self._air[-2][0])) > 0.5 * abs(v_jump):
+            # bounced: held SPACE through a landing and jumped again without a resting frame.
+            # A new arc from the ground (the old one made the fit fail -> raw 2-frame speed)
+            self._air = [(t - self._motion_dt(), self._air[-1][1])]
+            self._air_from_rest = True
+            self._air_rest = self._rest_true if self._rest_true is not None else self._air[0][1]
         if me.mode in ("ufo", "ball") and me.eff_hold(0) and not me.eff_hold(1):
             self._air = self._air[-8:]           # a UFO tap / ball flip starts a new arc
         self._air.append((t, y))
         self._air = self._air[-8:]
-        if len(self._air) < 3:
+        from_rest = getattr(self, "_air_from_rest", False) and me.mode == "cube"
+        if len(self._air) < (2 if from_rest else 3):
             return None
-        G = {"ball": self.phys.ball_g, "ufo": self.phys.ufo_g}.get(me.mode, self.phys.cube_g) * me.g
-        if getattr(self, "_air_from_rest", False) and me.mode == "cube" and len(self._air) <= 12:
+        if from_rest and len(self._air) <= 12:
             # From the ground the takeoff speed is KNOWN (a jump: the measured jump speed;
             # walking off a ledge: 0): only the takeoff moment inside the first step is
-            # unknown. Much steadier than fitting the speed from a few wobbly heights.
+            # unknown. Much steadier than fitting the speed from a few wobbly heights --
+            # and usable from the FIRST frame in the air (live: the raw speed there was
+            # ~4 blocks/s for a jump really going up at ~18, so it "fell" onto the spike).
             T = np.array([q[0] for q in self._air]); Y = np.array([q[1] for q in self._air])
-            y_rest, t1 = Y[0], (T[1] if len(T) > 1 else 0.0)
-            v_jump = self.phys.cube_v0 * (self.phys.mini if me.mini else 1.0) * me.g
+            rest = getattr(self, "_air_rest", None)
+            y_rest, t1 = (Y[0] if rest is None else float(rest)), (T[1] if len(T) > 1 else 0.0)
             best = None
             for v0 in (v_jump, 0.0):
                 for tau in np.linspace(0.0, t1, 6):

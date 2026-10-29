@@ -88,6 +88,8 @@ class GDCapture:
         self._period_s: float = 1.0 / float(self.cfg.target_fps)
         self._period_ns: int = int(round(1e9 / float(self.cfg.target_fps)))
         self._camera = None
+        self.last_frame_ts: float | None = None   # when the newest frame was shown (seconds)
+        self._ts_mode: str | None = None          # "dxcam" (exact) / "none" (arrival times)
         self._bgr_direct: bool = True  # True once we confirm native BGR path
         self._running: bool = False
         self._lock = threading.Lock()
@@ -432,7 +434,7 @@ class GDCapture:
         t_in = time.perf_counter()
         missed = self._throttle_to_fps_cap()
         try:
-            frame = self._camera.get_latest_frame()
+            frame, ts = self._latest_with_time()
         except Exception:  # noqa: BLE001 - DXGI lost device etc.
             with self._lock:
                 self._restart_locked("get_latest_frame raised")
@@ -465,6 +467,7 @@ class GDCapture:
             return self._stacked_obs()
         with self._lock:
             self._push(small)
+            self.last_frame_ts = ts
             self._fullres = frame  # dxcam owns buffer; read-only use, same-tick only
             self._hires = getattr(self, "_hires_next", None)
             self._consec_none = 0
@@ -473,6 +476,28 @@ class GDCapture:
         self._note_tick(missed, fresh=True)
         self._lat_ms.append((time.perf_counter() - t_in) * 1000.0)
         return obs
+
+    def _latest_with_time(self):
+        """(frame, seconds) -- when the game put that frame on screen if dxcam can tell
+        (0.3+: get_latest_frame(with_timestamp=True)), else when we received it. Motion is
+        measured over the real time between two frames: the newest frame is up to a frame
+        older or newer than our decision tick, which made measured speeds wobble ~20%."""
+        if getattr(self, "_ts_mode", None) != "none":
+            try:
+                got = self._camera.get_latest_frame(with_timestamp=True)
+                if isinstance(got, tuple) and len(got) == 2:
+                    frame, ts = got
+                    if ts is not None and float(ts) > 0:
+                        if getattr(self, "_ts_mode", None) is None:
+                            self._ts_mode = "dxcam"
+                            log.info("frame times: from dxcam (exact)")
+                        return frame, float(ts)
+                    return frame, time.perf_counter()
+                return got, time.perf_counter()
+            except TypeError:
+                self._ts_mode = "none"       # older dxcam: no timestamps
+                log.info("frame times: dxcam has none, using arrival times")
+        return self._camera.get_latest_frame(), time.perf_counter()
 
     def _note_tick(self, missed: int, *, fresh: bool) -> None:
         """Exact accounting, one read() = exactly one tick.

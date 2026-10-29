@@ -6,12 +6,14 @@ ending just after the moment of the crash (red border), each with
 
   - the boxes the detector found (red = spike, gray = block, green = player, ...)
   - the predicted paths (thick green = tap now, yellow = tap in 4,
-    magenta = hold, white dots = don't press, red X = that path crashes)
+    magenta = hold, white dots = don't press, thick cyan = the best line the search
+    found, red X = that path crashes), light blue line = detected ground / ceiling
   - a header: time before the crash, what was sent (PRESS / ----), whether the
     safety shield changed the brain's choice, the mode the recogniser thinks
     it's in, the input delay, how much the brain wanted to jump (Q hold-release)
-  - a second line: best survival (0..1 of 1.5 s, 1 = no crash) of the
-    "press now" and "don't press now" plans the shield compares.
+  - a second line: the search's safety score if it presses now / waits, with every later
+    decision played well (1 = safe, 0.9-0.99 = safe only if the timing is exactly as
+    measured, below 0.85 = crashes) -- what the shield uses.
 
 Plus a .json with the same numbers for every kept step (for analysis).
 Only the newest `keep` deaths are kept, so the folder never grows past ~60 MB.
@@ -65,22 +67,27 @@ def _draw(frame, rec) -> np.ndarray:
     if pp is not None:
         ppx, ppy = pp
         for name, hit, pts in rec["arcs"]:
-            if name not in ("tap now", "tap in 4", "release", "hold") or len(pts) < 2:
+            if name not in ("tap now", "tap in 4", "release", "hold", "best") or len(pts) < 2:
                 continue
             if name == "hold" and rec["mode"] not in ("ship", "wave", "robot"):
                 continue
             P = np.array([[(ppx + px * BLOCK_W) * W, (ppy - py * BLOCK_H) * H] for px, py in pts], np.int32)
-            col = {"tap now": (0, 255, 0), "tap in 4": (0, 255, 255), "hold": (255, 0, 255)}.get(name, (255, 255, 255))
+            col = {"tap now": (0, 255, 0), "tap in 4": (0, 255, 255), "hold": (255, 0, 255),
+                   "best": (255, 255, 0)}.get(name, (255, 255, 255))
             if name == "release":
                 for q in P[::3]:
                     cv2.circle(img, (int(q[0]), int(q[1])), 2, col, -1)
             else:
-                cv2.polylines(img, [P], False, (0, 0, 0), 4 if name == "tap now" else 3, cv2.LINE_AA)
-                cv2.polylines(img, [P], False, col, 2 if name == "tap now" else 1, cv2.LINE_AA)
+                thick = name in ("tap now", "best")
+                cv2.polylines(img, [P], False, (0, 0, 0), 4 if thick else 3, cv2.LINE_AA)
+                cv2.polylines(img, [P], False, col, 2 if thick else 1, cv2.LINE_AA)
             if hit:
                 ex, ey = (int(v) for v in P[-1])
                 cv2.line(img, (ex - 6, ey - 6), (ex + 6, ey + 6), (0, 0, 255), 3)
                 cv2.line(img, (ex - 6, ey + 6), (ex + 6, ey - 6), (0, 0, 255), 3)
+    for q in rec.get("lines") or []:          # detected ground / ceiling line (light blue)
+        if q is not None:
+            cv2.line(img, (0, int(q * H)), (W - 1, int(q * H)), (255, 200, 120), 1)
     tile = cv2.resize(img, (TILE_W, TILE_H), interpolation=cv2.INTER_AREA)
     return tile
 
@@ -96,9 +103,15 @@ def _header(tile, rec, t_rel: float, is_crash: bool) -> None:
     bp, br = s.get("best_press"), s.get("best_release")
     fl, ce = rec.get("floor_rel"), rec.get("ceil_rel")
     surf = (f" floor{fl + 0.5:+.1f}" if fl is not None else " floor?") + (f" ceil{ce - 0.5:+.1f}" if ce is not None else "")
-    l2 = ("no preview (player not found)" if bp is None else
-          f"press-now {bp:.2f} release-now {br:.2f} spikes {rec['n_spikes']}{surf}"
-          + ("" if rec["player"] else "  NO PLAYER"))
+    sr = rec.get("search")
+    if sr:   # the search (later decisions played well): what the shield goes by
+        l2 = (f"safe? press {sr['1']:.2f} wait {max(sr['00'], sr['01']):.2f}"
+              f"{' (only if press next)' if sr['00'] < sr['01'] else ''} spikes {rec['n_spikes']}{surf}"
+              + ("" if rec["player"] else "  NO PLAYER"))
+    else:
+        l2 = ("no preview (player not found)" if bp is None else
+              f"press-now {bp:.2f} release-now {br:.2f} spikes {rec['n_spikes']}{surf}"
+              + ("" if rec["player"] else "  NO PLAYER"))
     cv2.rectangle(tile, (0, 0), (TILE_W, 30), (0, 0, 0), -1)
     cv2.putText(tile, l1, (3, 12), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (255, 255, 255), 1, cv2.LINE_AA)
     cv2.putText(tile, l2, (3, 26), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (200, 255, 200), 1, cv2.LINE_AA)

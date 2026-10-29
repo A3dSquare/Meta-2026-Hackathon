@@ -456,12 +456,34 @@ def safety_shield(obs: np.ndarray, a: int) -> int:
     learns from the action actually taken.
     """
     try:
-        from env_boxes import OFF_PLAN, OFF_RES, OBS_DIM
+        from env_boxes import OFF_PLAN, OFF_RES, OFF_SEARCH, OBS_DIM
         from gd_physics import EXTRA_PLANS, N_PLANS, PLANS
     except Exception:
         return a
     if obs is None or len(obs) != OBS_DIM:
         return a
+    if obs[OFF_SEARCH + 3] > 0.5:
+        # The search (every later decision played well, checked in a slightly worse world
+        # too). Replaying live deaths: the 8 fixed plans called most steps before a crash
+        # "doomed either way" (they can't jump twice), so this rule had nothing to go on.
+        from gd_physics import safety_level
+        p1, w00, w01 = (float(v) for v in obs[OFF_SEARCH:OFF_SEARCH + 3])
+        L1, L00, L01 = safety_level(p1), safety_level(w00), safety_level(w01)
+        Lw = max(L00, L01)
+        # levels: 2 = survives even if the timing is a bit worse than measured, 1 = only as
+        # measured, 0 = crashes. Take the safer first action; same level -> the brain decides
+        if int(a) == 1 and L1 < Lw:
+            return 0                        # pressing now is less safe than waiting
+        if int(a) == 0 and Lw < L1:
+            return 1                        # only pressing now is that safe
+        if int(a) == 0 and L00 < L01 == Lw and L1 >= Lw and Lw > 0:
+            return 1                        # waiting only works by pressing at the very next step:
+                                            # timing that tight flips with jitter -- press now
+        if L1 == 0 and Lw == 0:             # doomed both ways (as far as we can see): buy time
+            mine, other = (p1, max(w00, w01)) if int(a) == 1 else (max(w00, w01), p1)
+            if other > mine + 0.12:
+                return 1 - int(a)
+        return int(a)
     f = obs[OFF_PLAN:OFF_PLAN + 3 * N_PLANS]
     if not np.any(f):                       # no preview this step (icon not found)
         return a

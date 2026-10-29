@@ -348,6 +348,184 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
     return feats, paths
 
 
+# --------------------------------------------------------------------------- #
+# Search: "is there ANY way to survive if I press / don't press now?"
+# --------------------------------------------------------------------------- #
+# The 8 fixed plans press at most once (or hold forever), so two obstacles in a row
+# ("jump, land, jump again") made EVERY plan crash 0.5-1 s early and the safety shield
+# had nothing to compare (live logs: most steps before a death looked "doomed either
+# way"). This search plays every later decision well: at each decision every surviving
+# state branches into press / release, identical states are merged, and a small beam
+# per first action keeps it fast (~1-2 ms). It answers the question the shield needs.
+SEARCH_KEYS = ("1", "00", "01")      # press now / release now + next / release now, press next
+
+
+def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
+                dec_dt: float, lag: int = 0, pending=(), horizon: float = 1.5,
+                half: float = 0.5, beam: int = 10, want_path: bool = False,
+                late_every: float = 0.0) -> dict:
+    """Longest survival (fraction of `horizon`, 1.0 = survives it all) for each first
+    action ("1" = press now, "00" = release now and at the next decision, "01" =
+    release now, press at the next decision), with every later decision chosen well.
+    With want_path, also the path (x, y) of the best line found and whether it crashes.
+
+    Each state carries the SET of first actions that can reach it (bit 0 = "1",
+    bit 1 = "00", bit 2 = "01"), so lines that end up in the same state (e.g. back on
+    the ground) are simulated once."""
+    dt = 1.0 / 30.0
+    pending = list(pending)[-lag:] if lag > 0 else []
+    n_pend = len(pending)
+    fine = int(round(0.5 / dt))
+    times = [k * dt for k in range(1, fine + 1)]
+    while times[-1] + 1e-9 < horizon:
+        times.append(min(horizon, times[-1] + 2 * dt))
+    root_node = (0.0, body.y, None)
+    ALL, B1, B00, B01 = 7, 1, 2, 4
+    # a state: [Body, root mask, hold this step, path node]
+    states = [(Body(body.y, body.vy, body.g, body.grounded, body.mode, body.mini, body.boost, body.prev_hold),
+               ALL, False, root_node)]
+    best = [0.0, 0.0, 0.0]
+    best_node = [root_node, root_node, root_node]
+
+    def credit(mask: int, t_frac: float, node) -> None:
+        for i in range(3):
+            if mask >> i & 1 and t_frac > best[i]:
+                best[i] = t_frac
+                best_node[i] = node
+
+    every = max(1, int(round(late_every / dec_dt))) if late_every > 0 else 1
+    t_prev, x_prev, last_jd = 0.0, 0.0, -1
+    for t in times:
+        if not states:
+            break
+        x = speed * t
+        jd = int(t_prev / dec_dt + 1e-9)            # decision index during this step (0 = now)
+        if jd < n_pend:
+            hp = bool(pending[jd])
+            states = [(b, m, hp, nd) for b, m, _h, nd in states]
+        elif jd != last_jd and (t_prev < 0.5 or jd % every == 0):
+            k = jd - n_pend                         # which free decision this is (0 = now)
+            new = []
+            for b, m, _h, nd in states:
+                for h in (True, False):
+                    if k == 0:
+                        m2 = m & (B1 if h else (B00 | B01))
+                    elif k == 1:
+                        m2 = m & ((B1 | B01) if h else (B1 | B00))
+                    else:
+                        m2 = m
+                    if m2:
+                        new.append((Body(b.y, b.vy, b.g, b.grounded, b.mode, b.mini, b.boost, b.prev_hold),
+                                    m2, h, nd))
+            states = new
+        last_jd = jd
+        dt_i = t - t_prev
+        floors, ceils = surfaces_at(x, solid, floor, ceil, half)
+        lo, hi = x_prev - half, x + half                 # swept horizontally (no tunnelling)
+        hz = [(h_[2], h_[3]) for h_ in haz if h_[0] < hi and h_[1] > lo]
+        so = [(s_[2], s_[3]) for s_ in solid if s_[0] < hi - 0.05 and s_[1] > lo + 0.05]
+        alive: list = []
+        index: dict = {}
+        for b, m, h, nd in states:
+            advance(b, h, dt_i, speed, p, (floors, ceils))
+            y = b.y
+            node = (x, y, nd) if want_path else nd
+            dead = y < -12 or y > 14
+            if not dead:
+                yt, yb_ = y + half, y - half
+                for hb, ht in hz:
+                    if hb < yt and ht > yb_:
+                        dead = True
+                        break
+                if not dead:
+                    for sb, st in so:
+                        if sb < yt - 0.12 and st > yb_ + 0.12:
+                            dead = True
+                            break
+            if dead:
+                credit(m, t / horizon, node)
+                continue
+            key = (h, b.prev_hold, round(y * 20.0), round(b.vy * 1.6667), b.grounded, b.g, round(b.boost, 2))
+            j = index.get(key)
+            if j is not None:                       # same state reached by other first actions
+                s0 = alive[j]
+                if m & ~s0[1]:
+                    alive[j] = (s0[0], s0[1] | m, s0[2], s0[3])
+                continue
+            index[key] = len(alive)
+            alive.append((b, m, h, node))
+        if len(alive) > beam:                       # keep a spread of heights for each first action
+            keep = set()
+            for i in range(3):
+                lst = [j for j, s_ in enumerate(alive) if s_[1] >> i & 1]
+                if len(lst) > beam:
+                    # evenly spread over height INCLUDING both extremes (the top one is
+                    # e.g. a ship that kept climbing -- losing it lost every way over a wall)
+                    lst.sort(key=lambda j: (alive[j][0].y, alive[j][0].vy))
+                    n_ = len(lst) - 1
+                    lst = [lst[int(round(q * n_ / (beam - 1)))] for q in range(beam)]
+                keep.update(lst)
+            alive = [alive[j] for j in sorted(keep)]
+        states = alive
+        t_prev, x_prev = t, x
+    for b, m, h, nd in states:
+        credit(m, 1.0, nd)
+    out = {k: float(best[i]) for i, k in enumerate(SEARCH_KEYS)}
+    if want_path:
+        # ties -> prefer waiting: the line then shows the LATEST safe moment to press
+        i_best = max((1, 2, 0), key=lambda i: best[i])
+        node = best_node[i_best]
+        pts = []
+        while node is not None:
+            pts.append((node[0], node[1]))
+            node = node[2]
+        out["path"] = pts[::-1]
+        out["path_hit"] = best[i_best] < 1.0
+    return out
+
+
+def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, dec_dt: float,
+                  lag: int, pending, pending_long=None, horizon: float = 1.5, half: float = 0.5,
+                  want_path: bool = False) -> dict:
+    """search_best in the measured world AND a slightly worse one (the press arrives one
+    step later, the level scrolls 4% faster). Replaying the real last seconds before live
+    deaths, timing that is half a step off explained many crashes the preview called safe.
+
+    Per first action one SAFETY score (what the brain sees and the shield uses):
+      1.0          survives in both worlds
+      0.90..0.99   survives as measured, crashes in the worse world (later = higher)
+      0..0.85      crashes even as measured (0.85 x the fraction of the horizon survived)
+    The raw values are kept under "nominal" / "worse"."""
+    if not haz and not solid:          # nothing ahead to hit: every choice is safe (fast path)
+        a = {k: 1.0 for k in SEARCH_KEYS}
+        a.update(nominal=dict(a), worse=dict(a), path=[], path_hit=False)
+        return a
+    a = search_best(body, haz, solid, floor, ceil, speed, p, dec_dt, lag, pending, horizon, half,
+                    want_path=want_path)
+    if all(a[k] < 1.0 for k in SEARCH_KEYS):
+        b = {k: 0.0 for k in SEARCH_KEYS}   # crashes as measured -> the worse world can't help
+    else:
+        pl = list(pending_long) if pending_long is not None else [False] + list(pending)
+        b = search_best(body, haz, solid, floor, ceil, speed * 1.04, p, dec_dt, lag + 1, pl[-(lag + 1):],
+                        horizon, half)
+    a["nominal"] = {k: a[k] for k in SEARCH_KEYS}
+    a["worse"] = {k: b[k] for k in SEARCH_KEYS}
+    for k in SEARCH_KEYS:
+        a[k] = safety_score(a["nominal"][k], b[k])
+    return a
+
+
+def safety_score(nominal: float, worse: float) -> float:
+    if nominal < 1.0:
+        return 0.85 * float(nominal)
+    return 1.0 if worse >= 1.0 else 0.90 + 0.09 * float(worse)
+
+
+def safety_level(v: float) -> int:
+    """2 = survives even in the worse world, 1 = only as measured, 0 = crashes."""
+    return 2 if v >= 1.0 - 1e-6 else (1 if v >= 0.895 else 0)
+
+
 def inst_vy(mode: str, g: int, mini: bool, v_avg: float, hold: bool, grounded: bool,
             dt: float, p: Phys) -> float:
     """Measured speed is the AVERAGE over the last step; the simulation wants the
@@ -632,9 +810,13 @@ class ModeEstimator:
         i = len(self.hist) - 1 - back - self.lag
         return bool(self.hist[i][1]) if 0 <= i < len(self.hist) else False
 
-    def pending(self) -> list:
-        """Actions already sent that haven't reached the icon yet (oldest first)."""
-        return [h[1] for h in list(self.hist)[len(self.hist) - self.lag:]] if self.lag > 0 else []
+    def pending(self, n: int | None = None) -> list:
+        """Actions already sent that haven't reached the icon yet (oldest first).
+        n: how many (default: the measured input delay)."""
+        n = self.lag if n is None else int(n)
+        h = list(self.hist)
+        out = [x[1] for x in h[max(0, len(h) - n):]] if n > 0 else []
+        return [0.0] * (n - len(out)) + out
 
     def resting_before(self) -> bool:
         return bool(self._rest and self._rest[-1])

@@ -55,23 +55,26 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
             cv2.putText(img, CLASSES[int(e.cls)], (x0, max(12, y0 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, c, 1)
     # physics preview (in the current mode): thick = tap now, thin yellow = tap in 4 steps,
     # thin magenta = keep holding (ship / wave / robot), white dots = don't press,
+    # thick cyan = the best line the search found (what the safety shield goes by),
     # red X = where that path would crash
     try:
         from env_boxes import BLOCK_W, BLOCK_H
         ppx, ppy = ents.player_pos()
         for name, hit, pts in getattr(env, "last_arcs", []):
-            if name not in ("tap now", "tap in 4", "release", "hold") or len(pts) < 2:
+            if name not in ("tap now", "tap in 4", "release", "hold", "best") or len(pts) < 2:
                 continue
             if name == "hold" and getattr(getattr(env, "mode_est", None), "mode", "cube") not in ("ship", "wave", "robot"):
                 continue
             P = np.array([[(ppx + x * BLOCK_W) * W, (ppy - y * BLOCK_H) * H] for x, y in pts], np.int32)
-            col = {"tap now": (0, 255, 0), "tap in 4": (0, 255, 255), "hold": (255, 0, 255)}.get(name, (255, 255, 255))
+            col = {"tap now": (0, 255, 0), "tap in 4": (0, 255, 255), "hold": (255, 0, 255),
+                   "best": (255, 255, 0)}.get(name, (255, 255, 255))
             if name == "release":
                 for q in P[::3]:
                     cv2.circle(img, tuple(int(v) for v in q), 2, col, -1)
             else:
-                cv2.polylines(img, [P], False, (0, 0, 0), 4 if name == "tap now" else 3, cv2.LINE_AA)   # outline
-                cv2.polylines(img, [P], False, col, 2 if name == "tap now" else 1, cv2.LINE_AA)
+                thick = name in ("tap now", "best")
+                cv2.polylines(img, [P], False, (0, 0, 0), 4 if thick else 3, cv2.LINE_AA)   # outline
+                cv2.polylines(img, [P], False, col, 2 if thick else 1, cv2.LINE_AA)
             if hit:                                   # red X where that path would crash
                 ex, ey = (int(v) for v in P[-1])
                 cv2.line(img, (ex - 5, ey - 5), (ex + 5, ey + 5), (0, 0, 255), 2)
@@ -80,6 +83,9 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
         if not getattr(render, "_warned", False):
             render._warned = True
             print(f"[overlay] couldn't draw the predicted paths: {ex!r}")
+    for q in getattr(env, "_lines", None) or ():   # detected ground / ceiling line
+        if q is not None:
+            cv2.line(img, (0, int(q * H)), (W - 1, int(q * H)), (255, 200, 120), 1)
     if a == 1:
         cv2.rectangle(img, (0, 0), (W - 1, H - 1), (0, 255, 0), 3)
     # jump-urge bar

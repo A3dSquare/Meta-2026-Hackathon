@@ -36,13 +36,25 @@ by every brain and level; delete it to re-measure).
 moving; the console prints `[input] measured input delay: N step(s)`). Live it
 was 1 step.
 
-**Safety shield:** before every action (chosen or random), the preview is
-checked: if that action crashes on every path but the other action has a
-path that survives, the other action is taken. Otherwise the brain decides.
+**Safety shield:** before every action (chosen or random), a SEARCH asks
+"is there any way to survive the next 1.5 s if I press now / if I wait?",
+with every later decision played well (jump, land, jump again...). It checks
+twice: as measured, and with the press arriving a step late and the level 4%
+faster. Each choice gets a safety score: 1.00 = safe both times, 0.90-0.99 =
+safe only if the timing is exactly as measured, below 0.85 = crashes. The
+shield takes the safer choice; when both are equally safe the brain decides.
 It learns from what was actually done, so it picks up the habit itself. The
 `[update]` line shows `shield saved Nx (P% of steps)`, which should shrink as
-it learns. In the simulator this took the Stereo-like level from ~60-70%
-after 55 attempts to completing it by attempt 6-14. `--no-shield` turns it off.
+it learns. (The old shield only compared 8 fixed one-press plans, which all
+crash before any "jump, land, jump" pattern, so it had nothing to go on.) In
+the simulator, an agent that never pressed by itself got 87% of the way
+through the Stereo-like level on the shield alone (old shield: 34%).
+`--no-shield` turns it off.
+
+**Floor:** read from the bright line GD draws on top of the ground (light blue
+line in the overlay), not guessed from where the cube stood. The guess drifted
+by up to 1.2 blocks after deaths froze the cube in mid-air. If a level has no
+visible ground line it falls back to the guess.
 
 **Future-proofing:** the brain has 12 spare inputs that are wired in but
 switched off. New features can be added there later without starting a new
@@ -121,9 +133,11 @@ every level (the old version started each level from scratch).
   completed within ~100 attempts.)
 - Boxes in the overlay: red = spike (small and mini spikes too), gray =
   block/wall, green = player. The thick box is the nearest hazard ahead.
-- Paths in the overlay: thick = tap now, thin yellow = tap in 4 steps, thin
-  magenta = keep holding (ship / wave / robot), dots = don't press. A path
-  turns red when it would hit something.
+- Paths in the overlay: thick green = tap now, thin yellow = tap in 4 steps,
+  thin magenta = keep holding (ship / wave / robot), dots = don't press,
+  **thick cyan = the best line the search found** (waits as long as it safely
+  can, so where it leaves the ground is the latest safe moment to jump). A red
+  X marks where a path would hit something. Light blue = detected ground line.
 
 ## 4b. Death snapshots (what it saw before each crash)
 
@@ -131,8 +145,10 @@ Every death saves `logs_boxes/deaths/death_NNNNN.png`: 12 frames, 0.1 s apart,
 ending just after the crash (red border). Each frame shows the boxes, the
 predicted paths, what was pressed (`PRESS` / `-----`), `SHIELD(brain ...)`
 when the shield overrode the brain, the mode, the input delay `dN`, the
-brain's jump urge `Q`, and `press-now` / `release-now` = how long the best
-plan starting with that action survives (1.00 = no crash in 1.5 s). The
+brain's jump urge `Q`, and `safe? press X wait Y` = the search's safety
+scores the shield used (1.00 = safe, 0.90-0.99 = safe only with exact timing,
+below 0.85 = crashes; "only if press next" = waiting works only by pressing on
+the very next step, so the shield presses now). The
 `.json` next to it has the same numbers per step. The newest 30 deaths are
 kept (`--death-snaps N` to change, 0 = off). Send a few of these when asking
 why it dies somewhere.
