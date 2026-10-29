@@ -13,7 +13,9 @@ import os
 
 
 def add_common_args(p: argparse.ArgumentParser) -> None:
-    p.add_argument("--backend", default="heuristic", choices=("heuristic", "yolo"))
+    p.add_argument("--backend", default="heuristic", choices=("heuristic", "yolo", "yolo-only"),
+                   help="heuristic = built-in rules; yolo = rules + YOLO for what they miss; "
+                        "yolo-only = everything from YOLO incl. the icon's mode (needs yolo_gd.pt)")
     p.add_argument("--model", default=None, help="checkpoint to resume (.pt for dqn, .zip for ppo)")
     p.add_argument("--algo", default="dqn", choices=("dqn", "ppo"))
     p.add_argument("--steps", "--timesteps", dest="steps", type=int, default=3_000_000)

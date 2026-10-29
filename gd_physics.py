@@ -22,6 +22,9 @@ import numpy as np
 
 MODES = ["cube", "ship", "ball", "ufo", "wave", "robot", "spider"]
 MODE_ID = {m: i for i, m in enumerate(MODES)}
+# the swing copter (GD 2.2) has its own physics below but shares the ship's slot in the
+# brain's inputs (both fly; a new slot would change the input size = need a new brain)
+MODE_ID["swing"] = MODE_ID["ship"]
 
 
 @dataclass
@@ -109,6 +112,7 @@ class Body:
     boost: float = 0.0          # robot: remaining boost time
     prev_hold: bool = False
     used: int = 0               # search: pads / orbs this path already used (bitmask)
+    dash: bool = False          # dashing (dash orb, while SPACE stays held)
 
 
 def _scale(b: Body, p: Phys) -> float:
@@ -124,7 +128,21 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
     floors, ceils = surfaces
     was_grounded = b.grounded
     dv = 0.0   # velocity lost to gravity / thrust this step (for an exact position update)
-    if m == "cube":
+    if b.dash:
+        if hold:                 # dash orb: straight ahead while held, no gravity
+            b.vy, b.grounded, b.prev_hold = 0.0, False, hold
+            return b
+        b.dash = False
+    if m == "swing":
+        # swing copter: every press flips which way it accelerates (like gravity), speed
+        # capped like the ship's
+        if press:
+            b.g = -b.g
+        dv = b.g * p.ship_down * s * dt
+        b.vy -= dv
+        b.vy = max(-p.ship_vmax * s, min(p.ship_vmax * s, b.vy))
+        b.grounded = False
+    elif m == "cube":
         if b.grounded and hold:
             b.vy, b.grounded = b.g * p.cube_v0 * s, False
         if not b.grounded:
@@ -183,22 +201,22 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
         land = [f for f in floors if y_new <= f <= max(b.y, y_new) + up]
         if land:
             y_new = max(land)
-            if b.g == 1 or m in ("ship", "wave", "ufo"):
-                b.grounded = b.g == 1 and m not in ("ship", "wave")
+            if b.g == 1 or m in ("ship", "wave", "ufo", "swing"):
+                b.grounded = b.g == 1 and m not in ("ship", "wave", "swing")
             b.vy = 0.0 if m != "wave" else b.vy
     if b.vy >= 0:
         hit_c = [c for c in ceils if min(b.y, y_new) - dn <= c <= y_new]
         if hit_c:
             y_new = min(hit_c)
-            if b.g == -1 or m in ("ship", "wave", "ufo"):
-                b.grounded = b.g == -1 and m not in ("ship", "wave")
+            if b.g == -1 or m in ("ship", "wave", "ufo", "swing"):
+                b.grounded = b.g == -1 and m not in ("ship", "wave", "swing")
             b.vy = 0.0 if m != "wave" else b.vy
     if b.grounded and hold and m in ("cube", "robot") and not was_grounded:
         # holding SPACE as it lands: GD jumps again straight away (no frame on the ground)
         b.vy, b.grounded = b.g * (p.robot_v0 if m == "robot" else p.cube_v0) * s, False
         if m == "robot":
             b.boost = p.robot_boost
-    if b.grounded and m not in ("ship", "wave"):
+    if b.grounded and m not in ("ship", "wave", "swing"):
         on = floors if b.g == 1 else ceils
         if not any(abs(y_new - f) < 0.07 for f in on):
             b.grounded = False                      # walked off an edge
@@ -413,10 +431,11 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
 
     every = max(1, int(round(late_every / dec_dt))) if late_every > 0 else 1
     t_prev, x_prev, last_jd = 0.0, 0.0, -1
+    spd_now = speed
     for t in times:
         if not states:
             break
-        x = speed * t
+        x = x_prev + spd_now * (t - t_prev)        # (speed portals change spd_now)
         jd = int(t_prev / dec_dt + 1e-9)            # decision index during this step (0 = now)
         if jd < n_pend:
             hp = bool(pending[jd])
@@ -433,7 +452,7 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                     else:
                         m2 = m
                     if m2:
-                        new.append((Body(b.y, b.vy, b.g, b.grounded, b.mode, b.mini, b.boost, b.prev_hold, b.used),
+                        new.append((Body(b.y, b.vy, b.g, b.grounded, b.mode, b.mini, b.boost, b.prev_hold, b.used, b.dash),
                                     m2, h, nd))
             states = new
         last_jd = jd
@@ -446,24 +465,32 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         # (whole-level test: every jump into the ship portal "crashed" as a cube)
         pt_here = [q for q in (portals or ()) if q[0] < hi and q[1] > lo]
         if pt_here:
+            for _x0, _x1, pb, ptop, kind, val in pt_here:
+                if kind == "speed":                  # speed portals: the whole level speeds up
+                    spd_now = float(val)
             for b, m, h, nd in states:
                 for _x0, _x1, pb, ptop, kind, val in pt_here:
                     if pb < b.y + half and ptop > b.y - half:
                         if kind == "mode" and b.mode != val:
                             b.mode, b.boost = val, 0.0
-                            if val in ("ship", "wave", "ufo"):
+                            if val in ("ship", "wave", "ufo", "swing"):
                                 b.grounded = False
                             b.vy *= 0.5
-                        elif kind == "g" and b.g != val:
+                        elif kind == "g" and val == 0 and not (b.used >> 30 & 1):
+                            b.g, b.grounded = -b.g, False           # toggle: once per portal
+                            b.used |= 1 << 30
+                        elif kind == "g" and val != 0 and b.g != val:
                             b.g, b.grounded = val, False
+                        elif kind == "size":
+                            b.mini = bool(val)
         alive: list = []
         index: dict = {}
         sp_here = [q for q in (specials or ()) if q[0] < hi and q[1] > lo]
         for b, m, h, nd in states:
             pressed = h and not b.prev_hold
-            advance(b, h, dt_i, speed, p, (floors, ceils))
+            advance(b, h, dt_i, spd_now, p, (floors, ceils))
             if sp_here:
-                special_effect(b, sp_here, pressed, half, p)
+                special_effect(b, sp_here, pressed, half, p, (floors, ceils))
             y = b.y
             # the drawn line = the surviving path with the LEAST effort (presses, holding):
             # with nothing dangerous ahead every path survives, and an arbitrary one was
@@ -513,7 +540,18 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                     # e.g. a ship that kept climbing -- losing it lost every way over a wall)
                     lst.sort(key=lambda j: (alive[j][0].y, alive[j][0].vy))
                     n_ = len(lst) - 1
-                    lst = [lst[int(round(q * n_ / (beam - 1)))] for q in range(beam)]
+                    pick = [lst[int(round(q * n_ / (beam - 1)))] for q in range(beam)]
+                    if want_path:
+                        # among states at the same height and speed keep the one with the least
+                        # effort (else a "pad launched it, no presses" line could be dropped for
+                        # a copy that holds / presses, and the drawn line showed a needless jump)
+                        grp: dict = {}
+                        for j in lst:
+                            k_ = (round(alive[j][0].y * 20.0), round(alive[j][0].vy * 1.6667))
+                            if k_ not in grp or alive[j][3][3] < alive[grp[k_]][3][3]:
+                                grp[k_] = j
+                        pick = [grp[(round(alive[j][0].y * 20.0), round(alive[j][0].vy * 1.6667))] for j in pick]
+                    lst = pick
                 keep.update(lst)
             alive = [alive[j] for j in sorted(keep)]
         states = alive
@@ -583,46 +621,64 @@ def safety_level(v: float) -> int:
     return 2 if v >= 1.0 - 1e-6 else (1 if v >= 0.895 else 0)
 
 
-# Pads and orbs (GD 2.2 launch speeds relative to the cube's own jump, 11.18):
-# yellow pad 16 (x1.43), pink pad 10.4 (x0.93), yellow orb 11.2 (x1.0), pink orb 8 (x0.72);
-# blue pad / blue orb flip gravity. Pads fire on touch, orbs on a press while touching.
-PAD_MULT = {"yellow": 1.43, "pink": 0.93}
-ORB_MULT = {"yellow": 1.0, "pink": 0.72}
-
-
-def pad_orb_kind(cls: int, hue: float):
-    """("pad" | "orb", "yellow" | "pink" | "blue") from the detector's class and hue, or None."""
+# Pads and orbs: what each type does is in gd_objects.OBJECTS (GD 2.2 strengths relative
+# to the cube's jump). Pads fire on touch, orbs on a press while touching.
+def pad_orb_kind(cls: int, hue: float, kind: str | None = None):
+    """("pad" | "orb", effect) for a detected object: from its exact type (YOLO) when known,
+    else from its class (orbs) / colour (pads). None = not a pad / orb, or unknown."""
+    from gd_objects import EFFECT, orb_pad_effect, pad_kind_from_hue
+    if kind:
+        return orb_pad_effect(kind)
     if cls in (1, 2, 3):
-        return ("orb", {1: "yellow", 2: "blue", 3: "pink"}[cls])
-    if cls == 4 and hue is not None and hue >= 0:
-        h = hue * 180.0
-        if 12 <= h <= 42:
-            return ("pad", "yellow")
-        if 135 <= h <= 175:
-            return ("pad", "pink")
-        if 85 <= h <= 120:
-            return ("pad", "blue")
+        return ("orb", EFFECT[{1: "orb_y", 2: "orb_b", 3: "orb_p"}[cls]])
+    if cls == 4:
+        k = pad_kind_from_hue(hue)
+        return orb_pad_effect(k) if k else None
     return None
 
 
-def special_effect(b: Body, here, pressed: bool, half: float, p: Phys) -> None:
-    """Apply a pad / orb the icon touches this step. here: [(x0, x1, bot, top, kind, colour, idx)]."""
-    if b.mode in ("ship", "wave"):
-        return                        # (ship / wave pad physics aren't modelled)
-    s = _scale(b, p)
-    for x0, x1, sb, st, kind, col, idx in here:
+def special_effect(b: Body, here, pressed: bool, half: float, p: Phys, surfaces=None) -> None:
+    """Apply a pad / orb the icon touches this step.
+    here: [(x0, x1, bot, top, "pad" | "orb", effect, idx)]; surfaces = (floors, ceilings)."""
+    from gd_objects import MODE_SCALE
+    s = _scale(b, p) * MODE_SCALE.get(b.mode, 1.0)
+    for x0, x1, sb, st, kind, fx, idx in here:
         if b.used >> idx & 1 or not (sb < b.y + half and st > b.y - half):
             continue
         if kind == "orb" and not pressed:
             continue
+        what = fx[0]
+        if what == "none":
+            continue
         b.used |= 1 << idx
-        if col == "blue":
-            b.g, b.grounded = -b.g, False
-            b.vy = -b.g * 0.4 * p.cube_v0 * s       # small push toward the new "down"
-        else:
-            mult = (PAD_MULT if kind == "pad" else ORB_MULT)[col]
-            b.vy, b.grounded = b.g * mult * p.cube_v0 * s, False
         b.boost = 0.0
+        if what == "jump":
+            if b.mode != "wave":
+                b.vy, b.grounded = b.g * fx[1] * p.cube_v0 * s, False
+        elif what == "down":
+            if b.mode != "wave":
+                b.vy, b.grounded = -b.g * fx[1] * p.cube_v0 * s, False
+        elif what == "flip":
+            b.g, b.grounded = -b.g, False
+            if b.mode != "wave":
+                b.vy = -b.g * fx[1] * p.cube_v0 * s       # small push toward the new floor
+        elif what == "flipjump":
+            b.g, b.grounded = -b.g, False
+            if b.mode != "wave":
+                b.vy = b.g * fx[1] * p.cube_v0 * s
+        elif what == "dash":
+            if fx[1]:
+                b.g = -b.g
+            b.dash, b.vy, b.grounded = True, 0.0, False
+        elif what == "teleport_flip":
+            floors, ceils = surfaces if surfaces else ([], [])
+            if b.g == 1:
+                tgt = [c for c in ceils if c > b.y + 0.5 and c - b.y <= p.spider_snap]
+                b.y = min(tgt) if tgt else b.y + p.spider_snap
+            else:
+                tgt = [f for f in floors if f < b.y - 0.5 and b.y - f <= p.spider_snap]
+                b.y = max(tgt) if tgt else b.y - p.spider_snap
+            b.g, b.vy = -b.g, 0.0
         return
 
 
@@ -664,6 +720,8 @@ def inst_vy(mode: str, g: int, mini: bool, v_avg: float, hold: bool, grounded: b
     if mode == "ship":
         a = g * (p.ship_up if hold else -p.ship_down) * s
         return max(-p.ship_vmax * s, min(p.ship_vmax * s, v_avg + a * dt / 2))
+    if mode == "swing":
+        return max(-p.ship_vmax * s, min(p.ship_vmax * s, v_avg - g * p.ship_down * s * dt / 2))
     G = {"ball": p.ball_g, "ufo": p.ufo_g}.get(mode, p.cube_g)
     return v_avg - g * G * dt / 2
 
@@ -1131,6 +1189,42 @@ class ModeEstimator:
         """An orb / pad is at the icon: gravity may flip now (allow a fast gravity change)."""
         self._ghint_t = 15
 
+    def icon_hint(self, mode: str | None, conf: float) -> None:
+        """The detector RECOGNISED the icon (YOLO: cube / ship / ball ...). Three frames in a
+        row of the same answer switch the mode at once -- no portal needed -- and while the
+        detector keeps saying so, the motion check can't switch it away."""
+        self._icon_lock = max(0, getattr(self, "_icon_lock", 0) - 1)
+        if mode is None or mode not in MODE_ID or conf < 0.5:
+            self._icon_run = (None, 0)
+            return
+        m, n = getattr(self, "_icon_run", (None, 0))
+        n = n + 1 if m == mode else 1
+        self._icon_run = (mode, n)
+        if n >= 3:
+            self._icon_mode = mode
+            self._icon_lock = 15
+            if mode != self.mode:
+                self.mode, self.mini = mode, False
+                self._cand_streak = (None, 0)
+                while len(self.hist) > 2:      # motion from before follows other physics
+                    self.hist.popleft()
+
+    def portal_fx(self, fx) -> None:
+        """A portal of a KNOWN type was crossed (YOLO named it): apply it directly."""
+        self._hint_t = 30
+        self._hint = None
+        while len(self.hist) > 2:
+            self.hist.popleft()
+        what = fx[0]
+        if what == "mode":
+            self._hint = fx[1]
+            if fx[1] != self.mode:
+                self.mode = fx[1]
+        elif what == "g":
+            self.g = -self.g if fx[1] == 0 else int(fx[1])
+        elif what == "size":
+            self.mini = bool(fx[1])
+
     def portal_hint(self, hue: float) -> None:
         self._hint_t = 30              # a portal was crossed: allow a fast switch
         self._hint = None
@@ -1162,6 +1256,9 @@ class ModeEstimator:
         if mode == "ship":
             v = max(-p.ship_vmax * sc, min(p.ship_vmax * sc, v0 + g * (p.ship_up if h else -p.ship_down) * sc * dt))
             return [v, 0.0] if resting else [v]
+        if mode == "swing":                    # a press flips its pull: both are possible
+            vs = [max(-p.ship_vmax * sc, min(p.ship_vmax * sc, v0 - gg * p.ship_down * sc * dt)) for gg in (g, -g)]
+            return vs + [0.0] if resting else vs
         G = {"cube": p.cube_g, "robot": p.cube_g, "spider": p.cube_g, "ball": p.ball_g, "ufo": p.ufo_g}[mode]
         jump = g * (p.robot_v0 if mode == "robot" else p.cube_v0) * sc - (0.0 if mode == "robot" else g * G * dt / 2)
         if resting:
@@ -1310,7 +1407,8 @@ class ModeEstimator:
             c, k = self._cand_streak
             k = k + 1 if (c == cand and clearly) else (1 if clearly else 0)
             self._cand_streak = (cand, k)
-            if k >= (2 if portal else (20 if gravity_only else 40)):
+            icon_says = getattr(self, "_icon_lock", 0) > 0 and getattr(self, "_icon_mode", None) == self.mode
+            if k >= (2 if portal else (20 if gravity_only else 40)) and not (icon_says and cand[0] != self.mode):
                 self.mode, self.g, self.mini = cand
                 self._cand_streak = (None, 0)
         self.conf = float(np.clip(1.0 - best[0] / max(second, 1e-6), 0.0, 1.0))

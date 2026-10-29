@@ -4,6 +4,7 @@
     python detect_yolo.py --train           # all recs/*.boxes.json -> ./yolo_gd.pt
     python detect_yolo.py --train --epochs 80
     python detect_yolo.py --check recs/deadlocked.mp4    # writes yolo_check_*.png previews
+    python preview_boxes.py --backend yolo-only ...      # YOLO does ALL the detecting
 
 Used by `--backend yolo` in preview_boxes.py / train_boxes.py as a HELPER to
 the built-in detector (detect.HeuristicDetector(extra=...)): the built-in one
@@ -25,7 +26,10 @@ import shutil
 import numpy as np
 
 MODEL_PATH = "./yolo_gd.pt"
-NAMES = ["hazard", "orb_y", "orb_b", "orb_p", "pad", "portal", "solid"]
+# All the classes (gd_objects.py): 0-6 the objects the policy has always used, 7-14 the
+# ICON by game mode, then every orb / pad / portal / speed portal type. Each maps to a
+# base class for the brain; the exact type drives the blue line's physics.
+from gd_objects import BASE, GROUP, ICON_CLASSES, NAMES
 
 
 class YoloDetector:
@@ -50,7 +54,7 @@ class YoloDetector:
             cls = res.boxes.cls.cpu().numpy().astype(int)
             cf = res.boxes.conf.cpu().numpy()
             for (x0, y0, x1, y1), c, p in zip(xyxy, cls, cf):
-                if 0 <= c <= 6:
+                if 0 <= c < len(NAMES):
                     out.append((int(c), x0 / w, y0 / h, x1 / w, y1 / h, float(p)))
         except Exception:
             pass
@@ -60,8 +64,121 @@ class YoloDetector:
         """YOLO-only Entities (no icon / speed) -- prefer the hybrid (make_detector('yolo'))."""
         from detect import Entities, Entity
         img = hires_bgr if hires_bgr is not None else np.ascontiguousarray(np.asarray(rgb320)[:, :, ::-1])
-        return Entities([Entity(c, (a + b) / 2, (y0 + y1) / 2, b - a, y1 - y0, p)
-                         for c, a, y0, b, y1, p in self.detect(img)])
+        return Entities([Entity(BASE[c], (a + b) / 2, (y0 + y1) / 2, b - a, y1 - y0, p)
+                         for c, a, y0, b, y1, p in self.detect(img) if c not in ICON_CLASSES])
+
+
+def _tip(gray, x0, y0, x1, y1) -> int:
+    """Which way a hazard points (0 up, 1 down, 2 left, 3 right, -1 can't tell): a spike is
+    wide at its base and narrow at its tip. The blue line puts the hitbox at the base."""
+    import cv2
+    H, W = gray.shape
+    a, b = max(0, int(x0 * W)), min(W, int(x1 * W) + 1)
+    c, d = max(0, int(y0 * H)), min(H, int(y1 * H) + 1)
+    if b - a < 6 or d - c < 6:
+        return -1
+    e = cv2.Canny(gray[c:d, a:b], 50, 150) > 0
+    h, w = e.shape
+    def span(m):
+        idx = np.nonzero(m.any(axis=0))[0]
+        return (idx[-1] - idx[0] + 1) if len(idx) else 0
+    q = max(1, h // 4)
+    top, bot = span(e[:q]), span(e[-q:])
+    qx = max(1, w // 4)
+    lef, rig = span(e[:, :qx].T), span(e[:, -qx:].T)
+    if bot > 1.6 * max(1, top) and bot >= 0.5 * w:
+        return 0
+    if top > 1.6 * max(1, bot) and top >= 0.5 * w:
+        return 1
+    if rig > 1.6 * max(1, lef) and rig >= 0.5 * h:
+        return 2
+    if lef > 1.6 * max(1, rig) and lef >= 0.5 * h:
+        return 3
+    return -1
+
+
+class YoloOnlyDetector:
+    """Everything from YOLO: hazards, blocks, orbs, pads, portals AND the icon with its mode.
+    (--backend yolo-only.) Same Entities as the built-in detector, so the brain, the blue
+    line and the shield work unchanged. Kept from the built-in detector: hazard tracking
+    (smooths boxes, measures the scroll = speed) and, only for frames where YOLO doesn't
+    see the icon, the built-in icon finder."""
+
+    def __init__(self, path: str = MODEL_PATH, icon_hue: tuple = (55, 95), conf: float = 0.35, device=None) -> None:
+        from detect import HeuristicDetector, _HazardTracker
+        self.yolo = YoloDetector(path, conf=conf, device=device)
+        names = list(getattr(self.yolo._m, "names", {}).values()) if isinstance(getattr(self.yolo._m, "names", None), dict) \
+            else list(getattr(self.yolo._m, "names", []) or [])
+        if names and names != NAMES[:len(names)]:
+            raise SystemExit(f"{path} was trained with other classes ({names}): retrain with python detect_yolo.py --train")
+        self.has_icon = len(names) > 7
+        if not self.has_icon:
+            print("[yolo-only] this model has no icon classes (old labels): using the built-in icon finder. "
+                  "Label the icon (keys 7 8 9 U V R P in label_boxes.py) and retrain to get the mode from YOLO.")
+        self._fallback = HeuristicDetector(icon_hue=icon_hue)
+        self._tracker = _HazardTracker()
+        self.n_icon_yolo = self.n_icon_fallback = 0
+
+    def reset(self) -> None:
+        self._tracker.reset()
+
+    def __call__(self, rgb320, hires_bgr=None):
+        import cv2
+        from detect import CLS_ID, Entities, Entity, _PL_LAST
+        img = np.asarray(hires_bgr if hires_bgr is not None else np.asarray(rgb320)[-1] if np.asarray(rgb320).ndim == 4
+                         else rgb320)
+        if hires_bgr is None:
+            img = np.ascontiguousarray(img[:, :, ::-1])
+        img = np.ascontiguousarray(img[:, :, :3])
+        H, W = img.shape[:2]
+        dets = self.yolo.detect(img)
+        ents = []
+        icons = [d for d in dets if d[0] in ICON_CLASSES]
+        pl = None
+        if icons:
+            c, x0, y0, x1, y1, p = max(icons, key=lambda d: d[5])
+            pl = Entity(CLS_ID["player"], (x0 + x1) / 2, (y0 + y1) / 2, x1 - x0, y1 - y0, p)
+            pl.mode = ICON_CLASSES[c]
+            _PL_LAST[0] = (pl.x, pl.y)          # keep the built-in finder in step
+            self.n_icon_yolo += 1
+        else:
+            hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            pl = self._fallback._player(hsv, W, H)
+            if pl is not None:
+                pl.mode = None
+                self.n_icon_fallback += 1
+        if pl is not None:
+            ents.append(pl)
+        # every other class -> its base class (what the brain sees) + its exact type (kind)
+        objs = [(BASE[d[0]],) + tuple(d[1:]) + (NAMES[d[0]] if d[0] > 6 else None,)
+                for d in dets if d[0] not in ICON_CLASSES]
+        if pl is not None:                       # nothing on the icon itself is a hazard / block
+            px0, py0, px1, py1 = pl.x - pl.w / 2, pl.y - pl.h / 2, pl.x + pl.w / 2, pl.y + pl.h / 2
+            objs = [d for d in objs if not (d[0] in (0, 6) and d[1] < px1 and d[3] > px0 and d[2] < py1 and d[4] > py0
+                                            and (d[1] + d[3]) / 2 > px0 and (d[1] + d[3]) / 2 < px1)]
+        gray = None
+        track = []
+        for c, x0, y0, x1, y1, p, _k in objs:
+            if c == 6:
+                track.append((c, x0, y0, x1, y1, p, -1))
+            elif c == 0:
+                if gray is None:
+                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                track.append((c, x0, y0, x1, y1, p, _tip(gray, x0, y0, x1, y1)))
+        ents.extend(self._tracker.update(track))
+        hsv = None
+        for c, x0, y0, x1, y1, p, kind in objs:
+            if c in (0, 6):
+                continue
+            if hsv is None:
+                hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            reg = hsv[int(y0 * H):int(y1 * H) + 1, int(x0 * W):int(x1 * W) + 1].reshape(-1, 3)
+            reg = reg[reg[:, 1] > 80]
+            hue = float(np.median(reg[:, 0])) / 180.0 if len(reg) else -1.0
+            e = Entity(c, (x0 + x1) / 2, (y0 + y1) / 2, x1 - x0, y1 - y0, p, hue)
+            e.kind = kind                        # exact type (red orb, 2x speed portal ...)
+            ents.append(e)
+        return Entities(ents, self._tracker.last_scroll)
 
 
 def _load_labels(path: str):
@@ -82,6 +199,7 @@ def build_dataset(ds: str = "./yolo_ds") -> tuple[str, int, int]:
     if not files:
         raise SystemExit("no recs/*.boxes.json yet: python record.py --level NAME, then python label_boxes.py --rec recs/NAME.mp4")
     n_img = n_box = 0
+    any_icon = any(int(b["cls"]) in ICON_CLASSES for bf in files for b in _load_labels(bf)[0])
     for bf in files:
         rec = bf.replace(".boxes.json", ".mp4")
         if not os.path.exists(rec):
@@ -91,6 +209,14 @@ def build_dataset(ds: str = "./yolo_ds") -> tuple[str, int, int]:
         by_fi: dict = {}
         for b in boxes:
             by_fi.setdefault(int(b["fi"]), []).append(b)
+        # frames labelled before the icon classes existed have no icon box: training on them
+        # would teach YOLO that the icon is background -- leave them out (add the icon with
+        # I in label_boxes.py to use them again)
+        no_icon = [fi for fi in done if not any(int(b["cls"]) in ICON_CLASSES for b in by_fi.get(fi, []))]
+        if any_icon and no_icon:
+            print(f"  {bf}: {len(no_icon)} of {len(done)} done frames have no icon box -- left out "
+                  f"(open them in label_boxes.py and press I on each to add it)")
+            done = [fi for fi in done if fi not in set(no_icon)]
         cap = cv2.VideoCapture(rec)
         stem = os.path.basename(rec)[:-4]
         for k, fi in enumerate(done):
@@ -111,12 +237,23 @@ def build_dataset(ds: str = "./yolo_ds") -> tuple[str, int, int]:
         print(f"  {bf}: {len(done)} done frames")
     yaml = os.path.join(ds, "data.yaml")
     with open(yaml, "w") as f:
+        names = NAMES
+        if not any_icon:
+            print("  (no icon labels anywhere: the icon / mode will come from the built-in finder)")
+        cnt = {}
+        for bf in files:
+            for b in _load_labels(bf)[0]:
+                cnt[int(b["cls"])] = cnt.get(int(b["cls"]), 0) + 1
+        few = [f"{NAMES[c]} ({n})" for c, n in sorted(cnt.items()) if n < 15]
+        if few:
+            print(f"  only a few examples of: {', '.join(few)} -- aim for 15+ boxes of each type you use")
         f.write(f"path: {os.path.abspath(ds)}\ntrain: images/train\nval: images/val\n"
-                f"nc: {len(NAMES)}\nnames: {NAMES}\n")
+                f"nc: {len(names)}\nnames: {names}\n")
     return yaml, n_img, n_box
 
 
 def train(epochs: int = 60, imgsz: int = 640, base: str = "yolov8n.pt", device=None) -> int:
+    """base: yolov8n.pt (fastest) or yolov8s.pt (more accurate, still ~3 ms on a 5070 Ti)."""
     try:
         from ultralytics import YOLO
     except ImportError:
@@ -137,14 +274,17 @@ def train(epochs: int = 60, imgsz: int = 640, base: str = "yolov8n.pt", device=N
     if os.path.exists(MODEL_PATH):
         shutil.copy(MODEL_PATH, MODEL_PATH.replace(".pt", "_prev.pt"))
     shutil.copy(best, MODEL_PATH)
-    print(f"saved {MODEL_PATH}  -> use it with:  python preview_boxes.py --backend yolo ...")
+    print(f"saved {MODEL_PATH}  -> check it:  python detect_yolo.py --check recs/<level>.mp4\n"
+          f"            then use it:  python preview_boxes.py --backend yolo-only --model checkpoints/preview_boxes.pt")
     return 0
 
 
-def check(rec: str, n: int = 6) -> int:
+def check(rec: str, n: int = 6, hybrid: bool = False) -> int:
+    """Preview images of what the detector sees (YOLO-only by default, the icon labelled
+    with the mode YOLO thinks it's in)."""
     import cv2
     from detect import HeuristicDetector, draw
-    det = HeuristicDetector(temporal=False, extra=YoloDetector())
+    det = HeuristicDetector(temporal=False, extra=YoloDetector()) if hybrid else YoloOnlyDetector()
     cap = cv2.VideoCapture(rec)
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
     for k, fi in enumerate(np.linspace(0, max(0, total - 1), n).astype(int)):
@@ -154,7 +294,14 @@ def check(rec: str, n: int = 6) -> int:
             continue
         rgb = cv2.cvtColor(cv2.resize(fr, (320, 180), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2RGB)
         hi = cv2.resize(fr, (640, 360), interpolation=cv2.INTER_AREA)
-        cv2.imwrite(f"yolo_check_{k}.png", draw(hi, det(rgb, hi)))
+        ents = det(rgb, hi)
+        img = draw(hi, ents)
+        pl = ents.player()
+        if pl is not None:
+            lab = getattr(pl, "mode", None) or "icon (built-in finder)"
+            cv2.putText(img, lab, (int((pl.x - pl.w / 2) * img.shape[1]), max(12, int((pl.y - pl.h / 2) * img.shape[0]) - 4)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1)
+        cv2.imwrite(f"yolo_check_{k}.png", img)
     print(f"wrote yolo_check_0..{n - 1}.png")
     return 0
 
@@ -166,12 +313,15 @@ def main() -> int:
     p.add_argument("--epochs", type=int, default=60)
     p.add_argument("--imgsz", type=int, default=640)
     p.add_argument("--device", default=None, help="cpu, 0 (first GPU), ... default: auto")
-    p.add_argument("--check", default=None, help="mp4 to preview detections on")
+    p.add_argument("--base", default="yolov8n.pt", help="starting model: yolov8n.pt (fast) or yolov8s.pt (better)")
+    p.add_argument("--check", default=None, help="mp4 to preview detections on (writes yolo_check_*.png)")
+    p.add_argument("--hybrid", action="store_true", help="--check the built-in + YOLO mix instead of YOLO only")
+    p.add_argument("--n", type=int, default=6, help="--check: how many frames")
     a = p.parse_args()
     if a.train:
-        return train(a.epochs, a.imgsz, device=a.device)
+        return train(a.epochs, a.imgsz, base=a.base, device=a.device)
     if a.check:
-        return check(a.check)
+        return check(a.check, a.n, a.hybrid)
     p.print_help()
     return 2
 

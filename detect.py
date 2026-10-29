@@ -1099,6 +1099,11 @@ class HeuristicDetector:
             hsv_e = None
             for yd in ydets:
                 c = int(yd[0])
+                from gd_objects import BASE as _BASE, ICON_CLASSES as _IC
+                if c in _IC:
+                    continue             # icon classes: this (hybrid) mode keeps the built-in icon finder
+                c = _BASE[c] if c < len(_BASE) else c
+                yd = (c,) + tuple(yd[1:])
                 if c in (0, 6):
                     if not any(_overlaps(yd, h) for h in dets):
                         dets.append(tuple(yd[:6]))
@@ -1137,7 +1142,18 @@ def _overlaps(a, b) -> bool:
 
 
 def make_detector(backend: str = "heuristic", icon_hue: tuple = (55, 95)):
-    """heuristic = built-in rules; yolo = built-in rules + YOLO for what they miss."""
+    """heuristic = built-in rules; yolo = built-in rules + YOLO for what they miss;
+    yolo-only = everything from YOLO, icon + its mode included (detect_yolo.YoloOnlyDetector)."""
+    if backend == "yolo-only":
+        from detect_yolo import YoloOnlyDetector
+        try:
+            import torch
+            if not torch.cuda.is_available():
+                print("[yolo-only] no CUDA GPU found: YOLO on the CPU is slow (~30+ ms a frame). "
+                      "Install the CUDA build of PyTorch for your GPU.")
+        except Exception:
+            pass
+        return YoloOnlyDetector(icon_hue=icon_hue)
     if backend == "yolo":
         from detect_yolo import YoloDetector
         y = YoloDetector()

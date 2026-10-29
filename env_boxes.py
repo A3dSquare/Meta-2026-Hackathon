@@ -138,13 +138,13 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
         elif c == 6:
             solid.append((x0, x1, bot, top))
         elif c == CLS_ID["portal"]:
-            portals.append((x0, x1, bot, top, float(getattr(e, "hue", -1.0))))
+            portals.append((x0, x1, bot, top, float(getattr(e, "hue", -1.0)), getattr(e, "kind", None)))
     return haz, solid, portals
 
 
 def special_boxes(ents: Entities, reach: float = 17.0) -> list:
     """Pads and orbs ahead, in blocks relative to the icon centre:
-    [(x0, x1, bottom, top, "pad" | "orb", colour, index)] (see gd_physics.special_effect)."""
+    [(x0, x1, bottom, top, "pad" | "orb", effect, index)] (see gd_physics.special_effect)."""
     from gd_physics import pad_orb_kind
     px, py = ents.player_pos()
     out = []
@@ -152,7 +152,7 @@ def special_boxes(ents: Entities, reach: float = 17.0) -> list:
         c = int(e.cls)
         if c not in (1, 2, 3, 4):
             continue
-        k = pad_orb_kind(c, float(getattr(e, "hue", -1.0)))
+        k = pad_orb_kind(c, float(getattr(e, "hue", -1.0)), getattr(e, "kind", None))
         if k is None:
             continue
         x0 = (e.x - e.w / 2 - px) / BLOCK_W
@@ -182,9 +182,15 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     """
     haz, solid, portals_raw = preview_boxes(ents, speed * horizon + 1)
     portals = []
-    for x0_, x1_, b_, t_, hue_ in portals_raw:   # real portals only (same test as the env's hint)
-        eff = portal_effect(hue_)
+    for x0_, x1_, b_, t_, hue_, kind_ in portals_raw:   # real portals only (same test as the env's hint)
         on_block = any(s0 < x1_ and s1 > x0_ and sb < t_ and st > b_ for s0, s1, sb, st in solid)
+        if kind_:                                # YOLO named the exact portal: trust it
+            from gd_objects import portal_fx
+            eff = portal_fx(kind_)
+            if eff is not None and eff[0] != "none" and not on_block:
+                portals.append((x0_, x1_, b_, t_) + tuple(eff))
+            continue
+        eff = portal_effect(hue_)
         if eff is not None and (t_ - b_) >= 2.4 and (x1_ - x0_) >= 0.6 and not on_block:
             portals.append((x0_, x1_, b_, t_) + eff)
     specials = special_boxes(ents)
@@ -681,6 +687,12 @@ class EntityBoxEnv(gym.Wrapper):
         except Exception as ex:
             self._loud("detect", ex)
             ents = Entities([])
+        try:                             # the detector recognised the icon's mode (YOLO)
+            _pl = ents.player()
+            self.mode_est.icon_hint(getattr(_pl, "mode", None) if _pl is not None else None,
+                                    float(getattr(_pl, "conf", 0.0)) if _pl is not None else 0.0)
+        except Exception as ex:
+            self._loud("icon-mode", ex)
         if self.hazmem is not None:      # hazards taught by picture / learned from deaths
             try:
                 ents = self.hazmem.apply(ents, hi if hi is not None else self.last_hires, getattr(ents, "scroll", None))
@@ -717,7 +729,20 @@ class EntityBoxEnv(gym.Wrapper):
             walls_ = [w for w in ents.items if int(w.cls) == CLS_ID["wall"]]
             for e in ents.items:            # portal crossing the icon: mode may change now
                 c_ = int(e.cls)
-                if c_ == CLS_ID["portal"] and abs(e.x - px_) < 0.6 * BLOCK_W and self._portal_cool <= 0:
+                kind_ = getattr(e, "kind", None)
+                if c_ == CLS_ID["portal"] and kind_ and abs(e.x - px_) < 0.6 * BLOCK_W and self._portal_cool <= 0:
+                    # YOLO named the exact portal: apply it (no size / colour guessing)
+                    from gd_objects import portal_fx
+                    fx = portal_fx(kind_)
+                    if fx is not None and abs(e.y - py) < 0.6 * max(e.h, 2.0 * BLOCK_H):
+                        if fx[0] == "speed":
+                            self.speed = float(fx[1])
+                            self._speed_hist.clear()
+                            self._speed_hist.extend([float(fx[1])] * 5)
+                        else:
+                            self.mode_est.portal_fx(fx)
+                        self._portal_cool = 10
+                elif c_ == CLS_ID["portal"] and abs(e.x - px_) < 0.6 * BLOCK_W and self._portal_cool <= 0:
                     # mode / gravity portals are ~3 blocks tall (speed portals are shorter and
                     # don't change the mode); a "portal" that sits on a detected block is a
                     # pillar, not a portal (live runs: pillars turned the cube into a "UFO")

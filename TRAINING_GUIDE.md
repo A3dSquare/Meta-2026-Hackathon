@@ -254,6 +254,37 @@ boxes (and the brain's behaviour) stay the same.
 6. Use: add `--backend yolo` to preview_boxes.py / train_boxes.py
    (`--extra "--backend yolo"` for train_general.py)
 
+### YOLO only (`--backend yolo-only`)
+
+YOLO does ALL the detecting -- spikes, blocks, orbs, pads, portals and the ICON,
+including which mode it's in (so the blue line switches to ship physics the
+moment the icon turns into a ship, no portal needed). Kept from the built-in
+detector: box tracking (smooth boxes, scroll speed) and, only on frames where
+YOLO doesn't see the icon, the built-in icon finder.
+
+- Label the icon too: ONE box around the whole icon, class = its mode:
+  `7` cube, `8` ship, `9` ball, `U` ufo, `V` wave, `R` robot, `P` spider, `N` swing.
+- Every orb / pad / portal type has its own class (gd_objects.py), so the blue
+  line knows exactly what each does (a red orb's big jump, a 2x speed portal,
+  a mini portal...). Keys step through a group -- press again for the next
+  type; with the mouse over a box, the key changes that box:
+  `O` orbs (yellow, pink, red, blue, green, black, dash green, dash pink,
+  spider, teleport, toggle), `K` pads (yellow, pink, red, blue, spider),
+  `T` mode portals, `G` gravity / size / mirror / dual / teleport portals,
+  `E` speed portals (0.5x .. 4x). The top bar shows the type you're drawing.
+  Aim for 15+ boxes of every type you use (training warns about rare ones).
+  Mirror / dual / teleport portals and teleport orbs are recognised but their
+  effect isn't simulated yet.
+  New frames come pre-filled with a guessed icon box; old labelled frames
+  show `NO ICON BOX (I)` -- press `I` on each to add it (training leaves out
+  frames without an icon box once any frame has one).
+- Train on the GPU: `python detect_yolo.py --train --device 0 --epochs 80`
+  (`--base yolov8s.pt` = more accurate, still fast on a 5070 Ti)
+- Check: `python detect_yolo.py --check recs/<level>.mp4 --n 12`: the icon is
+  labelled with the mode YOLO thinks it's in.
+- Use: `python preview_boxes.py --backend yolo-only --model checkpoints/preview_boxes.pt`
+  (same brain: the inputs are the same kinds of objects).
+
 Label more levels any time and re-run step 4; every level you label makes it
 better on levels it has never seen. `recs/` is git-ignored -- back up the
 `.boxes.json` files, they are your labelling work.
