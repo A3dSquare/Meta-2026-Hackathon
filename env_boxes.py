@@ -791,9 +791,13 @@ class EntityBoxEnv(gym.Wrapper):
         deb = self._debris
         n = len(deb)
         crash = n - 1 - int(lag)
-        for i in range(max(1, crash - 22), min(n - 1, crash + 7)):
-            if deb[i] >= 2 and deb[i + 1] >= 1:
-                return max(0, n - 1 - (i - 1))   # visible one step after the impact
+        lo = max(1, crash - 22)
+        for i in range(lo, min(n - 1, crash + 7)):
+            if deb[i] >= 2 and deb[i + 1] >= 2:          # a burst (normal play: ~never 2+)
+                j = i
+                while j > lo and deb[j - 1] >= 1:        # back to where it started building up
+                    j -= 1
+                return max(0, n - 1 - (j - 1))           # visible one step after the impact
         return None
 
     @staticmethod
