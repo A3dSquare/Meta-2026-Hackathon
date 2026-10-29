@@ -354,7 +354,8 @@ class SimGD(gym.Env):
             mf = plan = None
             self.last_arcs = []
         v = encode_obs(ents, hold=hold, prev_py=self.prev_py, player_found=True,
-                       speed=speed, hist=self.hist, mode=mf, plan=plan)
+                       speed=speed, hist=self.hist, mode=mf, plan=plan,
+                       extra=out.get("extra_plans") if self.use_jump else None)
         self.hist.append((player_vy(ents, self.prev_py), 1.0 if hold else 0.0))
         self.hist = self.hist[-8:]
         self.prev_py = ents.player_pos()[1]

@@ -31,15 +31,19 @@ N_TILES = 12
 EVERY = 3            # steps between tiles (3 steps = 0.1 s at 30 decisions/s)
 
 
-def plan_summary(plan_feats) -> dict:
+def plan_summary(plan_feats, extra_feats=None) -> dict:
     """Per plan: survival 0..1 (1 = survives the whole 1.5 s) + best per first action."""
-    from gd_physics import PLANS
+    from gd_physics import EXTRA_PLANS, PLANS
     out, best = {}, {0: 0.0, 1: 0.0}
     if plan_feats is None:
         return {"plans": out, "best_press": None, "best_release": None}
     f = np.asarray(plan_feats, np.float32)
-    for pi, (name, plan) in enumerate(PLANS):
-        s = 1.0 if f[3 * pi] < 0.5 else float(f[3 * pi + 1])
+    items = [(name, plan, f[3 * pi:3 * pi + 3]) for pi, (name, plan) in enumerate(PLANS)]
+    if extra_feats is not None and np.any(extra_feats):
+        fx = np.asarray(extra_feats, np.float32)
+        items += [(name, plan, fx[3 * pi:3 * pi + 3]) for pi, (name, plan) in enumerate(EXTRA_PLANS)]
+    for name, plan, f3 in items:
+        s = 1.0 if f3[0] < 0.5 else float(f3[1])
         out[name] = round(s, 3)
         first = int(bool(plan(0)))
         best[first] = max(best[first], s)

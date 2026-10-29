@@ -210,6 +210,16 @@ PLANS = [
     ("release 3 then hold", lambda k: k >= 3),
 ]
 N_PLANS = len(PLANS)
+# Two more timings, so "press in k steps" exists for every k up to 4: with only 0/2/4/6
+# the shield could not see "the only way is to press in 1 step" coming (live deaths).
+# They live in the brain's spare inputs, so existing brains keep working.
+EXTRA_PLANS = [
+    ("tap in 1", lambda k: k == 1),
+    ("tap in 3", lambda k: k == 3),
+]
+ALL_PLANS = PLANS + EXTRA_PLANS
+N_ALL = len(ALL_PLANS)
+N_EXTRA_FEATS = 3 * len(EXTRA_PLANS)
 
 
 def surfaces_at(x: float, solid, floor, ceil, half: float = 0.4):
@@ -229,7 +239,8 @@ def surfaces_at(x: float, solid, floor, ceil, half: float = 0.4):
 
 def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                    frame_skip: int = 2, horizon: float = 1.5, half: float = 0.4,
-                   dec_dt: float | None = None, lag: int = 0, pending=(), motion=None):
+                   dec_dt: float | None = None, lag: int = 0, pending=(), motion=None,
+                   extra_out: list | None = None):
     """Run every plan forward; return (features [N_PLANS*3 + 1], paths).
 
     haz / solid: boxes (x0, x1, bottom, top) in blocks relative to the icon.
@@ -250,11 +261,11 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
     use_m = motion is not None and motion.active_for(body.mode)   # off = zero cost
     feats = np.zeros(N_PLANS * 3 + 1, dtype=np.float32)
     B = [Body(body.y, body.vy, body.g, body.grounded, body.mode, body.mini, body.boost, body.prev_hold)
-         for _ in PLANS]
-    pts = [[(0.0, body.y)] for _ in PLANS]
-    hit_t = [None] * N_PLANS
-    clear = [3.0] * N_PLANS
-    live = list(range(N_PLANS))
+         for _ in ALL_PLANS]
+    pts = [[(0.0, body.y)] for _ in ALL_PLANS]
+    hit_t = [None] * N_ALL
+    clear = [3.0] * N_ALL
+    live = list(range(N_ALL))
     t_ledge = None
     x_prev = 0.0
     corr_by: dict = {}
@@ -275,7 +286,7 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         if jd < len(pending):
             holds = [bool(pending[jd])] * len(live)  # already sent, still in the pipeline
         else:
-            holds = [bool(PLANS[pi][1](jd - len(pending))) for pi in live]
+            holds = [bool(ALL_PLANS[pi][1](jd - len(pending))) for pi in live]
         floors, ceils = surfaces_at(x, solid, floor, ceil, half)
         corr = None
         if use_m:
@@ -321,13 +332,19 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         x_prev = x
         t_prev = t
     paths = []
-    for pi in range(N_PLANS):
+    extra = np.zeros(N_EXTRA_FEATS, dtype=np.float32)
+    for pi in range(N_ALL):
         h = hit_t[pi]
-        feats[3 * pi] = 1.0 if h is not None else 0.0
-        feats[3 * pi + 1] = (h if h is not None else horizon) / horizon
-        feats[3 * pi + 2] = float(np.clip(clear[pi], -2.0, 3.0)) / 2.0
-        paths.append((PLANS[pi][0], h is not None, pts[pi]))
+        f3 = (1.0 if h is not None else 0.0, (h if h is not None else horizon) / horizon,
+              float(np.clip(clear[pi], -2.0, 3.0)) / 2.0)
+        if pi < N_PLANS:
+            feats[3 * pi:3 * pi + 3] = f3
+        else:
+            extra[3 * (pi - N_PLANS):3 * (pi - N_PLANS) + 3] = f3
+        paths.append((ALL_PLANS[pi][0], h is not None, pts[pi]))
     feats[-1] = (t_ledge if t_ledge is not None else horizon) / horizon
+    if extra_out is not None:
+        extra_out.append(extra)
     return feats, paths
 
 
@@ -628,7 +645,12 @@ class ModeEstimator:
         self.conf = 0.0
         self._cand_streak = (None, 0)
         self._hint, self._hint_t = None, 0     # the last attempt's portal doesn't carry over
+        self._ghint_t = 0
         self._rest = []                        # (the measured input delay does carry over)
+
+    def gravity_hint(self) -> None:
+        """An orb / pad is at the icon: gravity may flip now (allow a fast gravity change)."""
+        self._ghint_t = 15
 
     def portal_hint(self, hue: float) -> None:
         self._hint_t = 30              # a portal was crossed: allow a fast switch
@@ -643,10 +665,10 @@ class ModeEstimator:
             if d[m] < 0.04:
                 self.g = GRAVITY_DIR[m]
             return
-        if d[m] < 0.04:                # colour clearly says which mode: take it now,
-            self._hint = m             # the motion check can still overrule it
-            if m != self.mode:
-                self.mode, self.mini = m, False
+        if d[m] < 0.04:                # colour clearly says which mode: take it now, the
+            self._hint = m             # motion check can still overrule it within the window.
+            if m != self.mode:         # (pillars that looked like portals are filtered out
+                self.mode, self.mini = m, False   # by the env: they overlap a detected block)
 
     REST = 2.0   # |vy| below this (blocks/s) = sitting on a surface (detector jitter is ~1.3)
 
@@ -744,6 +766,8 @@ class ModeEstimator:
             return                    # sitting still / sliding, not pressing: nothing to learn
         if self._hint_t > 0:          # (the portal window only counts informative steps)
             self._hint_t -= 1
+        if getattr(self, "_ghint_t", 0) > 0:
+            self._ghint_t -= 1
         # 'resting before step k' = barely moved over the two steps before it (two-step
         # displacement: much less sensitive to detector jitter than single-step speeds)
         self._rest = [k >= 3 and abs(ys[k - 1] - ys[k - 3]) < self.REST * 2 * dt for k in range(len(ys))]
@@ -788,8 +812,11 @@ class ModeEstimator:
             # GD only changes mode at a portal (gravity: portals, orbs, ball/spider
             # presses -- the models track those). Right after a portal, switch fast;
             # otherwise only when the current model keeps failing badly.
-            # gravity alone changes often (orbs, pads, ball/spider presses): treat like a portal
-            portal = self._hint_t > 0 or cand[0::2] == (self.mode, self.mini)
+            # fast switch only right after a portal, or (gravity alone) at an orb / pad;
+            # ball / spider press flips are modelled above. Anything else needs overwhelming,
+            # long-lasting evidence: a normal cube jump once looked like "falling upward"
+            gravity_only = cand[0::2] == (self.mode, self.mini)
+            portal = self._hint_t > 0 or (gravity_only and getattr(self, "_ghint_t", 0) > 0)
             # without a portal, demand overwhelming, long-lasting evidence: real live runs
             # showed a cube whose presses weren't reaching the game turn into an
             # "upside-down ship" within a second -- and then every prediction was wrong

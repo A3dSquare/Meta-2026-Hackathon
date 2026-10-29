@@ -456,8 +456,8 @@ def safety_shield(obs: np.ndarray, a: int) -> int:
     learns from the action actually taken.
     """
     try:
-        from env_boxes import OFF_PLAN, OBS_DIM
-        from gd_physics import N_PLANS, PLANS
+        from env_boxes import OFF_PLAN, OFF_RES, OBS_DIM
+        from gd_physics import EXTRA_PLANS, N_PLANS, PLANS
     except Exception:
         return a
     if obs is None or len(obs) != OBS_DIM:
@@ -465,10 +465,14 @@ def safety_shield(obs: np.ndarray, a: int) -> int:
     f = obs[OFF_PLAN:OFF_PLAN + 3 * N_PLANS]
     if not np.any(f):                       # no preview this step (icon not found)
         return a
+    fx = obs[OFF_RES:OFF_RES + 3 * len(EXTRA_PLANS)]   # "tap in 1" / "tap in 3" (spare inputs)
     best = {0: 0.0, 1: 0.0}                 # longest survival (1 = whole horizon) per first action
-    for pi, (_name, plan) in enumerate(PLANS):
+    plans = [(plan, f[3 * pi:3 * pi + 3]) for pi, (_n, plan) in enumerate(PLANS)]
+    if np.any(fx):
+        plans += [(plan, fx[3 * pi:3 * pi + 3]) for pi, (_n, plan) in enumerate(EXTRA_PLANS)]
+    for plan, f3 in plans:
         first = int(bool(plan(0)))
-        surv = 1.0 if f[3 * pi] < 0.5 else float(f[3 * pi + 1])
+        surv = 1.0 if f3[0] < 0.5 else float(f3[1])
         best[first] = max(best[first], surv)
     mine, other = best[int(a)], best[1 - int(a)]
     if mine < 1.0 and other >= 1.0:

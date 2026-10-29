@@ -140,9 +140,12 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     dtd = dec_dt or frame_skip / 60.0
     vy0 = inst_vy(est.mode, est.g, est.mini, vy_bps, eff_prev, grounded, dtd, phys)
     body = Body(0.0, vy0, est.g, grounded, est.mode, est.mini, 0.0, eff_prev)
+    xo: list = []
     plan, paths = simulate_plans(body, haz, solid, floor_rel, ceil_rel, speed, phys,
                                  frame_skip=frame_skip, horizon=horizon, dec_dt=dec_dt,
-                                 lag=est.lag, pending=est.pending(), motion=motion)
+                                 lag=est.lag, pending=est.pending(), motion=motion, extra_out=xo)
+    if out is not None and xo:
+        out["extra_plans"] = xo[0]   # "tap in 1" / "tap in 3" -> the brain's spare inputs
     if out is not None:   # the state the preview started from (to learn from what happens next)
         out["inputs"] = {"grounded": bool(grounded), "vy0": float(vy0), "floor_rel": floor_rel, "ceil_rel": ceil_rel,
                          "lag": int(est.lag), "pending": [bool(x) for x in est.pending()],
@@ -160,7 +163,7 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
 
 def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
                player_found: bool | None = None, speed: float = SPEED_1X,
-               hist=None, mode=None, plan=None) -> np.ndarray:
+               hist=None, mode=None, plan=None, extra=None) -> np.ndarray:
     """Entities -> flat (OBS_DIM,) float32. Player-relative, in block units / 8.
 
     Globals tell the policy what the boxes can't:
@@ -191,7 +194,9 @@ def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
         out[OFF_MODE:OFF_MODE + N_MODE] = mode
     if plan is not None:            # physics preview: outcome of 8 fixed action plans
         out[OFF_PLAN:OFF_PLAN + N_PLAN] = plan
-    # out[RESERVED] stays 0: room for future features without a new brain
+    if extra is not None:           # extra plan timings, in the first spare inputs
+        out[OFF_RES:OFF_RES + len(extra)] = extra
+    # the rest of out[RESERVED] stays 0: room for future features without a new brain
     half_pw = 0.5 * BLOCK_W
     ahead = []
     for e in ents.items:
@@ -501,14 +506,21 @@ class EntityBoxEnv(gym.Wrapper):
                 # the press that reached the icon this step (input delay), and whether it
                 # was resting BEFORE this step (not counting the jump's own first motion)
                 self.phys.calibrate(y_b, vy_step, me.eff_hold(0), me.resting_before(), dt)
+            px_ = ents.player_pos()[0]
+            walls_ = [w for w in ents.items if int(w.cls) == CLS_ID["wall"]]
             for e in ents.items:            # portal crossing the icon: mode may change now
-                if int(e.cls) == CLS_ID["portal"] and abs(e.x - ents.player_pos()[0]) < 0.6 * BLOCK_W:
-                    if self._portal_cool <= 0:
-                        # mode / gravity portals are ~3 blocks tall; speed portals (whose colours
-                        # overlap the mode colours) are shorter -> only trust the colour of tall ones
-                        tall = e.h / BLOCK_H >= 2.4
-                        self.mode_est.portal_hint(float(getattr(e, "hue", -1.0)) if tall else -1.0)
+                c_ = int(e.cls)
+                if c_ == CLS_ID["portal"] and abs(e.x - px_) < 0.6 * BLOCK_W and self._portal_cool <= 0:
+                    # mode / gravity portals are ~3 blocks tall (speed portals are shorter and
+                    # don't change the mode); a "portal" that sits on a detected block is a
+                    # pillar, not a portal (live runs: pillars turned the cube into a "UFO")
+                    if e.h / BLOCK_H >= 2.4 and not any(abs(w.x - e.x) < (w.w + e.w) / 2
+                                                         and abs(w.y - e.y) < (w.h + e.h) / 2 for w in walls_):
+                        self.mode_est.portal_hint(float(getattr(e, "hue", -1.0)))
                         self._portal_cool = 10
+                elif c_ in (CLS_ID["orb_y"], CLS_ID["orb_b"], CLS_ID["orb_p"], CLS_ID["pad"]) \
+                        and abs(e.x - px_) < 1.0 * BLOCK_W and abs(e.y - py) < 1.5 * BLOCK_H:
+                    self.mode_est.gravity_hint()   # orbs / pads can flip gravity
             self._portal_cool -= 1
             # Floor / ceiling. The player box is often only part of the icon (and which part
             # changes as it spins), so its centre wobbles by ~0.3 blocks: track the ground as
@@ -561,7 +573,7 @@ class EntityBoxEnv(gym.Wrapper):
         self._last_inputs = out.get("inputs")
         self.timing["physics"] += time.perf_counter() - _t1
         v = encode_obs(ents, hold=hold, prev_py=self._prev_py,
-                       speed=spd, hist=self._hist, mode=mf, plan=plan)
+                       speed=spd, hist=self._hist, mode=mf, plan=plan, extra=out.get("extra_plans"))
         self._hist.append((player_vy(ents, self._prev_py) if pl is not None else 0.0, 1.0 if hold else 0.0))
         self._prev_py = ents.player_pos()[1] if pl is not None else self._prev_py
         return v
@@ -599,7 +611,7 @@ class EntityBoxEnv(gym.Wrapper):
             "a": int(a), "a_brain": int(d.get("a_brain", a)), "shielded": bool(d.get("shielded", False)),
             "qdiff": d.get("qdiff"),
             "mode": me.mode, "g": int(me.g), "mini": bool(me.mini), "lag": int(me.lag),
-            "plan": death_snaps.plan_summary(v[OFF_PLAN:OFF_PLAN + N_PLAN]),
+            "plan": death_snaps.plan_summary(v[OFF_PLAN:OFF_PLAN + N_PLAN], v[OFF_RES:OFF_RES + 6]),
             "n_spikes": sum(1 for e in ents.items if int(e.cls) == 0),
             "y": (0.75 - ents.player_pos()[1]) / BLOCK_H if pl is not None else None,
             "vy": float(self._hist[-1][0]) / self._step_dt(peek=True) if self._hist else 0.0,
