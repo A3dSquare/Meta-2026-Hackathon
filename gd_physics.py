@@ -624,25 +624,144 @@ def safety_level(v: float) -> int:
 # Pads and orbs: what each type does is in gd_objects.OBJECTS (GD 2.2 strengths relative
 # to the cube's jump). Pads fire on touch, orbs on a press while touching.
 def pad_orb_kind(cls: int, hue: float, kind: str | None = None):
-    """("pad" | "orb", effect) for a detected object: from its exact type (YOLO) when known,
-    else from its class (orbs) / colour (pads). None = not a pad / orb, or unknown."""
-    from gd_objects import EFFECT, orb_pad_effect, pad_kind_from_hue
-    if kind:
-        return orb_pad_effect(kind)
-    if cls in (1, 2, 3):
-        return ("orb", EFFECT[{1: "orb_y", 2: "orb_b", 3: "orb_p"}[cls]])
-    if cls == 4:
-        k = pad_kind_from_hue(hue)
-        return orb_pad_effect(k) if k else None
-    return None
+    """("pad" | "orb", effect, type name) for a detected object: from its exact type (YOLO)
+    when known, else from its class (orbs) / colour (pads). None = not a pad / orb, unknown."""
+    from gd_objects import orb_pad_effect, pad_kind_from_hue
+    name = kind
+    if not name and cls in (1, 2, 3):
+        name = {1: "orb_y", 2: "orb_b", 3: "orb_p"}[cls]
+    if not name and cls == 4:
+        name = pad_kind_from_hue(hue)
+    r = orb_pad_effect(name) if name else None
+    return (r[0], r[1], name) if r else None
+
+
+LAUNCH_LEARNED: dict = {}     # (type name, mode) -> measured strength (x cube jump), see LaunchCalibrator
+
+
+class LaunchCalibrator:
+    """Learns every pad / orb type's REAL launch strength, per game mode, from the icon's
+    motion -- the way the cube jump is measured. When the icon touches a pad, or a press
+    reaches the game while it touches an orb, the next few heights are fitted with a
+    parabola; the launch speed / the measured cube jump = that type's strength in this mode.
+    Used (in the blue line) once 3 launches agree (median of the last 15); saved with the
+    rest of the measured physics (motion_model.npz)."""
+
+    MIN_N = 3
+    LO, HI = 0.15, 3.0
+    LEARN = ("jump", "down", "flip", "flipjump")
+
+    def __init__(self) -> None:
+        self.samples: dict = {}
+        self.pending = None
+        self._cool: dict = {}
+        self._prev_eff = False
+
+    def strength(self, name: str, mode: str):
+        q = self.samples.get((name, mode))
+        return float(np.median(q)) if q is not None and len(q) >= self.MIN_N else None
+
+    def _publish(self) -> None:
+        LAUNCH_LEARNED.clear()
+        for (name, mode) in self.samples:
+            v = self.strength(name, mode)
+            if v is not None:
+                LAUNCH_LEARNED[(name, mode)] = v
+
+    def update(self, y: float, dt: float, mode: str, g: int, mini: bool, eff_hold: bool,
+               touching, p: Phys, confident: bool = True) -> None:
+        """One step. y: icon centre height (blocks, up = +); touching: [(group, effect, name)]
+        for the pads / orbs the icon overlaps right now."""
+        pressed = bool(eff_hold) and not self._prev_eff
+        self._prev_eff = bool(eff_hold)
+        y_prev, self._last_y = getattr(self, "_last_y", None), y
+        for k in list(self._cool):
+            self._cool[k] -= 1
+            if self._cool[k] <= 0:
+                del self._cool[k]
+        if self.pending is not None:
+            pe = self.pending
+            pe["t"] += dt
+            pe["pts"].append((pe["t"], y))
+            if mode != pe["mode"] or len(pe["pts"]) >= 6:
+                self._finish(p)
+            return
+        if not confident or mode in ("wave", "ship", "swing"):
+            return                       # (ship / swing: thrust hides the launch; wave: none)
+        for group, fx, name in touching:
+            if not name or fx is None or fx[0] not in self.LEARN or name in self._cool:
+                continue
+            if group == "orb" and not pressed:
+                continue
+            g_after = -g if fx[0] in ("flip", "flipjump") else g
+            self.pending = {"name": name, "mode": mode, "fx": fx[0], "g": g_after, "mini": mini,
+                            "t": 0.0, "pts": [(0.0, y)], "dt": dt, "y_prev": y_prev}
+            self._cool[name] = 20        # one launch per object
+            return
+
+    def _finish(self, p: Phys) -> None:
+        pe, self.pending = self.pending, None
+        pts = pe["pts"][1:]              # the heights AFTER the launch step
+        if len(pts) < 4:
+            return
+        T = np.array([q[0] for q in pts])
+        Y = np.array([q[1] for q in pts])
+        c2, c1, _c0 = np.polyfit(T, Y, 2)
+        G = {"ball": p.ball_g, "ufo": p.ufo_g}.get(pe["mode"], p.cube_g)
+        acc = 2.0 * c2
+        if abs(acc + pe["g"] * G) > 0.5 * G:
+            return                       # didn't fall freely (hit something, landed): don't learn
+        # when did it launch? The frame that shows the contact may already show the launch:
+        # where the new arc meets the height the step BEFORE it (else: half a step back)
+        dt_ = pe["dt"]
+        t_l = -0.5 * dt_
+        if pe.get("y_prev") is not None:
+            r = np.roots([c2, c1, _c0 - pe["y_prev"]])
+            r = [float(np.real(q)) for q in r if abs(np.imag(q)) < 1e-9 and -1.5 * dt_ <= np.real(q) <= 0.5 * dt_]
+            if r:
+                t_l = min(r, key=lambda q: abs(q + 0.5 * dt_))
+        vy0 = c1 + acc * t_l             # launch speed
+        sc = p.mini if pe["mini"] else 1.0
+        sign = -1.0 if pe["fx"] in ("down", "flip") else 1.0
+        strength = sign * pe["g"] * vy0 / max(1e-6, p.cube_v0 * sc)
+        if not (self.LO <= strength <= self.HI):
+            return
+        self.samples.setdefault((pe["name"], pe["mode"]), deque(maxlen=15)).append(float(strength))
+        self._publish()
+
+    def state(self) -> np.ndarray:
+        import json
+        return np.array([json.dumps({f"{n}|{m}": list(q) for (n, m), q in self.samples.items()})])
+
+    def load_state(self, arr) -> None:
+        import json
+        try:
+            d = json.loads(str(np.asarray(arr).reshape(-1)[0]))
+        except Exception:
+            return
+        for k, v in d.items():
+            n, m = k.split("|", 1)
+            self.samples[(n, m)] = deque([float(x) for x in v], maxlen=15)
+        self._publish()
+
+    def summary(self) -> str:
+        parts = []
+        for (n, m), q in sorted(self.samples.items()):
+            v = self.strength(n, m)
+            parts.append(f"{n}/{m} {v:.2f}x" if v is not None else f"{n}/{m} ?({len(q)})")
+        return ", ".join(parts) if parts else "no pad / orb launches measured yet"
 
 
 def special_effect(b: Body, here, pressed: bool, half: float, p: Phys, surfaces=None) -> None:
     """Apply a pad / orb the icon touches this step.
-    here: [(x0, x1, bot, top, "pad" | "orb", effect, idx)]; surfaces = (floors, ceilings)."""
+    here: [(x0, x1, bot, top, "pad" | "orb", effect, idx, name)]; surfaces = (floors, ceilings).
+    A strength measured on your game (LaunchCalibrator) replaces the built-in one."""
     from gd_objects import MODE_SCALE
-    s = _scale(b, p) * MODE_SCALE.get(b.mode, 1.0)
-    for x0, x1, sb, st, kind, fx, idx in here:
+    for x0, x1, sb, st, kind, fx, idx, name in here:
+        learned = LAUNCH_LEARNED.get((name, b.mode))
+        s = _scale(b, p) * (1.0 if learned is not None else MODE_SCALE.get(b.mode, 1.0))
+        if learned is not None and fx[0] in ("jump", "down", "flip", "flipjump"):
+            fx = (fx[0], learned)
         if b.used >> idx & 1 or not (sb < b.y + half and st > b.y - half):
             continue
         if kind == "orb" and not pressed:
@@ -1098,7 +1217,7 @@ class ModeCalibrator:
         return ", ".join(parts) if parts else "no other modes seen yet"
 
 
-def save_motion(path: str, learner: MotionLearner, phys: Phys, est, calib=None) -> None:
+def save_motion(path: str, learner: MotionLearner, phys: Phys, est, calib=None, launch=None) -> None:
     """Learned correction + tuned jump + measured input delay, in one small file
     shared by every brain and level (it's the game's physics, not a level's)."""
     import os
@@ -1107,12 +1226,14 @@ def save_motion(path: str, learner: MotionLearner, phys: Phys, est, calib=None) 
     d["phys"] = np.array([phys.cube_v0, phys.cube_g, phys.n_cal, getattr(est, "lag", 0)], np.float64)
     if calib is not None:
         d["modes"] = calib.state()
+    if launch is not None:
+        d["launch"] = launch.state()
     tmp = path + ".tmp.npz"
     np.savez_compressed(tmp, **d)
     os.replace(tmp, path)
 
 
-def load_motion(path: str, learner: MotionLearner, phys: Phys, est, calib=None) -> bool:
+def load_motion(path: str, learner: MotionLearner, phys: Phys, est, calib=None, launch=None) -> bool:
     import os
     if not os.path.exists(path):
         return False
@@ -1122,6 +1243,8 @@ def load_motion(path: str, learner: MotionLearner, phys: Phys, est, calib=None) 
             v0, g, n_cal, lag = d["phys"]
             if calib is not None and "modes" in d.files:
                 calib.load_state(d["modes"], phys)
+            if launch is not None and "launch" in d.files:
+                launch.load_state(d["launch"])
         if n_cal > 0:
             phys.cube_v0, phys.cube_g, phys.n_cal = float(v0), float(g), int(n_cal)
         est.lag = int(lag)

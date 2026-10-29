@@ -128,7 +128,8 @@ def main() -> int:
     env = EntityBoxEnv(base, frame_skip=2)
     d = tempfile.mkdtemp()
     # shield off: this test checks the death / crash-time / pause pipeline, so it needs deaths
-    tr = Trainer(env, TrainConfig(total_steps=steps, save_dir=d, log_dir=d, name="live", verbose=0, shield=False))
+    tr = Trainer(env, TrainConfig(total_steps=steps, save_dir=d, log_dir=d, name="live", verbose=0, shield=False,
+                                route=False))   # (route memory is tested on its own)
     tr.run()
     import csv
     rows = list(csv.DictReader(open(os.path.join(d, "attempts.csv"))))

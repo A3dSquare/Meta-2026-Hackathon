@@ -57,6 +57,7 @@ ENT_FEAT = 7 + ENT_CLASSES        # present, x0, x1, y0, y1, hue cos, hue sin, o
 N_HIST = 8                        # past decision steps of (vertical speed, action)
 from gd_physics import (MODES, MODE_ID, N_PLANS, SEARCH_KEYS, Body, ModeCalibrator, ModeEstimator,
                         MotionLearner, Phys, inst_vy, load_motion, portal_effect, resolve_start, robust_search,
+                        LaunchCalibrator,
                         save_motion,
                         simulate_plans, surfaces_at)
 N_MODE = len(MODES) + 3            # mode one-hot, gravity (+1/-1), mini, confidence
@@ -144,7 +145,7 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
 
 def special_boxes(ents: Entities, reach: float = 17.0) -> list:
     """Pads and orbs ahead, in blocks relative to the icon centre:
-    [(x0, x1, bottom, top, "pad" | "orb", effect, index)] (see gd_physics.special_effect)."""
+    [(x0, x1, bottom, top, "pad" | "orb", effect, index, type name)] (see gd_physics.special_effect)."""
     from gd_physics import pad_orb_kind
     px, py = ents.player_pos()
     out = []
@@ -163,7 +164,7 @@ def special_boxes(ents: Entities, reach: float = 17.0) -> list:
         top = (py - (e.y - e.h / 2)) / BLOCK_H
         if k[0] == "pad":
             top = max(top, bot + 0.3)          # the touch zone is the strip and a bit above it
-        out.append((x0, x1, bot, top, k[0], k[1], len(out)))
+        out.append((x0, x1, bot, top, k[0], k[1], len(out), k[2]))
         if len(out) >= 30:
             break
     return out
@@ -460,6 +461,9 @@ class EntityBoxEnv(gym.Wrapper):
         # learned correction of the physics preview (+ tuned jump + input delay), shared
         # by all brains and levels; trains itself on every step of play
         self._game_t = 0                 # captured frames while the game was running (see step)
+        self._in_level = False           # see _update_in_level: no SPACE on menus
+        self._no_icon = 0
+        self._pct_ever = False
         self.fast_steps = False          # see step(): observe as soon as frame_skip capture slots passed
         self.timing = {"detect": 0.0, "physics": 0.0}   # seconds since the last [health] line
         # death snapshots (death_snaps.py): the last ~2.5 s of steps, saved on each death
@@ -490,7 +494,9 @@ class EntityBoxEnv(gym.Wrapper):
         self._motion_t = time.time()
         self._n_deaths = 0
         self.mode_cal = ModeCalibrator()         # ship / ball / UFO / wave physics, measured live
-        if motion_path and load_motion(motion_path, self.motion_fix, self.phys, self.mode_est, self.mode_cal):
+        self.launch_cal = LaunchCalibrator()     # every pad / orb type's launch strength, measured live
+        if motion_path and load_motion(motion_path, self.motion_fix, self.phys, self.mode_est, self.mode_cal,
+                                       self.launch_cal):
             m = self.motion_fix
             print(f"[motion] loaded {motion_path}: {m.n} examples, correction trust {m.trust:.0%}, "
                   f"jump {self.phys.apex:.2f} blocks / {self.phys.airtime:.2f}s, input delay {self.mode_est.lag}; "
@@ -836,6 +842,12 @@ class EntityBoxEnv(gym.Wrapper):
                                  me.mini, near, spd, self.phys,
                                  confident=(self.presses_working and cam_moving
                                             and getattr(me, "lag_locked", False)))   # delay measured
+            # pads / orbs the icon is touching now -> their real launch strength
+            touching = [(k_, fx_, n_) for x0_, x1_, b_, t_, k_, fx_, _i, n_ in special_boxes(ents, 2.0)
+                        if x0_ < 0.5 and x1_ > -0.5 and b_ < 0.5 and t_ > -0.5]
+            self.launch_cal.update((0.75 - ents.player_pos()[1]) / BLOCK_H, dt, me.mode, me.g, me.mini,
+                                   me.eff_hold(0), touching, self.phys,
+                                   confident=self.presses_working and cam_moving)
         self._last_inputs = out.get("inputs")
         self._last_search = out.get("search")
         if "search_error" in out:
@@ -852,10 +864,11 @@ class EntityBoxEnv(gym.Wrapper):
         # (was: only when the learned correction had data -- it's off by default, so the
         # measured jump and input delay were never saved either)
         if not self.motion_path or not (self.motion_fix.n or self.phys.n_cal or self.mode_est.lag
-                                        or any(self.mode_cal.counts().values())):
+                                        or any(self.mode_cal.counts().values()) or self.launch_cal.samples):
             return
         try:
-            save_motion(self.motion_path, self.motion_fix, self.phys, self.mode_est, self.mode_cal)
+            save_motion(self.motion_path, self.motion_fix, self.phys, self.mode_est, self.mode_cal,
+                        self.launch_cal)
         except Exception as ex:
             self._loud("motion-save", ex)
 
@@ -917,6 +930,7 @@ class EntityBoxEnv(gym.Wrapper):
         }
 
     def _new_attempt(self) -> None:
+        self.launch_cal.pending = None       # (a launch measurement cut by the death)
         self._press_pending = []
         self._last_yb = None
         self._air = []
@@ -931,6 +945,7 @@ class EntityBoxEnv(gym.Wrapper):
         if self._n_deaths % 10 == 0:
             print(f"[physics] jump {self.phys.apex:.2f}b/{self.phys.airtime:.2f}s ({self.phys.n_cal} jumps), "
                   f"delay {self.mode_est.lag}; {self.mode_cal.summary(self.phys)}  (? = not enough yet)")
+            print(f"[physics] pads / orbs (x cube jump): {self.launch_cal.summary()}")
         if self._n_deaths % 10 == 0 and m.n:
             print(f"[motion] {m.n} examples  formulas off by {m.err_phys:.2f} blocks/s, "
                   f"with learned fix {m.err_corr:.2f}  -> using it at {m.trust:.0%}  "
@@ -977,6 +992,8 @@ class EntityBoxEnv(gym.Wrapper):
 
     def step(self, action):
         a = int(np.asarray(action).reshape(-1)[0])
+        if not self._in_level:
+            a = 0          # menus / loading / level-complete screen: never press SPACE there
         died = complete = paused = False
         px_moved = None          # pixel-shift verdict over this step's frames
         info: dict = {}
@@ -1100,7 +1117,29 @@ class EntityBoxEnv(gym.Wrapper):
                     self.hazmem.on_death(list(self._snap), lag)
             self._new_attempt()
         out_info["n_entities"] = len(self.last_ents.items)
+        self._update_in_level(info)
+        out_info["in_level"] = self._in_level
         return v, 0.0, complete, False, out_info
+
+    def _update_in_level(self, info: dict) -> None:
+        """In a level = the icon is on screen AND the level's % is showing (it isn't on the
+        menus). If the % has never been read this session (turned off in GD's settings),
+        the icon + a moving level have to do."""
+        pl = self.last_ents.player() if self.last_ents is not None else None
+        self._no_icon = 0 if pl is not None else self._no_icon + 1
+        age = info.get("pct_age")
+        if age is not None and age < 900:
+            self._pct_ever = True
+        if age is not None and self._pct_ever:
+            ok = age < 90                       # the level's % read within the last 1.5 s
+        else:                                   # (% turned off: the icon has to do; deaths hide
+            ok = self._no_icon <= 60            #  it for ~1 s, so allow 2 s without it)
+        was = self._in_level
+        # (a frozen picture = paused / a menu over the level: no presses either)
+        self._in_level = bool(ok and not info.get("frozen"))
+        if was != self._in_level and getattr(self, "_started", False):
+            print("[input] in a level: inputs on" if self._in_level else
+                  "[input] not in a level (menu / loading?): inputs off until a level starts")
 
     # -- pause protocol passthrough ------------------------------------------
     def pause(self) -> None:

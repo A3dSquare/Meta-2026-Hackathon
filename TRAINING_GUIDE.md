@@ -303,3 +303,20 @@ wave parts) don't fit boxes well; spikes, saws, monsters, blocks do.
   per attempt here, because every attempt is replayed many times instead of
   being used once.
 - Pixel legacy: `preview.py --train`, `preview_model.zip` — per-level only.
+
+## Route memory (routes/): practising the spots it keeps dying at
+
+On by default (`--no-route` turns it off). It recognises each level by how its start
+looks -- no names needed -- and keeps one file per level in `routes/` forever:
+the best run's presses, every spot it got stuck at, every change it tried there
+and the one that got it through. When it has died 4 times at the same spot, every
+OTHER attempt replays the best run up to just before the spot and tries the next
+untried change there (a press a bit earlier / later, left out, held longer, an
+extra tap). Coming back to a level weeks later continues where it left off.
+Those practice attempts are never given to the brain to learn from and don't
+count for best_boxes.pt; the console marks them `(route practice, not learned
+from)`. Rename a level by editing `"name"` in its file. Back up `routes/` if you
+care about it (it isn't the brain, it's per-level practice).
+
+Inputs are also only sent while a level is on screen (its % showing, nothing
+paused / frozen): on the menus SPACE is never pressed.

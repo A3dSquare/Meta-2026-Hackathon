@@ -155,6 +155,8 @@ class GymGDEnv(gym.Env):
         except Exception:
             pass
         r, done, info = self.reward.step(obs, pct=pct, completed=bool(done_flag), held=_held, spike_edge=_edge)
+        if isinstance(pct, tuple) and len(pct) == 3:    # how long since the % was last read (ticks)
+            info = dict(info, pct_age=int(pct[2]))
         self._steps += 1
         terminated = bool(done)  # level complete
         truncated = self._steps >= self.cfg.max_steps
