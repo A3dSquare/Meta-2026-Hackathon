@@ -203,6 +203,14 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     unknown). Returns (mode_feats[N_MODE], plan_feats[N_PLAN], paths).
     """
     haz, solid, portals_raw = preview_boxes(ents, speed * horizon + 1)
+    if floor_rel is not None and est.g == 1:
+        # hazards sitting at / just under the floor line (a floor covered in thorns): landing
+        # on the floor there kills -- reach their hitboxes up to the floor (live: thorns
+        # 0.3-0.5 blocks under the detected line, so falling onto them looked like a safe
+        # landing)
+        low = [h for h in haz if floor_rel - 1.0 < h[3] <= floor_rel + 0.05]
+        if len(low) >= 2:
+            haz = [(h[0], h[1], h[2], floor_rel + 0.15) if h in low else h for h in haz]
     portals = []
     for x0_, x1_, b_, t_, hue_, kind_ in portals_raw:   # real portals only (same test as the env's hint)
         on_block = any(s0 < x1_ and s1 > x0_ and sb < t_ and st > b_ for s0, s1, sb, st in solid)
@@ -812,7 +820,11 @@ class EntityBoxEnv(gym.Wrapper):
             # (only while the level scrolls: a death freezes the icon wherever it died,
             # and those "standing" heights dragged the floor up to 1.2 blocks off)
             scrolling = sc0 is not None and abs(sc0) > 0.0025 * self.frame_skip
-            if grounded and not on_block and scrolling:
+            # standing at the height of detected platform tops nearby: on a platform whose
+            # piece under the icon wasn't detected -- not the level's ground
+            at_plat = any(int(e.cls) == CLS_ID["wall"] and abs((e.y - e.h / 2) - (py + 0.5 * BLOCK_H)) < 0.3 * BLOCK_H
+                          and abs(e.x - ents.player_pos()[0]) < 8 * BLOCK_W for e in ents.items)
+            if grounded and not on_block and scrolling and not at_plat:
                 if g_ == 1 and (self._ceil_y is None or py - self._ceil_y > 1.5 * BLOCK_H):
                     if self._floor_hist and abs(py - float(np.median(self._floor_hist))) > 3 * BLOCK_H:
                         self._floor_hist.clear()          # the level's ground moved (new section)
@@ -825,13 +837,18 @@ class EntityBoxEnv(gym.Wrapper):
                         self._ceil_hist.clear()
                     self._ceil_hist.append(py)
                     self._ceil_y = float(np.median(self._ceil_hist))
+            if line_fl is not None and self._line_is_platform(ents, line_fl):
+                # the "ground line" is the top edge of a detected block (a floating platform):
+                # not the ground -- using it as an endless floor made walking off a platform
+                # look safe (live: 90% of deaths were falling off platforms instead of jumping)
+                line_fl = None
             if line_fl is not None and line_fl > py + 0.2 * BLOCK_H:
                 # the ground line: exact. Relative to the box centre, which may sit off the
                 # icon's real centre (the preview corrects for that while standing)
                 floor_rel = min(-0.15, (py - line_fl) / BLOCK_H)
             elif self._floor_y is not None:
                 floor_rel = (py - self._floor_y) / BLOCK_H - 0.5
-                if (grounded and g_ == 1 and not on_block) or floor_rel > -0.5:
+                if (grounded and g_ == 1 and not on_block and floor_rel > -1.0) or floor_rel > -0.5:
                     floor_rel = -0.5                      # standing on it / never inside the icon
             if line_ce is not None and line_ce < py - 0.2 * BLOCK_H:
                 ceil_rel = max(0.15, (py - line_ce) / BLOCK_H)   # a real ceiling line
@@ -1289,6 +1306,18 @@ class EntityBoxEnv(gym.Wrapper):
                 tc = T[-1]
                 return (float(a + b * tc - 0.5 * G * tc * tc - y), float(b - G * tc))
         return None
+
+    @staticmethod
+    def _line_is_platform(ents, line_y: float) -> bool:
+        """Is this bright horizontal line the top of a detected block (in the icon's half of
+        the screen)? Then it's a platform's edge, not the level's ground."""
+        px = ents.player_pos()[0]
+        for e in ents.items:
+            if int(e.cls) != CLS_ID["wall"] or e.x + e.w / 2 < px - 6 * BLOCK_W or e.x - e.w / 2 > px + 8 * BLOCK_W:
+                continue
+            if abs((e.y - e.h / 2) - line_y) < 0.35 * BLOCK_H:
+                return True
+        return False
 
     @staticmethod
     def _on_block(ents, py: float, g: int) -> bool:

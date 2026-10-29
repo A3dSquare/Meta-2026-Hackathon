@@ -42,6 +42,13 @@ rounded up to 2, so the line expected every jump ~17 ms (about 0.2 blocks) later
 than it really started. The "worse world" check still uses a delay at least a
 whole step off, so the shield is as careful as before.
 
+**Floating platforms (fix52):** the bright "ground line" is only used as the floor when
+it isn't the top edge of a detected block, and standing on a platform no longer counts
+as standing on the ground. Before, a platform's top became an endless floor, so
+walking off the platform looked safe and it fell instead of jumping. Hazards lying
+just under the floor (a floor covered in thorns) now make landing there deadly, and
+YOLO no longer drops the block the icon is standing on.
+
 **Safety shield:** before every action (chosen or random), a SEARCH asks
 "is there any way to survive the next 1.5 s if I press now / if I wait?",
 with every later decision played well (jump, land, jump again...). It checks

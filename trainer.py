@@ -835,7 +835,7 @@ class Trainer:
                 in_level = info.get("in_level", True) or len(seg) > 0 or info.get("died") or info.get("complete")
                 # --frontier: the replayed part isn't the brain's -- it learns from the hand-over on
                 replaying = (cfg.frontier and self.route is not None and self.route.frontier_attempt
-                             and getattr(self.route, "phase", None) == "replay")
+                             and getattr(self.route, "phase", None) in ("replay", "wait_align"))
                 if in_level and not (replaying and not info.get("died") and not info.get("complete")):
                     self.new_steps += 1
                     seg.obs.append(obs); seg.act.append(a); seg.rew.append(cfg.alive_reward - cfg.hold_cost * a)

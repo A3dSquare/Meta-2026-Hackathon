@@ -178,8 +178,12 @@ class YoloOnlyDetector:
                 for d in dets if d[0] not in ICON_CLASSES]
         if pl is not None:                       # nothing on the icon itself is a hazard / block
             px0, py0, px1, py1 = pl.x - pl.w / 2, pl.y - pl.h / 2, pl.x + pl.w / 2, pl.y + pl.h / 2
+            # (a block only when its CENTRE is in the icon: the platform the icon stands on
+            #  overlaps its bottom edge and was dropped -- the blue line then had no ground
+            #  under the icon)
             objs = [d for d in objs if not (d[0] in (0, 6) and d[1] < px1 and d[3] > px0 and d[2] < py1 and d[4] > py0
-                                            and (d[1] + d[3]) / 2 > px0 and (d[1] + d[3]) / 2 < px1)]
+                                            and (d[1] + d[3]) / 2 > px0 and (d[1] + d[3]) / 2 < px1
+                                            and (d[0] == 0 or py0 < (d[2] + d[4]) / 2 < py1))]
         gray = None
         track = []
         for c, x0, y0, x1, y1, p, _k in objs:
