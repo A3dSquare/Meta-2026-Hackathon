@@ -38,6 +38,9 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                    help="only jump when it's this confident jumping beats not jumping (0 = off)")
     p.add_argument("--hold-cost", type=float, default=0.02,
                    help="tiny penalty per step SPACE is held (0 = off)")
+    p.add_argument("--fast-steps", action="store_true",
+                   help="decide as soon as 2 game frames have passed even if processing ran long "
+                        "(more decisions/s, but their length varies; off = the tested behaviour)")
     p.add_argument("--death-snaps", type=int, default=30,
                    help="save what the AI saw before each death to logs_boxes/deaths/ "
                         "(keeps the newest N; 0 = off)")
@@ -89,6 +92,7 @@ def build(args):
                        hires=not args.no_hires, death_lag_s=lag,
                        motion_path=None if str(args.motion_model).lower() == "none" else args.motion_model,
                        motion_fix=bool(args.motion_fix))
+    env.fast_steps = bool(getattr(args, "fast_steps", False))
     if args.death_snaps > 0:
         env.death_dir = os.path.join("logs_boxes", "deaths")
         env.death_keep = int(args.death_snaps)

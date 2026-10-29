@@ -72,6 +72,9 @@ BLOCK_FRAC_H = 30.0 / 320.0
 _PL_LAST: list = [None]  # [(x, y)] last accepted cube center
 _PL_HOLD: list = [0]     # [ticks] held-through-miss counter
 _PL_SIZE: list = [(0.045, 0.08)]  # [(w, h)] last accepted icon box size
+from collections import deque as _dq
+_PL_XS = _dq(maxlen=120)   # recent icon screen x (the camera keeps it at one spot)
+_PL_MISS: list = [0]     # frames in a row with no icon found
 
 
 @dataclass
@@ -632,7 +635,11 @@ def _orb_class(hue: float) -> int:
     return min(cands, key=lambda c: min(abs(hue - cands[c]), 180 - abs(hue - cands[c])))
 
 
-def detect_specials(bgr: np.ndarray, player_box=None, hsv=None) -> list:
+PAD_S, PAD_V, PAD_DH = 150, 230, 8
+PAD_STRIP_S = 999      # a pad found by its strip under a glow dome (off: on real levels it also found decoration)
+
+
+def detect_specials(bgr: np.ndarray, player_box=None, hsv=None, solids=None) -> list:
     """Orbs, pads and portals from one BGR frame -> [(cls, x0, y0, x1, y1, conf, hue)].
 
     GD draws these as bright, saturated sprites whose colour encodes the type
@@ -724,9 +731,25 @@ def detect_specials(bgr: np.ndarray, player_box=None, hsv=None) -> list:
                     corners = [m[:k_, :k_].mean(), m[:k_, -k_:].mean(), m[-k_:, :k_].mean(), m[-k_:, -k_:].mean()]
                     if circ >= 0.6 and area >= 0.45 * bw * bh and float(np.mean(corners)) < 0.5:
                         det = (_orb_class(hue), *box, 0.8, hue / 180.0)
-            elif which == "colour" and hb <= 1.0 and 0.45 <= wb <= 2.0 and wb >= 1.25 * hb:
-                # pad: flat colour strip, often under a big glow dome
-                det = (CLS_ID["pad"], *box, 0.7, hue / 180.0)
+            elif hb <= 1.8 and 0.45 <= wb <= 2.2:
+                # pad: a flat strip ON a surface (ground / block top, or under a ceiling for
+                # an upside-down pad). Its glow dome often merges with it into one taller
+                # blob (that blob used to fail "wide and flat"), so look for the strip at
+                # the blob's bottom (or top) edge. Must touch a surface edge: a ship's
+                # flame, trails and particles float in the air.
+                strip = _pad_strip(m, blk)
+                if strip is not None:
+                    sx0, sy0, sx1, sy1 = strip
+                    X0, Y0, X1, Y1 = x + sx0, y + sy0, x + sx1, y + sy1
+                    ms = m[sy0:sy1, sx0:sx1]
+                    s_mean = float(S[Y0:Y1, X0:X1][ms].mean()) if ms.any() else 0.0
+                    # a pad is a solid saturated colour (the pale glow under a slab's outline
+                    # isn't), and the "glow" mask only counts for pads standing on something
+                    flat = which == "colour" and hb <= 1.0 and wb >= 1.25 * hb   # the old rule: a plain flat blob
+                    if (flat or s_mean >= PAD_STRIP_S) and _pad_supported(X0 / W, Y0 / H, X1 / W, Y1 / H, solids, V, blk,
+                                                        hang_ok=(which == "colour")):
+                        det = (CLS_ID["pad"], X0 / W, Y0 / H, X1 / W, Y1 / H,
+                               0.7 if which == "colour" else 0.6, hue / 180.0)
             if det is not None and det[0] in (1, 2, 3):
                 cxd, cyd = (det[1] + det[3]) / 2 * W, (det[2] + det[4]) / 2 * H
                 if any(o[0] in (1, 2, 3) and abs((o[1] + o[3]) / 2 * W - cxd) < 0.7 * blk
@@ -737,7 +760,117 @@ def detect_specials(bgr: np.ndarray, player_box=None, hsv=None) -> list:
                 det = None       # behind the icon: its own trail / particles (and past anyway)
             if det is not None and not any(_iou(det[1:5], o[1:5]) > 0.3 for o in out):
                 out.append(det)
+    # pads, a third way: a pad's strip is a solid, very bright, saturated colour -- brighter
+    # than the background even when its hue is close to it (pink pad, purple level), and
+    # brighter than its own translucent glow dome, so here it stands alone.
+    pm = ((S >= PAD_S) & (V >= PAD_V) & (V.astype(np.int16) >= int(bg_v) + 25)).astype(np.uint8)
+    if bg_h >= 0:
+        pm &= (_hue_dist(Hh, bg_h) >= PAD_DH).astype(np.uint8)
+    pm[: int(0.065 * H)] = 0
+    if pad_x0 is not None:
+        pm[pad_y0:pad_y1, pad_x0:pad_x1] = 0
+    # a block's glowing outline is bright and saturated too, and a pad standing on it would
+    # merge with it: take out long horizontal runs first (a pad is at most ~1.6 blocks)
+    L = max(3, int(1.8 * blk))
+    pm &= ~cv2.morphologyEx(pm, cv2.MORPH_OPEN, np.ones((1, L), np.uint8)).astype(bool) * np.uint8(1)
+    # ...and tall bright things (background panels, portals' sides): a pad is <= 0.4 blocks
+    Lv = max(3, int(0.6 * blk))
+    pm &= ~cv2.morphologyEx(pm, cv2.MORPH_OPEN, np.ones((Lv, 1), np.uint8)).astype(bool) * np.uint8(1)
+    pm = cv2.morphologyEx(pm, cv2.MORPH_OPEN, np.ones((2, 2), np.uint8))   # leftover slivers
+    n, lab, stats, _ = cv2.connectedComponentsWithStats(pm, connectivity=8)
+    for i in range(1, n):
+        x, y, bw, bh, area = (int(v) for v in stats[i])
+        wb, hb = bw / blk, bh / blk
+        if not (0.5 <= wb <= 1.6 and 0.08 <= hb <= 0.4 and wb >= 2.0 * hb and area >= 0.45 * bw * bh):
+            continue
+        mid = lab[y + bh // 2, x:x + bw] == i
+        if float(mid.mean()) < 0.8 or float((lab[y:y + bh, x + bw // 2] == i).mean()) < 0.7:
+            continue                         # hollow: a slab's outline, not a solid pad
+        X0, Y0, X1, Y1 = x / W, y / H, (x + bw) / W, (y + bh) / H
+        if any(_iou((X0, Y0, X1, Y1), o[1:5]) > 0.1 or (o[1] <= (X0 + X1) / 2 <= o[3] and o[2] <= (Y0 + Y1) / 2 <= o[4])
+               for o in out):
+            continue
+        if player_box is not None and (X0 + X1) / 2 < (player_box[0] + player_box[2]) / 2 - 0.3 * blk / W:
+            continue
+        if not _pad_supported(X0, Y0, X1, Y1, solids, V, blk):
+            continue
+        hv = Hh[y:y + bh, x:x + bw][lab[y:y + bh, x:x + bw] == i].astype(np.float32) * (2 * np.pi / 180)
+        hue = (np.degrees(np.arctan2(np.sin(hv).mean(), np.cos(hv).mean())) / 2) % 180
+        out.append((CLS_ID["pad"], X0, Y0, X1, Y1, 0.65, hue / 180.0))
     return out
+
+
+def _pad_strip(m: np.ndarray, blk: float):
+    """(x0, y0, x1, y1) in blob pixels of a flat strip along the blob's bottom or top edge
+    (a pad, with or without its glow dome), else None."""
+    rows = m.sum(axis=1)
+    if rows.size == 0:
+        return None
+    for order in (range(len(rows) - 1, -1, -1), range(len(rows))):   # bottom pad, then top
+        order = list(order)
+        edge = next((r for r in order if rows[r] >= 0.45 * blk), None)
+        if edge is None or abs(order.index(edge)) > 0.12 * blk:
+            continue                              # the wide part isn't at the edge
+        wmax = rows[edge]
+        taken = []
+        for r in order[order.index(edge):]:
+            if rows[r] < 0.55 * wmax:
+                break
+            taken.append(r)
+            wmax = max(wmax, rows[r])
+        hh = len(taken)
+        if not taken or hh > 0.45 * blk or hh < 0.08 * blk:
+            continue
+        cols = np.nonzero(m[min(taken):max(taken) + 1].any(axis=0))[0]
+        ww = cols.max() - cols.min() + 1
+        if ww < 0.45 * blk or ww > 2.2 * blk or ww < 1.8 * hh:
+            continue
+        # the strip must be the widest part: above it the dome narrows (or nothing at all)
+        rest = [rows[r] for r in order[order.index(edge) + hh:]]
+        if rest and max(rest) > 1.1 * ww:
+            continue
+        return int(cols.min()), int(min(taken)), int(cols.max() + 1), int(max(taken) + 1)
+    return None
+
+
+def _pad_supported(x0, y0, x1, y1, solids, V, blk, hang_ok: bool = True) -> bool:
+    """Pad on a block / the ground (or under one, upside down)? The detector's solid boxes
+    (normalised x0, y0, x1, y1) first, then the brightness edge (the ground line isn't
+    always a solid box) -- an edge only for a pad standing on it."""
+    H, W = V.shape
+    if solids:
+        tol = 0.3 * blk / H
+        for a0, b0, a1, b1 in solids:
+            ov = min(x1, a1) - max(x0, a0)
+            if ov < 0.5 * (x1 - x0):
+                continue
+            if abs(b0 - y1) <= tol and b1 > y1:        # sits on its top
+                return True
+            if hang_ok and abs(b1 - y0) <= tol and b0 < y0:   # hangs under its bottom
+                return True
+    return _on_surface(V, int(x0 * W), int(y0 * H), int(x1 * W), int(y1 * H), blk, below_only=True)
+
+
+def _on_surface(V: np.ndarray, x0: int, y0: int, x1: int, y1: int, blk: float,
+                below_only: bool = False) -> bool:
+    """Does the strip x0..x1 sit on a horizontal edge (just below it) or hang under one
+    (just above it)? An edge = a big brightness step between neighbouring rows, across
+    most of the columns, a bit wider than the strip itself."""
+    H, W = V.shape
+    w = x1 - x0
+    xa, xb = max(0, int(x0 - 0.3 * w)), min(W, int(x1 + 0.3 * w))
+    reach = max(2, int(0.2 * blk))
+    for ya, yb in ((y1 - 1, y1 + reach),) + (() if below_only else ((y0 - reach, y0 + 1),)):
+        ya, yb = max(0, ya), min(H - 1, yb)
+        if yb - ya < 2 or xb - xa < 4:
+            continue
+        band = V[ya:yb + 1, xa:xb].astype(np.int16)
+        step = np.abs(np.diff(band, axis=0)).max(axis=0)
+        # left and right of the strip (the pad itself covers the middle)
+        side = np.concatenate([step[: max(1, int(x0 - xa))], step[max(0, int(x1 - xa)):]])
+        if side.size >= 2 and float((side >= 15).mean()) >= 0.6:
+            return True
+    return False
 
 
 class _HazardTracker:
@@ -881,6 +1014,7 @@ class HeuristicDetector:
                 mask_p[same | (hsv[:, :, 2] < min(250, bg_v + 35)) & ~(_hue_dist(hsv[:, :, 0], bg_h) >= 14)] = 0
         cnts_p, _ = cv2.findContours(mask_p, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cands = []
+        anchor = float(np.median(_PL_XS)) if len(_PL_XS) >= 20 else None
         for c in cnts_p:
             area = cv2.contourArea(c) / blk2
             if not (0.03 <= area <= 4.0):      # wave/mini icons are small, ships wide
@@ -889,7 +1023,12 @@ class HeuristicDetector:
             cx, cy = (x + bw / 2) / w, (y + bh / 2) / h
             # whole height: ships fly high, upside-down cubes run on the ceiling
             # GD's camera keeps the icon at a fixed x (~0.37 of the screen)
-            if not (0.25 <= cx <= 0.48 and 0.07 <= cy <= 0.97):
+            # (bottom 14% excluded: practice mode's green checkpoint buttons sit there)
+            if not (0.25 <= cx <= 0.48 and 0.07 <= cy <= 0.86):
+                continue
+            # the camera keeps the icon at ONE screen x: once that's known, a green thing
+            # elsewhere (menu buttons, a practice checkpoint diamond scrolling past) isn't it
+            if anchor is not None and abs(cx - anchor) > 0.05:
                 continue
             if not (0.3 <= bw / max(1, bh) <= 3.5):
                 continue
@@ -898,14 +1037,21 @@ class HeuristicDetector:
                     continue
             d = (abs(cx - _PL_LAST[0][0]) + abs(cy - _PL_LAST[0][1]) if _PL_LAST[0]
                  else 3 * abs(cx - 0.37) - 0.002 * area)
+            if anchor is not None:
+                d += 3 * abs(cx - anchor)
             cands.append((d, Entity(CLS_ID["player"], cx, cy, max(bw / w, 0.03), max(bh / h, 0.05), 0.9)))
         if cands:
             cands.sort(key=lambda t: t[0])
             pl = cands[0][1]
+            _PL_XS.append(pl.x)
+            _PL_MISS[0] = 0
             _PL_LAST[0] = (pl.x, pl.y)
             _PL_SIZE[0] = (pl.w, pl.h)
             _PL_HOLD[0] = 0
             return pl
+        _PL_MISS[0] += 1
+        if _PL_MISS[0] >= 90:        # ~3 s with nothing at the usual spot: forget it (new level / window)
+            _PL_XS.clear()
         if _PL_LAST[0] is not None:
             _PL_HOLD[0] += 1
             if _PL_HOLD[0] <= 8:
@@ -936,7 +1082,8 @@ class HeuristicDetector:
         dets = detect_hazards(src, player_box=pbox, hsv=hsv_src)
         self._spec_n += 1
         if self.specials_every <= 1 or self._spec_n % self.specials_every == 1 or self._spec_n == 1:
-            specials = detect_specials(src, player_box=sbox, hsv=hsv_src)
+            solids = [tuple(d[1:5]) for d in dets if int(d[0]) == CLS_ID["wall"]]
+            specials = detect_specials(src, player_box=sbox, hsv=hsv_src, solids=solids)
         else:
             sc = float(getattr(self._tracker, "last_scroll", None) or 0.0) if self.temporal else 0.0
             specials = [(c, x0 + sc, y0, x1 + sc, y1, cf, hu) for c, x0, y0, x1, y1, cf, hu in self._spec_cache

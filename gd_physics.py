@@ -41,6 +41,12 @@ class Phys:
     robot_v0: float = 16.0
     robot_boost: float = 0.25   # seconds of extra rise while held
     spider_snap: float = 12.0   # how far it searches for the opposite surface
+    # GD only kills on a block when the icon's small INNER hitbox touches it; touching it
+    # with the rest of the icon puts the icon on top. So a cube coming in a little BELOW a
+    # block's top still lands on it (live: a jump onto a pillar landed with its bottom 0.1
+    # below the top, the preview called it a crash and the shield gave up). How far below
+    # the top (blocks, measured at the icon's bottom) that still lands:
+    snap: float = 0.3
     mini: float = 0.8           # impulses / accelerations scale when mini
     # cube calibration from observed jumps
     _track: list | None = field(default=None, repr=False)
@@ -102,6 +108,7 @@ class Body:
     mini: bool = False
     boost: float = 0.0          # robot: remaining boost time
     prev_hold: bool = False
+    used: int = 0               # search: pads / orbs this path already used (bitmask)
 
 
 def _scale(b: Body, p: Phys) -> float:
@@ -170,15 +177,17 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
             b.vy -= dv
     y_new = b.y + (b.vy + 0.5 * dv) * dt   # exact for constant acceleration
     # resting surfaces: falling onto a floor / rising into a ceiling
+    up = p.snap if b.g == 1 else 0.06           # landing side: GD's inner-hitbox leniency
+    dn = p.snap if b.g == -1 else 0.06
     if b.vy <= 0:
-        land = [f for f in floors if y_new <= f <= b.y + 0.06]
+        land = [f for f in floors if y_new <= f <= max(b.y, y_new) + up]
         if land:
             y_new = max(land)
             if b.g == 1 or m in ("ship", "wave", "ufo"):
                 b.grounded = b.g == 1 and m not in ("ship", "wave")
             b.vy = 0.0 if m != "wave" else b.vy
     if b.vy >= 0:
-        hit_c = [c for c in ceils if b.y - 0.06 <= c <= y_new]
+        hit_c = [c for c in ceils if min(b.y, y_new) - dn <= c <= y_new]
         if hit_c:
             y_new = min(hit_c)
             if b.g == -1 or m in ("ship", "wave", "ufo"):
@@ -323,7 +332,8 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                         hit_t[pi] = t
             if hit_t[pi] is None:
                 for s0, s1, sb, st in solid:
-                    if s0 < hi - 0.05 and s1 > lo + 0.05 and sb < y + half - 0.12 and st > y - half + 0.12:
+                    tu, td = (0.12, p.snap) if b.g == 1 else (p.snap, 0.12)   # landing side: lenient
+                    if s0 < hi - 0.05 and s1 > lo + 0.05 and sb < y + half - tu and st > y - half + td:
                         hit_t[pi] = t                  # into the side of a block
                         break
             if hit_t[pi] is None and (y < -12 or y > 14):
@@ -365,7 +375,7 @@ SEARCH_KEYS = ("1", "00", "01")      # press now / release now + next / release 
 def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                 dec_dt: float, lag: int = 0, pending=(), horizon: float = 1.5,
                 half: float = 0.5, beam: int = 10, want_path: bool = False,
-                late_every: float = 0.0, portals=None) -> dict:
+                late_every: float = 0.0, portals=None, specials=None) -> dict:
     """Longest survival (fraction of `horizon`, 1.0 = survives it all) for each first
     action ("1" = press now, "00" = release now and at the next decision, "01" =
     release now, press at the next decision), with every later decision chosen well.
@@ -418,7 +428,7 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                     else:
                         m2 = m
                     if m2:
-                        new.append((Body(b.y, b.vy, b.g, b.grounded, b.mode, b.mini, b.boost, b.prev_hold),
+                        new.append((Body(b.y, b.vy, b.g, b.grounded, b.mode, b.mini, b.boost, b.prev_hold, b.used),
                                     m2, h, nd))
             states = new
         last_jd = jd
@@ -443,9 +453,12 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                             b.g, b.grounded = val, False
         alive: list = []
         index: dict = {}
+        sp_here = [q for q in (specials or ()) if q[0] < hi and q[1] > lo]
         for b, m, h, nd in states:
             pressed = h and not b.prev_hold
             advance(b, h, dt_i, speed, p, (floors, ceils))
+            if sp_here:
+                special_effect(b, sp_here, pressed, half, p)
             y = b.y
             # the drawn line = the surviving path with the LEAST effort (presses, holding):
             # with nothing dangerous ahead every path survives, and an arbitrary one was
@@ -459,14 +472,15 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                         dead = True
                         break
                 if not dead:
+                    tu, td = (0.12, p.snap) if b.g == 1 else (p.snap, 0.12)   # landing side: lenient
                     for sb, st in so:
-                        if sb < yt - 0.12 and st > yb_ + 0.12:
+                        if sb < yt - tu and st > yb_ + td:
                             dead = True
                             break
             if dead:
                 credit(m, t / horizon, node)
                 continue
-            key = (h, b.prev_hold, round(y * 20.0), round(b.vy * 1.6667), b.grounded, b.g, round(b.boost, 2), b.mode)
+            key = (h, b.prev_hold, round(y * 20.0), round(b.vy * 1.6667), b.grounded, b.g, round(b.boost, 2), b.mode, b.used)
             j = index.get(key)
             if j is not None:                       # same state reached by other first actions
                 s0 = alive[j]
@@ -508,7 +522,7 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
 
 def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, dec_dt: float,
                   lag: int, pending, pending_long=None, horizon: float = 1.5, half: float = 0.5,
-                  want_path: bool = False, lag_alt: int | None = None, portals=None) -> dict:
+                  want_path: bool = False, lag_alt: int | None = None, portals=None, specials=None) -> dict:
     """search_best in the measured world AND a slightly different one: the press arrives
     one step EARLIER or LATER (lag_alt: whichever the measured delays say is likely --
     live they split between 1 and 2 steps, so with "2" a jump often started a step early
@@ -525,14 +539,14 @@ def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, de
         a.update(nominal=dict(a), worse=dict(a), path=[], path_hit=False)
         return a
     a = search_best(body, haz, solid, floor, ceil, speed, p, dec_dt, lag, pending, horizon, half,
-                    want_path=want_path, portals=portals)
+                    want_path=want_path, portals=portals, specials=specials)
     if all(a[k] < 1.0 for k in SEARCH_KEYS):
         b = {k: 0.0 for k in SEARCH_KEYS}   # crashes as measured -> the worse world can't help
     else:
         alt = lag + 1 if lag_alt is None else max(0, int(lag_alt))
         pl = list(pending_long) if pending_long is not None else [False] * max(0, alt - len(pending)) + list(pending)
         b = search_best(body, haz, solid, floor, ceil, speed * 1.04, p, dec_dt, alt, pl[len(pl) - alt:] if alt else [],
-                        horizon, half, portals=portals)
+                        horizon, half, portals=portals, specials=specials)
     a["nominal"] = {k: a[k] for k in SEARCH_KEYS}
     a["worse"] = {k: b[k] for k in SEARCH_KEYS}
     for k in SEARCH_KEYS:
@@ -549,6 +563,49 @@ def safety_score(nominal: float, worse: float) -> float:
 def safety_level(v: float) -> int:
     """2 = survives even in the worse world, 1 = only as measured, 0 = crashes."""
     return 2 if v >= 1.0 - 1e-6 else (1 if v >= 0.895 else 0)
+
+
+# Pads and orbs (GD 2.2 launch speeds relative to the cube's own jump, 11.18):
+# yellow pad 16 (x1.43), pink pad 10.4 (x0.93), yellow orb 11.2 (x1.0), pink orb 8 (x0.72);
+# blue pad / blue orb flip gravity. Pads fire on touch, orbs on a press while touching.
+PAD_MULT = {"yellow": 1.43, "pink": 0.93}
+ORB_MULT = {"yellow": 1.0, "pink": 0.72}
+
+
+def pad_orb_kind(cls: int, hue: float):
+    """("pad" | "orb", "yellow" | "pink" | "blue") from the detector's class and hue, or None."""
+    if cls in (1, 2, 3):
+        return ("orb", {1: "yellow", 2: "blue", 3: "pink"}[cls])
+    if cls == 4 and hue is not None and hue >= 0:
+        h = hue * 180.0
+        if 12 <= h <= 42:
+            return ("pad", "yellow")
+        if 135 <= h <= 175:
+            return ("pad", "pink")
+        if 85 <= h <= 120:
+            return ("pad", "blue")
+    return None
+
+
+def special_effect(b: Body, here, pressed: bool, half: float, p: Phys) -> None:
+    """Apply a pad / orb the icon touches this step. here: [(x0, x1, bot, top, kind, colour, idx)]."""
+    if b.mode in ("ship", "wave"):
+        return                        # (ship / wave pad physics aren't modelled)
+    s = _scale(b, p)
+    for x0, x1, sb, st, kind, col, idx in here:
+        if b.used >> idx & 1 or not (sb < b.y + half and st > b.y - half):
+            continue
+        if kind == "orb" and not pressed:
+            continue
+        b.used |= 1 << idx
+        if col == "blue":
+            b.g, b.grounded = -b.g, False
+            b.vy = -b.g * 0.4 * p.cube_v0 * s       # small push toward the new "down"
+        else:
+            mult = (PAD_MULT if kind == "pad" else ORB_MULT)[col]
+            b.vy, b.grounded = b.g * mult * p.cube_v0 * s, False
+        b.boost = 0.0
+        return
 
 
 def portal_effect(hue: float):

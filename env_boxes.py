@@ -142,6 +142,33 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
     return haz, solid, portals
 
 
+def special_boxes(ents: Entities, reach: float = 17.0) -> list:
+    """Pads and orbs ahead, in blocks relative to the icon centre:
+    [(x0, x1, bottom, top, "pad" | "orb", colour, index)] (see gd_physics.special_effect)."""
+    from gd_physics import pad_orb_kind
+    px, py = ents.player_pos()
+    out = []
+    for e in ents.items:
+        c = int(e.cls)
+        if c not in (1, 2, 3, 4):
+            continue
+        k = pad_orb_kind(c, float(getattr(e, "hue", -1.0)))
+        if k is None:
+            continue
+        x0 = (e.x - e.w / 2 - px) / BLOCK_W
+        x1 = (e.x + e.w / 2 - px) / BLOCK_W
+        if x1 < -1.0 or x0 > reach:
+            continue
+        bot = (py - (e.y + e.h / 2)) / BLOCK_H
+        top = (py - (e.y - e.h / 2)) / BLOCK_H
+        if k[0] == "pad":
+            top = max(top, bot + 0.3)          # the touch zone is the strip and a bit above it
+        out.append((x0, x1, bot, top, k[0], k[1], len(out)))
+        if len(out) >= 30:
+            break
+    return out
+
+
 def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phys,
                      frame_skip: int, vy_bps: float, grounded: bool, prev_hold: bool,
                      floor_rel: float | None, ceil_rel: float | None, horizon: float = 1.5,
@@ -159,6 +186,7 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
         on_block = any(s0 < x1_ and s1 > x0_ and sb < t_ and st > b_ for s0, s1, sb, st in solid)
         if eff is not None and (t_ - b_) >= 2.4 and (x1_ - x0_) >= 0.6 and not on_block:
             portals.append((x0_, x1_, b_, t_) + eff)
+    specials = special_boxes(ents)
     # just landed? Standing level with a known surface and not moving counts as on the
     # ground right away (the 3-still-frames rule alone misses taps right after a landing)
     if not grounded and est.mode not in ("ship", "wave") and est.g * vy_bps < 1.5 * ModeEstimator.REST:
@@ -194,7 +222,7 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
             alt = est.lag_alt if getattr(est, "lag_alt", None) is not None else est.lag + 1
             sr = robust_search(body, haz, solid, floor_rel, ceil_rel, speed, phys, dtd, est.lag, pend,
                                pending_long=est.pending(alt), horizon=horizon, half=half,
-                               want_path=True, lag_alt=alt, portals=portals)
+                               want_path=True, lag_alt=alt, portals=portals, specials=specials)
             paths = list(paths) + [("best", bool(sr.get("path_hit")), sr.get("path") or [])]
             if out is not None:
                 out["search"] = sr
@@ -423,6 +451,7 @@ class EntityBoxEnv(gym.Wrapper):
         self.mode_est = ModeEstimator()          # which mode / gravity, from how the icon moves
         # learned correction of the physics preview (+ tuned jump + input delay), shared
         # by all brains and levels; trains itself on every step of play
+        self.fast_steps = False          # see step(): observe as soon as frame_skip capture slots passed
         self.timing = {"detect": 0.0, "physics": 0.0}   # seconds since the last [health] line
         # death snapshots (death_snaps.py): the last ~2.5 s of steps, saved on each death
         self.death_dir: str | None = None
@@ -900,6 +929,8 @@ class EntityBoxEnv(gym.Wrapper):
         px_moved = None          # pixel-shift verdict over this step's frames
         info: dict = {}
         frame = None
+        # (OFF by default -- --fast-steps turns it on. Live, it made decision lengths flip
+        # between 2 and 3 frames and the agent did worse than at a steady 3.)
         # Frame pacing: the capture runs on a fixed 60 Hz grid and each env.step waits for
         # the NEXT slot. Counting reads, a decision whose processing ran past one slot (> 17
         # ms) took 3 slots (50 ms) instead of 2: live runs went at ~20 decisions/s, not 30.
@@ -907,7 +938,7 @@ class EntityBoxEnv(gym.Wrapper):
         # observation, observe now.
         cap = getattr(self.base, "cap", None) if self.base is not None else None
         slots = (lambda: int(getattr(cap, "_ticks", 0)) + int(getattr(cap, "_overruns", 0))) \
-            if cap is not None and hasattr(cap, "_ticks") else None
+            if cap is not None and hasattr(cap, "_ticks") and self.fast_steps else None
         s_mark = getattr(self, "_slot_mark", None)
         for _k in range(self.frame_skip):
             obs, _r, term, _trunc, info = self.env.step(a)

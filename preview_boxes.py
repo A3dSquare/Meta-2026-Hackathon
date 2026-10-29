@@ -128,9 +128,9 @@ def main() -> int:
     p = argparse.ArgumentParser(description="box-policy live GUI + train")
     add_common_args(p)
     p.add_argument("--scale", type=float, default=1.5, help="overlay window zoom")
-    p.add_argument("--render-every", type=int, default=2,
-                   help="draw every N decisions (drawing the window costs several ms; every 2nd "
-                        "decision = 15 fps on screen and more time for the game loop; 1 = every one)")
+    p.add_argument("--render-every", type=int, default=1,
+                   help="draw every N decisions (drawing costs several ms; >1 makes the decision "
+                        "length uneven, so only together with --fast-steps)")
     args = p.parse_args()
     cap, base, env, cfg = build(args)
     cv2.namedWindow("BOX policy view", cv2.WINDOW_NORMAL)
