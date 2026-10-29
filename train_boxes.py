@@ -109,8 +109,33 @@ def main() -> int:
     os.makedirs("./checkpoints", exist_ok=True)
     import time as _time
     _t_end = _time.time() + args.minutes * 60 if args.minutes > 0 else None
-    tr = Trainer(env, cfg, model_path=args.model,
-                 on_step=(lambda *_: _time.time() < _t_end) if _t_end else None)
+    import winfocus
+
+    def on_step(*_):
+        if _t_end and _time.time() >= _t_end:
+            return False
+        cmd = winfocus.user_command()          # F8 = pause / resume, F9 = save + quit
+        if cmd == "quit":
+            print("F9: saving and stopping")
+            return False
+        if cmd == "pause":
+            env.pause()
+            print("PAUSED -- press F8 to continue (F9 to quit)")
+            while True:
+                _time.sleep(0.05)
+                c2 = winfocus.user_command()
+                if c2 == "quit":
+                    return False
+                if c2 == "pause":
+                    break
+            print("resuming in 1 s")
+            _time.sleep(1.0)
+            env.mark_trained()
+            env.resume()
+        return True
+
+    print("F8 = pause / resume, F9 = save + quit (from any window)")
+    tr = Trainer(env, cfg, model_path=args.model, on_step=on_step)
     if args.eps is not None and cfg.algo == "dqn":
         tr.learner.steps_seen = 0
         tr.best_prog = -1.0   # --eps = new level: start a fresh best %

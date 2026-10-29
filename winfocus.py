@@ -103,3 +103,33 @@ def focus_gd() -> bool:
         return int(user32.GetForegroundWindow() or 0) == int(h)
     except Exception:
         return False
+
+
+# --------------------------------------------------------------------------- #
+# Keys that work from ANY window (GD is kept in front, so the overlay window
+# rarely has keyboard focus): F8 = pause / resume, F9 = save and quit.
+# --------------------------------------------------------------------------- #
+VK_F8, VK_F9 = 0x77, 0x78
+_key_down: dict = {}
+
+
+def key_tapped(vk: int) -> bool:
+    """True once each time the key goes down (polled; Windows only)."""
+    if not _IS_WIN:
+        return False
+    try:
+        down = bool(_user32().GetAsyncKeyState(vk) & 0x8000)
+    except Exception:
+        return False
+    was = _key_down.get(vk, False)
+    _key_down[vk] = down
+    return down and not was
+
+
+def user_command() -> str | None:
+    """'pause' (F8), 'quit' (F9) or None."""
+    if key_tapped(VK_F9):
+        return "quit"
+    if key_tapped(VK_F8):
+        return "pause"
+    return None
