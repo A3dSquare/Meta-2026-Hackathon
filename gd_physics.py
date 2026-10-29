@@ -455,7 +455,15 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         pending = list(pending)[-need:] if need > 0 else []
         pending = [0.0] * (need - len(pending)) + pending
     n_pend = len(pending)
-    times = _fine_times(D, dec_dt, n_pend, dt, horizon)
+    if delay is None:
+        # whole-step delay: the time grid and decision timing exactly as before fix49 (the
+        # live runs after that change did worse; the exact grid is used with --ms-delay)
+        fine = int(round(0.5 / dt))
+        times = [k * dt for k in range(1, fine + 1)]
+        while times[-1] + 1e-9 < horizon:
+            times.append(min(horizon, times[-1] + 2 * dt))
+    else:
+        times = _fine_times(D, dec_dt, n_pend, dt, horizon)
     root_node = (0.0, body.y, None, 0.0)          # path node: (x, y, parent, effort so far)
     pref_x = pref_y = None
     if want_path and prefer and len(prefer) >= 3:
@@ -485,8 +493,12 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         x = x_prev + spd_now * (t - t_prev)        # (speed portals change spd_now)
         # which decision's action reaches the icon during this step: the free decision k
         # (0 = the one chosen now) once its delay has passed, an already-sent one before
-        k_ = int(math.floor((t_prev - D) / dec_dt + 1e-6))
-        jd = k_ + n_pend
+        if delay is None:
+            jd = int(t_prev / dec_dt + 1e-9)
+            k_ = jd - n_pend
+        else:
+            k_ = int(math.floor((t_prev - D) / dec_dt + 1e-6))
+            jd = k_ + n_pend
         if k_ < 0:
             hp = bool(pending[max(0, n_pend + k_)]) if n_pend else bool(body.prev_hold)
             states = [(b, m, hp, nd) for b, m, _h, nd in states]

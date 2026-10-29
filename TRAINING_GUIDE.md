@@ -36,7 +36,8 @@ by every brain and level; delete it to re-measure).
 moving; the console prints `[input] measured input delay: N step(s)`). Live it
 was 1 step. Since fix49 it is also measured in **milliseconds** (from when the
 picture the press was decided on was shown to when the jump started, using the
-jump's own arc), and the blue line / search use that exact value:
+jump's own arc), and with `--ms-delay` (opt-in since fix53: the runs right after it went in did worse)
+the blue line / search use that exact value:
 `[input] input delay 52 ms (1.56 steps; spread 45-60 ms)`. Before, 1.5 steps was
 rounded up to 2, so the line expected every jump ~17 ms (about 0.2 blocks) later
 than it really started. The "worse world" check still uses a delay at least a

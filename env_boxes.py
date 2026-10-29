@@ -191,6 +191,9 @@ def special_boxes(ents: Entities, reach: float = 17.0) -> list:
     return out
 
 
+USE_MS_DELAY = False     # train_boxes --ms-delay turns it on
+
+
 def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phys,
                      frame_skip: int, vy_bps: float, grounded: bool, prev_hold: bool,
                      floor_rel: float | None, ceil_rel: float | None, horizon: float = 1.5,
@@ -257,7 +260,9 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     if search:
         try:
             alt = est.lag_alt if getattr(est, "lag_alt", None) is not None else est.lag + 1
-            D = getattr(est, "delay_s", None)
+            # (the ms delay is opt-in: --ms-delay. Live, the runs after it went in did worse
+            #  -- back to whole steps by default until it's proven)
+            D = getattr(est, "delay_s", None) if USE_MS_DELAY else None
             if D is not None:              # the input delay measured in ms (not whole steps)
                 Da = getattr(est, "delay_alt_s", None)
                 Da = D + dtd if Da is None else Da

@@ -44,6 +44,9 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                    help="beat the level with what it knows: NO training -- every attempt follows the "
                         "best run saved for this level, practises the spot it died at, and the brain "
                         "(no random moves) plays past it. Needs --model (and the route memory)")
+    p.add_argument("--ms-delay", action="store_true",
+                   help="blue line / shield use the input delay measured in ms (not whole steps); "
+                        "experimental -- off by default")
     p.add_argument("--frontier", action="store_true",
                    help="train where it gets stuck: every other attempt replays the best run saved for "
                         "this level to ~3 s before its furthest point and the brain plays and LEARNS "
@@ -121,6 +124,10 @@ def build(args):
                       shield=not args.no_shield, route=not args.no_route or args.play or args.frontier,
                       route_dir=args.routes,
                       play=bool(args.play), frontier=bool(args.frontier) and not args.play)
+    if getattr(args, "ms_delay", False):
+        import env_boxes as _eb
+        _eb.USE_MS_DELAY = True
+        print("--ms-delay: the blue line uses the input delay in ms")
     if args.frontier and args.play:
         print("--frontier and --play: --play wins (no training)")
     elif args.frontier:
