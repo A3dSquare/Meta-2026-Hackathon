@@ -173,7 +173,8 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
                      frame_skip: int, vy_bps: float, grounded: bool, prev_hold: bool,
                      floor_rel: float | None, ceil_rel: float | None, horizon: float = 1.5,
                      dec_dt: float | None = None, motion: MotionLearner | None = None,
-                     out: dict | None = None, state=None, search: bool = True, half: float = 0.5):
+                     out: dict | None = None, state=None, search: bool = True, half: float = 0.5,
+                     prefer=None):
     """Mode block + action-plan outcomes for the current frame.
 
     floor_rel / ceil_rel: surface heights relative to the icon centre (None =
@@ -222,7 +223,8 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
             alt = est.lag_alt if getattr(est, "lag_alt", None) is not None else est.lag + 1
             sr = robust_search(body, haz, solid, floor_rel, ceil_rel, speed, phys, dtd, est.lag, pend,
                                pending_long=est.pending(alt), horizon=horizon, half=half,
-                               want_path=True, lag_alt=alt, portals=portals, specials=specials)
+                               want_path=True, lag_alt=alt, portals=portals, specials=specials,
+                               prefer=prefer)
             paths = list(paths) + [("best", bool(sr.get("path_hit")), sr.get("path") or [])]
             if out is not None:
                 out["search"] = sr
@@ -451,6 +453,7 @@ class EntityBoxEnv(gym.Wrapper):
         self.mode_est = ModeEstimator()          # which mode / gravity, from how the icon moves
         # learned correction of the physics preview (+ tuned jump + input delay), shared
         # by all brains and levels; trains itself on every step of play
+        self._game_t = 0                 # captured frames while the game was running (see step)
         self.fast_steps = False          # see step(): observe as soon as frame_skip capture slots passed
         self.timing = {"detect": 0.0, "physics": 0.0}   # seconds since the last [health] line
         # death snapshots (death_snaps.py): the last ~2.5 s of steps, saved on each death
@@ -793,7 +796,10 @@ class EntityBoxEnv(gym.Wrapper):
                                                     vy_bps, grounded, hold, floor_rel, ceil_rel, dec_dt=dt_plan,
                                                     state=fit,
                                                     motion=self.motion_fix if self.use_motion_fix else None,
-                                                    out=out, search=self.use_search)
+                                                    out=out, search=self.use_search,
+                                                    prefer=self._prefer_path(spd, dt_plan, pl))
+        sr_ = out.get("search") or {}
+        self._last_path = (list(sr_.get("path") or []), float(pl.y)) if pl is not None else None
         self._mstate = (out["body"], out["surf"], spd, key) if (pl is not None and "body" in out) else None
         if pl is not None and "surf" in out:
             # every mode's physics from its real motion (like the cube jump). Touching or
@@ -827,6 +833,25 @@ class EntityBoxEnv(gym.Wrapper):
             save_motion(self.motion_path, self.motion_fix, self.phys, self.mode_est, self.mode_cal)
         except Exception as ex:
             self._loud("motion-save", ex)
+
+    def attempt_time(self) -> float | None:
+        """Seconds since this attempt started, counted in captured game frames from the
+        respawn (exact to one frame, whatever the decision steps did). None = can't tell."""
+        s0 = getattr(self, "_att_slot", None)
+        if s0 is None or getattr(self, "_gt_last", None) is None:
+            return None
+        return (self._game_t - s0) / 60.0
+
+    def _prefer_path(self, spd, dt, pl):
+        """Last step's drawn line, moved into this step's frame (the icon went spd*dt blocks
+        forward), for the search to stick to when other routes are just as safe."""
+        lp = getattr(self, "_last_path", None)
+        if pl is None or not lp or not lp[0]:
+            return None
+        dx = float(spd or SPEED_1X) * float(dt or self.frame_skip / 60.0)
+        dy = (lp[1] - float(pl.y)) / BLOCK_H        # how far the icon went UP on screen since
+        pts = [(x - dx, y - dy) for x, y in lp[0] if x - dx >= 0.0]
+        return pts if len(pts) >= 3 else None
 
     def _snap_record(self, a: int, v) -> dict:
         """One step for the death snapshots (frame + what the AI knew and did)."""
@@ -906,6 +931,8 @@ class EntityBoxEnv(gym.Wrapper):
     # -- gym API --------------------------------------------------------------
     def reset(self, *, seed=None, options=None):
         info: dict = {}
+        self._att_slot = self._game_t      # attempt clock (the first attempt is a little off: it
+                                           # isn't started by a respawn; the route memory copes)
         if not self._started:
             self._ensure_focus(force=True)
             obs, info = self.env.reset(seed=seed, options=options)
@@ -946,6 +973,14 @@ class EntityBoxEnv(gym.Wrapper):
             if f is not None:
                 frame = f
                 shift = self.motion.update(f)
+                if cap is not None and hasattr(cap, "_ticks"):
+                    # GAME time: capture frames while the picture moves (a paused game --
+                    # training pauses, menus -- doesn't advance the level, so doesn't count)
+                    now_s = int(getattr(cap, "_ticks", 0)) + int(getattr(cap, "_overruns", 0))
+                    last_s = getattr(self, "_gt_last", None)
+                    self._gt_last = now_s
+                    if last_s is not None and shift != 0.0:
+                        self._game_t += min(6, now_s - last_s)
                 if shift is not None:
                     px_moved = bool(px_moved) or shift > self.move_px
             if info.get("paused"):
@@ -957,6 +992,7 @@ class EntityBoxEnv(gym.Wrapper):
                 att = self._prev_attempts
             if str(info.get("event")) == "death" or att > self._prev_attempts:
                 died = True
+                self._att_slot = self._game_t                    # the attempt clock restarts here
                 self._prev_attempts = max(self._prev_attempts, att)
                 break
             if str(info.get("event")) == "complete" or term:

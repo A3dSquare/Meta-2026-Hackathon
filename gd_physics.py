@@ -375,7 +375,7 @@ SEARCH_KEYS = ("1", "00", "01")      # press now / release now + next / release 
 def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                 dec_dt: float, lag: int = 0, pending=(), horizon: float = 1.5,
                 half: float = 0.5, beam: int = 10, want_path: bool = False,
-                late_every: float = 0.0, portals=None, specials=None) -> dict:
+                late_every: float = 0.0, portals=None, specials=None, prefer=None) -> dict:
     """Longest survival (fraction of `horizon`, 1.0 = survives it all) for each first
     action ("1" = press now, "00" = release now and at the next decision, "01" =
     release now, press at the next decision), with every later decision chosen well.
@@ -392,6 +392,11 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
     while times[-1] + 1e-9 < horizon:
         times.append(min(horizon, times[-1] + 2 * dt))
     root_node = (0.0, body.y, None, 0.0)          # path node: (x, y, parent, effort so far)
+    pref_x = pref_y = None
+    if want_path and prefer and len(prefer) >= 3:
+        pp = sorted(prefer)
+        pref_x = np.array([q[0] for q in pp], float)
+        pref_y = np.array([q[1] for q in pp], float)
     ALL, B1, B00, B01 = 7, 1, 2, 4
     # a state: [Body, root mask, hold this step, path node]
     states = [(Body(body.y, body.vy, body.g, body.grounded, body.mode, body.mini, body.boost, body.prev_hold),
@@ -463,7 +468,16 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
             # the drawn line = the surviving path with the LEAST effort (presses, holding):
             # with nothing dangerous ahead every path survives, and an arbitrary one was
             # drawn -- full of pointless jumps
-            node = (x, y, nd, nd[3] + (1.0 if pressed else 0.0) + (0.05 if h else 0.0)) if want_path else nd
+            if want_path:
+                eff = nd[3] + (1.0 if pressed else 0.0) + (0.05 if h else 0.0)
+                if pref_x is not None and x <= pref_x[-1]:
+                    # stay on LAST step's line unless it stopped working: among equally safe
+                    # routes the least-effort one flipped from step to step ("the line is on
+                    # the right track, then blips to another one")
+                    eff += PREFER_W * min(1.0, abs(y - float(np.interp(x, pref_x, pref_y))))
+                node = (x, y, nd, eff)
+            else:
+                node = nd
             dead = y < -12 or y > 14
             if not dead:
                 yt, yb_ = y + half, y - half
@@ -520,9 +534,13 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
     return out
 
 
+PREFER_W = 0.15   # path effort per step for being 1 block off last step's line (a press = 1.0)
+
+
 def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, dec_dt: float,
                   lag: int, pending, pending_long=None, horizon: float = 1.5, half: float = 0.5,
-                  want_path: bool = False, lag_alt: int | None = None, portals=None, specials=None) -> dict:
+                  want_path: bool = False, lag_alt: int | None = None, portals=None, specials=None,
+                  prefer=None) -> dict:
     """search_best in the measured world AND a slightly different one: the press arrives
     one step EARLIER or LATER (lag_alt: whichever the measured delays say is likely --
     live they split between 1 and 2 steps, so with "2" a jump often started a step early
@@ -539,7 +557,7 @@ def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, de
         a.update(nominal=dict(a), worse=dict(a), path=[], path_hit=False)
         return a
     a = search_best(body, haz, solid, floor, ceil, speed, p, dec_dt, lag, pending, horizon, half,
-                    want_path=want_path, portals=portals, specials=specials)
+                    want_path=want_path, portals=portals, specials=specials, prefer=prefer)
     if all(a[k] < 1.0 for k in SEARCH_KEYS):
         b = {k: 0.0 for k in SEARCH_KEYS}   # crashes as measured -> the worse world can't help
     else:

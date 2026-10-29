@@ -601,6 +601,18 @@ class ProgressReward:
                 "prev": self.prev_fill, "attempts": self.attempts,
                 "diff": diff, "frozen": auto_frozen,
                 "pct_seen": True}
+        # 100% only counts when it came from the 90s: a misread "100" (live: twice in a row,
+        # in Stereo Madness's ship part at ~30%) used to end the run as "level complete".
+        self._rt = getattr(self, "_rt", 0) + 1
+        if src.startswith("pct") and 0.90 <= prog < self.cfg.completion_frac:
+            self._last90 = self._rt
+        if not completed and prog >= self.cfg.completion_frac and \
+                self._rt - getattr(self, "_last90", -10**9) > 180:
+            if not getattr(self, "_warned100", False) or self._rt - self._warned100 > 600:
+                self._warned100 = self._rt
+                print(f"[progress] ignored a 100% read (it came from {self.prev_fill * 100:.0f}%, not the 90s)")
+            prog, src = self.prev_fill, "stale"     # treat it as no read
+            info["prog"], info["src"] = prog, src
         if completed or prog >= self.cfg.completion_frac:
             r = self.cfg.completion_bonus
             self.done = True

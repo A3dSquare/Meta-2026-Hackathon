@@ -353,7 +353,14 @@ class SimGD(gym.Env):
             out: dict = {}
             self._pf_args = (ents, speed, self.est, self.phys, self.frame_skip, vy_step / dt, grounded, hold,
                              -(self.y + 0.5), CEIL - (self.y + 0.5))   # (tests: redo the preview)
-            mf, plan, self.last_arcs = physics_features(*self._pf_args, motion=self.motion_fix, out=out)
+            pref = None
+            lp = getattr(self, "_last_path", None)
+            if lp:
+                dx, dy = speed * dt, (self.y + 0.5) - lp[1]
+                pref = [(x - dx, y - dy) for x, y in lp[0] if x - dx >= 0.0] or None
+            mf, plan, self.last_arcs = physics_features(*self._pf_args, motion=self.motion_fix, out=out,
+                                                        prefer=pref)
+            self._last_path = (list((out.get("search") or {}).get("path") or []), self.y + 0.5)
             self._mstate = (out["body"], out["surf"], speed, key) if self.dead == 0 else None
             fl_s, ce_s = out["surf"]
             near = grounded or any(abs(q) < 0.45 for q in list(fl_s) + list(ce_s))
