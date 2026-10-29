@@ -225,6 +225,10 @@ class HazardMemory:
                 return
             if c == 6 and 0 <= (x - w / 2) - px < 1.0 * bw and abs(y - py) < h / 2 + 0.4 * bh:
                 return
+            # a block right above the icon: it hit its head (a cube dies from that) -- not
+            # an unknown hazard (else the block's underside got learned as "deadly")
+            if c == 6 and abs(x - px) < w / 2 + 0.5 * bw and abs((y + h / 2) - (py - 0.5 * bh)) < 0.6 * bh:
+                return
         # only if the predicted path thought it was fine (else it was a known risk)
         sr = rec.get("search") or {}
         if sr and max(sr.get("1", 1.0), sr.get("00", 1.0), sr.get("01", 1.0)) < 0.9:

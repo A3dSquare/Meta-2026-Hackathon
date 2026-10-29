@@ -34,13 +34,15 @@ class Phys:
     cube_v0: float = 20.5       # jump speed (blocks/s)
     cube_g: float = 95.0        # gravity (blocks/s^2)
     ship_a: float = 55.0        # (old single value; ship_up / ship_down are used)
-    ship_up: float = 55.0       # ship acceleration while holding / falling while released
-    ship_down: float = 55.0     # (measured live per mode: ModeCalibrator)
+    # (starting values measured on a recording of your game -- custom-for-claude.mp4; the
+    #  ModeCalibrator keeps measuring them live)
+    ship_up: float = 58.0       # ship acceleration while holding / falling while released
+    ship_down: float = 45.0     # (was 55 / 55: the fall was ~20% too strong)
     ship_vmax: float = 12.0
     ball_g: float = 80.0
-    ufo_v0: float = 14.0
-    ufo_g: float = 80.0
-    wave_slope: float = 1.0     # 45 degrees (mini wave: 2.0)
+    ufo_v0: float = 12.5        # (was 14)
+    ufo_g: float = 57.0         # (was 80: ~30% too strong)
+    wave_slope: float = 0.86    # (was 1.0 = 45 degrees; measured ~40; mini wave: 2x)
     robot_v0: float = 16.0
     robot_boost: float = 0.25   # seconds of extra rise while held
     spider_snap: float = 12.0   # how far it searches for the opposite surface
@@ -113,6 +115,7 @@ class Body:
     prev_hold: bool = False
     used: int = 0               # search: pads / orbs this path already used (bitmask)
     dash: bool = False          # dashing (dash orb, while SPACE stays held)
+    crashed: bool = False       # hit a block head-first (cube / robot): dead
 
 
 def _scale(b: Body, p: Phys) -> float:
@@ -197,6 +200,20 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
     # resting surfaces: falling onto a floor / rising into a ceiling
     up = p.snap if b.g == 1 else 0.06           # landing side: GD's inner-hitbox leniency
     dn = p.snap if b.g == -1 else 0.06
+    # A cube / robot can only stand on the side gravity pulls it to. Hitting a block with
+    # its HEAD (jumping into the underside; upside down: falling onto a block's top) kills
+    # it in GD -- this used to be a harmless bump, so the blue line drew jumps straight up
+    # into low ceilings and called them safe.
+    head_kills = m in ("cube", "robot")
+    # (only a real hit: moving INTO it, and the block's edge was clear of the head before
+    #  this step -- sliding along under a block in a 1-block gap is fine in GD; the
+    #  first version flagged that and the whole-level test went from 18 to 28 false crashes)
+    if b.vy < -0.5 and head_kills and b.g == -1 and not was_grounded:
+        if any(y_new <= f < b.y - 0.02 for f in floors):
+            b.crashed = True
+    if b.vy > 0.5 and head_kills and b.g == 1 and not was_grounded:
+        if any(b.y + 0.02 < c <= y_new for c in ceils):
+            b.crashed = True
     if b.vy <= 0:
         land = [f for f in floors if y_new <= f <= max(b.y, y_new) + up]
         if land:
@@ -354,8 +371,8 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                     if s0 < hi - 0.05 and s1 > lo + 0.05 and sb < y + half - tu and st > y - half + td:
                         hit_t[pi] = t                  # into the side of a block
                         break
-            if hit_t[pi] is None and (y < -12 or y > 14):
-                hit_t[pi] = t                          # out of the world
+            if hit_t[pi] is None and (y < -12 or y > 14 or b.crashed):
+                hit_t[pi] = t                          # out of the world / hit a block head-first
             if hit_t[pi] is None:
                 still.append(pi)
         live = still
@@ -452,7 +469,8 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                     else:
                         m2 = m
                     if m2:
-                        new.append((Body(b.y, b.vy, b.g, b.grounded, b.mode, b.mini, b.boost, b.prev_hold, b.used, b.dash),
+                        new.append((Body(b.y, b.vy, b.g, b.grounded, b.mode, b.mini, b.boost, b.prev_hold, b.used, b.dash,
+                                         b.crashed),
                                     m2, h, nd))
             states = new
         last_jd = jd
@@ -505,7 +523,7 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                 node = (x, y, nd, eff)
             else:
                 node = nd
-            dead = y < -12 or y > 14
+            dead = y < -12 or y > 14 or b.crashed
             if not dead:
                 yt, yb_ = y + half, y - half
                 for hb, ht in hz:

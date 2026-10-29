@@ -105,6 +105,7 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
     """Hazard / solid boxes in blocks relative to the icon centre (+y = up)."""
     px, py = ents.player_pos()
     haz, solid, portals = [], [], []
+    spikes = []                      # the spikes' full boxes (the hitboxes are smaller)
     for e in ents.items:
         c = int(e.cls)
         x0 = (e.x - e.w / 2 - px) / BLOCK_W
@@ -140,6 +141,25 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
             solid.append((x0, x1, bot, top))
         elif c == CLS_ID["portal"]:
             portals.append((x0, x1, bot, top, float(getattr(e, "hue", -1.0)), getattr(e, "kind", None)))
+        if c == 0:
+            spikes.append((x0, x1, bot, top))
+    # a block box drawn over its own spikes (a hanging block's box reaching down over the
+    # spikes under it): the block ends where the spikes start. With head hits now deadly,
+    # the too-low bottom made every jump under it a "crash" (whole-level test, 77% part).
+    if spikes and solid:
+        fixed = []
+        for s0, s1, sb, st in solid:
+            for h0, h1, hb, ht in spikes:
+                cx = (h0 + h1) / 2
+                if not (s0 <= cx <= s1) or (h1 - h0) > 0.9 * (s1 - s0) + 0.3:
+                    continue
+                if sb - 0.1 <= hb and ht < st - 0.2 and hb < sb + 0.6 * (ht - hb) + 0.1:
+                    sb = max(sb, ht - 0.05)          # spike hangs from inside the box's bottom
+                elif st + 0.1 >= ht and hb > sb + 0.2 and ht > st - 0.6 * (ht - hb) - 0.1:
+                    st = min(st, hb + 0.05)          # spike stands inside the box's top
+            if st - sb > 0.1:
+                fixed.append((s0, s1, sb, st))
+        solid = fixed
     return haz, solid, portals
 
 
