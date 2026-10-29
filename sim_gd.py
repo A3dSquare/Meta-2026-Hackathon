@@ -181,7 +181,7 @@ class SimGD(gym.Env):
 
     def __init__(self, level=None, frame_skip: int = 2, dead_ticks: int = 60, signal_delay: int = 2,
                  p_miss: float = 0.03, pos_noise: float = 0.002, seed: int = 0, use_jump: bool = True,
-                 input_lag: int = 0, world_phys: "gp.Phys | None" = None, motion_fix: bool = True) -> None:
+                 input_lag: int = 0, world_phys: "gp.Phys | None" = None, motion_fix: bool = False) -> None:
         self.use_jump = use_jump
         # the simulated game's true physics; the preview's formulas (self.phys) can differ,
         # which is what the learned correction (motion_fix) is there to make up for
@@ -440,7 +440,7 @@ def main() -> int:
     p.add_argument("--eval", default=None, help="evaluate a checkpoint instead of training")
     p.add_argument("--quiet", action="store_true")
     p.add_argument("--no-shield", action="store_true", help="no physics-preview safety shield")
-    p.add_argument("--no-motion-fix", action="store_true", help="don't learn a correction of the physics preview")
+    p.add_argument("--motion-fix", action="store_true", help="also learn a correction of the physics preview (experimental)")
     p.add_argument("--input-lag", type=int, default=0,
                    help="decisions between pressing and the icon reacting (real GD + capture: ~1)")
     a = p.parse_args()
@@ -455,7 +455,7 @@ def main() -> int:
     else:
         level = random_level(a.seed)
     env = SimGD(level, frame_skip=a.frame_skip, seed=a.seed, input_lag=a.input_lag,
-                motion_fix=not a.no_motion_fix)
+                motion_fix=a.motion_fix)
     cfg = TrainConfig(algo=a.algo, total_steps=a.steps, shield=not a.no_shield, name=f"sim_{a.level}", log_dir="./logs_sim",
                       trim_death=not a.no_trim, verbose=0 if a.quiet else 1,
                       stop_on_complete=False)

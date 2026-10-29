@@ -144,6 +144,10 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
                                  frame_skip=frame_skip, horizon=horizon, dec_dt=dec_dt,
                                  lag=est.lag, pending=est.pending(), motion=motion)
     if out is not None:   # the state the preview started from (to learn from what happens next)
+        out["inputs"] = {"grounded": bool(grounded), "vy0": float(vy0), "floor_rel": floor_rel, "ceil_rel": ceil_rel,
+                         "lag": int(est.lag), "pending": [bool(x) for x in est.pending()],
+                         "motion": bool(motion is not None and motion.active_for(est.mode)),
+                         "cube_v0": float(phys.cube_v0), "cube_g": float(phys.cube_g)}
         out["body"] = body
         out["surf"] = surfaces_at(0.0, solid, floor_rel, ceil_rel)
     mf = np.zeros(N_MODE, dtype=np.float32)
@@ -332,7 +336,7 @@ class EntityBoxEnv(gym.Wrapper):
     def __init__(self, env: gym.Env, backend: str = "heuristic", detector: Any | None = None,
                  frame_skip: int = 2, hires: bool = True, death_lag_s: float | None = None,
                  fallback_lag_s: float = 0.6, move_px: float = 0.6,
-                 motion_path: str | None = None) -> None:
+                 motion_path: str | None = None, motion_fix: bool = False) -> None:
         super().__init__(env)
         self.base = _find_base(env)
         self.det = detector if detector is not None else make_detector(backend)
@@ -365,8 +369,15 @@ class EntityBoxEnv(gym.Wrapper):
         self._focus_unknown_shown = False
         self._press_pending: list = []
         self._press_ok: deque = deque(maxlen=10)
+        self._press_delay: deque = deque(maxlen=15)
+        self._last_yb = None
+        self._debris: list = []          # per step: debris boxes around the icon (crash timing)
+        self._last_pp = None
         self._press_warn_t = 0.0
         self._peak = 0.0
+        # off by default: on live data its corrections made "don't press" float over
+        # the first spike in the preview (so the shield trusted it). --motion-fix = on.
+        self.use_motion_fix = bool(motion_fix)
         self.motion_fix = MotionLearner()
         self.motion_path = motion_path
         self._mstate = None
@@ -381,6 +392,8 @@ class EntityBoxEnv(gym.Wrapper):
             atexit.register(self.save_motion)
         self.last_arcs: list = []                # predicted paths (for the overlay)
         self._floor_y = None                     # screen y of the floor (lowest place stood on)
+        self._floor_hist: deque = deque(maxlen=30)   # recent standing positions on the ground
+        self._ceil_hist: deque = deque(maxlen=30)
         self._ceil_y = None                      # ... of the ceiling when upside down
         self._portal_cool = 0
         self.speed = None                        # blocks/s, from the tracker
@@ -497,20 +510,35 @@ class EntityBoxEnv(gym.Wrapper):
                         self.mode_est.portal_hint(float(getattr(e, "hue", -1.0)) if tall else -1.0)
                         self._portal_cool = 10
             self._portal_cool -= 1
-            if grounded:   # remember where it stood: lowest = floor, highest (upside down) = ceiling
-                # (screen y grows downward: a ceiling is a SMALLER y than the floor)
-                if self.mode_est.g == 1:
-                    if self._ceil_y is None or py - self._ceil_y > 1.5 * BLOCK_H:
-                        self._floor_y = py if self._floor_y is None or abs(py - self._floor_y) > 6 * BLOCK_H else max(self._floor_y, py)
-                elif self._floor_y is None or self._floor_y - py > 1.5 * BLOCK_H:
+            # Floor / ceiling. The player box is often only part of the icon (and which part
+            # changes as it spins), so its centre wobbles by ~0.3 blocks: track the ground as
+            # the MEDIAN of recent standing positions, and while standing on the ground (not
+            # on a detected block) the floor is exactly half a block down by definition.
+            # Live snapshots showed the floor placed 0.3 blocks too high, so the "don't press"
+            # path sank through it and slid UNDER the first spike -- "safe" until too late.
+            g_ = self.mode_est.g
+            on_block = self._on_block(ents, py, g_)
+            if grounded and not on_block:
+                if g_ == 1 and (self._ceil_y is None or py - self._ceil_y > 1.5 * BLOCK_H):
+                    if self._floor_hist and abs(py - float(np.median(self._floor_hist))) > 3 * BLOCK_H:
+                        self._floor_hist.clear()          # the level's ground moved (new section)
+                    self._floor_hist.append(py)
+                    self._floor_y = float(np.median(self._floor_hist))
+                elif g_ == -1 and (self._floor_y is None or self._floor_y - py > 1.5 * BLOCK_H):
                     # only a real ceiling: standing still ON the floor while the recogniser
                     # briefly thinks "upside down" must not turn the floor into a ceiling
-                    # (that made every predicted jump hit an invisible ceiling)
-                    self._ceil_y = py if self._ceil_y is None or abs(py - self._ceil_y) > 6 * BLOCK_H else min(self._ceil_y, py)
+                    if self._ceil_hist and abs(py - float(np.median(self._ceil_hist))) > 3 * BLOCK_H:
+                        self._ceil_hist.clear()
+                    self._ceil_hist.append(py)
+                    self._ceil_y = float(np.median(self._ceil_hist))
             if self._floor_y is not None:
                 floor_rel = (py - self._floor_y) / BLOCK_H - 0.5
-            if self._ceil_y is not None and self.mode_est.g == -1:
+                if (grounded and g_ == 1 and not on_block) or floor_rel > -0.5:
+                    floor_rel = -0.5                      # standing on it / never inside the icon
+            if self._ceil_y is not None and g_ == -1:
                 ceil_rel = (py - self._ceil_y) / BLOCK_H + 0.5   # only matters upside down
+                if (grounded and not on_block) or ceil_rel < 0.5:
+                    ceil_rel = 0.5
         self._last_floor_rel, self._last_ceil_rel = floor_rel, ceil_rel
         # learn from the step that just happened: what the preview expected vs what the icon did
         me = self.mode_est
@@ -518,7 +546,7 @@ class EntityBoxEnv(gym.Wrapper):
         sc_ = getattr(ents, "scroll", None)
         cam_moving = sc_ is not None and abs(sc_) > 0.0025 * self.frame_skip
         if (self._mstate is not None and pl is not None and cam_moving and self._mstate[3] == key
-                and me._hint_t < 25 and abs(vy_bps) < 40 and self.presses_working):
+                and me._hint_t < 25 and abs(vy_bps) < 40 and self.presses_working and self.use_motion_fix):
             body0, (fl0, ce0), spd0 = self._mstate[:3]
             try:
                 self.motion_fix.observe(body0, me.eff_hold(0), fl0, ce0, spd0, dt, self.phys, vy_bps)
@@ -527,8 +555,10 @@ class EntityBoxEnv(gym.Wrapper):
         out: dict = {}
         mf, plan, self.last_arcs = physics_features(ents, spd, self.mode_est, self.phys, self.frame_skip,
                                                     vy_bps, grounded, hold, floor_rel, ceil_rel, dec_dt=dt,
-                                                    motion=self.motion_fix, out=out)
+                                                    motion=self.motion_fix if self.use_motion_fix else None,
+                                                    out=out)
         self._mstate = (out["body"], out["surf"], spd, key) if (pl is not None and "body" in out) else None
+        self._last_inputs = out.get("inputs")
         self.timing["physics"] += time.perf_counter() - _t1
         v = encode_obs(ents, hold=hold, prev_py=self._prev_py,
                        speed=spd, hist=self._hist, mode=mf, plan=plan)
@@ -575,11 +605,15 @@ class EntityBoxEnv(gym.Wrapper):
             "vy": float(self._hist[-1][0]) / self._step_dt(peek=True) if self._hist else 0.0,
             "dt": self._step_dt(peek=True), "speed": float(self.speed or SPEED_1X), "prog": prog,
             "floor_rel": getattr(self, "_last_floor_rel", None), "ceil_rel": getattr(self, "_last_ceil_rel", None),
+            "preview_inputs": getattr(self, "_last_inputs", None),
         }
 
     def _new_attempt(self) -> None:
         self._press_pending = []
+        self._last_yb = None
+        self._debris = []
         self._ceil_y = None        # ceilings belong to a section; the floor is the level's
+        self._ceil_hist.clear()
         self._snap.clear()
         self._peak = 0.0
         self._mstate = None
@@ -663,6 +697,7 @@ class EntityBoxEnv(gym.Wrapper):
             frame = self.last_frame
         v = self._observe(frame, a == 1)
         self._ensure_focus()
+        self._debris.append(self._debris_count())
         if self.death_dir:
             try:
                 self._snap.append(self._snap_record(a, v))
@@ -709,6 +744,9 @@ class EntityBoxEnv(gym.Wrapper):
                 else:
                     lag = raw
                 lag = min(lag, max(0, len(self._moving) - 1))
+            lag2 = self._explosion_lag(lag)
+            if lag2 is not None and lag2 != lag:
+                lag, src = lag2, src + "+explosion"
             out_info["death_lag"], out_info["death_lag_src"] = lag, src
             out_info["attempt_steps"] = len(self._moving)
             if self.death_dir and self._snap:
@@ -735,6 +773,43 @@ class EntityBoxEnv(gym.Wrapper):
             self.motion.reset()
 
     # -- input sanity -----------------------------------------------------------
+    def _debris_count(self) -> int:
+        """Coloured bits (orb / pad / portal boxes) right around the icon: the crash
+        explosion makes lots of them appear at once."""
+        ents = self.last_ents
+        if ents.player() is not None:
+            self._last_pp = ents.player_pos()
+        if self._last_pp is None:
+            return 0
+        px, py = self._last_pp
+        return sum(1 for e in ents.items if 1 <= int(e.cls) <= 5 and abs(e.x - px) < 0.12 and abs(e.y - py) < 0.2)
+
+    def _explosion_lag(self, lag: int):
+        """Refine one death's crash time: the explosion starts within a second of where
+        the usual crash->% reset delay puts it. Live snapshots: the fixed delay was right
+        within ~4 steps for most deaths, but 12-20 steps late for some."""
+        deb = self._debris
+        n = len(deb)
+        crash = n - 1 - int(lag)
+        for i in range(max(1, crash - 22), min(n - 1, crash + 7)):
+            if deb[i] >= 2 and deb[i + 1] >= 1:
+                return max(0, n - 1 - (i - 1))   # visible one step after the impact
+        return None
+
+    @staticmethod
+    def _on_block(ents, py: float, g: int) -> bool:
+        """Is a detected block right under (or, upside down, over) the icon?"""
+        px = ents.player_pos()[0]
+        for e in ents.items:
+            if int(e.cls) != CLS_ID["wall"] or abs(e.x - px) > e.w / 2 + 0.3 * BLOCK_W:
+                continue
+            top, bot = e.y - e.h / 2, e.y + e.h / 2
+            if g == 1 and 0.15 * BLOCK_H < top - py < 0.9 * BLOCK_H:
+                return True
+            if g == -1 and 0.15 * BLOCK_H < py - bot < 0.9 * BLOCK_H:
+                return True
+        return False
+
     def _ensure_focus(self, force: bool = False) -> None:
         """SPACE only reaches GD when GD is the active window: check every ~2 s
         (and before pausing / resuming); bring it back to the front if not."""
@@ -768,18 +843,29 @@ class EntityBoxEnv(gym.Wrapper):
         if y_b is None or not alive:
             self._press_pending = []
             return
+        prev = bool(self._hist and self._hist[-1][1] > 0.5)
+        y_before = self._last_yb
+        self._last_yb = y_b
+        if hold and not prev and resting and y_before is not None and len(self._press_pending) < 4:
+            self._press_pending.append((0, y_before))     # (steps since the press, height before it)
         still = []
-        for left, y0 in self._press_pending:
-            if abs(y_b - y0) > 0.35:
+        for age, y0 in self._press_pending:
+            if abs(y_b - y0) > 0.3:
                 self._press_ok.append(True)
-            elif left <= 1:
+                self._press_delay.append(age)             # 0 = it reacted during the press step
+            elif age >= 11:
                 self._press_ok.append(False)
             else:
-                still.append((left - 1, y0))
+                still.append((age + 1, y0))
         self._press_pending = still
-        prev = bool(self._hist and self._hist[-1][1] > 0.5)
-        if hold and not prev and resting and len(self._press_pending) < 4:
-            self._press_pending.append((12, y_b))
+        if len(self._press_delay) >= 5:
+            # the measured input delay (median of recent presses) beats inferring it from
+            # motion: live data showed a real delay of 1 step while the inference said 0
+            lag = int(np.clip(np.median(self._press_delay), 0, ModeEstimator.MAX_LAG))
+            if lag != self.mode_est.lag:
+                print(f"[input] measured input delay: {lag} step(s) between pressing and the icon moving")
+            self.mode_est.lag = lag
+            self.mode_est.lag_locked = True
         r = list(self._press_ok)
         if len(r) >= 8 and sum(r) <= 1:
             now = time.time()

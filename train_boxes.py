@@ -43,6 +43,8 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                         "(keeps the newest N; 0 = off)")
     p.add_argument("--no-shield", action="store_true",
                    help="don't let the physics preview veto actions it predicts will crash")
+    p.add_argument("--motion-fix", action="store_true",
+                   help="also use the learned physics correction (experimental; off by default)")
     p.add_argument("--motion-model", default="checkpoints/motion_model.npz",
                    help="learned physics correction + tuned jump + input delay (shared by all "
                         "brains and levels); 'none' = don't load or save one")
@@ -82,7 +84,8 @@ def build(args):
     det = make_detector(args.backend, icon_hue=tuple(args.icon_hue))
     env = EntityBoxEnv(base, backend=args.backend, detector=det, frame_skip=args.frame_skip,
                        hires=not args.no_hires, death_lag_s=lag,
-                       motion_path=None if str(args.motion_model).lower() == "none" else args.motion_model)
+                       motion_path=None if str(args.motion_model).lower() == "none" else args.motion_model,
+                       motion_fix=bool(args.motion_fix))
     if args.death_snaps > 0:
         env.death_dir = os.path.join("logs_boxes", "deaths")
         env.death_keep = int(args.death_snaps)

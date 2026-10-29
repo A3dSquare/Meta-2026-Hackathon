@@ -749,7 +749,7 @@ class ModeEstimator:
         self._rest = [k >= 3 and abs(ys[k - 1] - ys[k - 3]) < self.REST * 2 * dt for k in range(len(ys))]
         self._n_upd += 1
         # input-delay check: often at first, rarely once it has been confirmed a few times
-        if self._n_upd % (8 if self._lag_ok < 5 else 40) == 0 and any(holds):
+        if not getattr(self, "lag_locked", False) and self._n_upd % (8 if self._lag_ok < 5 else 40) == 0 and any(holds):
             self._fit_lag(vys, holds, dt, speed, p)
         L = self.lag
         if (self.mode in ("ball", "spider") and len(holds) > L + 1 and holds[-1 - L] and not holds[-2 - L]
