@@ -12,7 +12,7 @@ best*.pt
 
 # --- training telemetry (logs, tensorboard, monitor csv) ---
 logs/
-logs_boxes/
+
 tb/
 tb_boxes/
 runs/
