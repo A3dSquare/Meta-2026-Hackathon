@@ -8,7 +8,8 @@ Each class has a BASE class -- one of the 7 the brain has always seen (0 hazard,
 same shape and an existing brain keeps working. The exact type (red orb, 2x speed
 portal...) rides along as `kind` and drives the blue line's physics.
 
-Launch strengths are GD 2.2's, relative to the cube's own jump (11.18). The less
+Launch strengths are relative to the cube's own jump. Yellow / pink / red orbs and pads
+were measured on a recording of your game (custom-for-claude.mp4, 30 fps); the less
 common ones (black / dash / spider orbs, mode scaling for ship / ufo / ball / swing)
 are approximate and get checked against recordings.
 """
@@ -27,9 +28,9 @@ from __future__ import annotations
 OBJECTS = [
     # --- the 7 classes the brain has always had (kept: old labels stay valid) -------
     ("hazard", 0, "base", None),
-    ("orb_y", 1, "orb", ("jump", 1.0)),        # yellow orb
+    ("orb_y", 1, "orb", ("jump", 1.04)),       # yellow orb (measured on your game: 1.04)
     ("orb_b", 2, "orb", ("flip", 0.4)),        # blue orb
-    ("orb_p", 3, "orb", ("jump", 0.72)),       # pink orb
+    ("orb_p", 3, "orb", ("jump", 0.75)),       # pink orb (measured: 0.75)
     ("pad", 4, "pad", None),                   # pad, type from its colour (old labels)
     ("portal", 5, "portal", None),             # portal, type from its colour (old labels)
     ("solid", 6, "base", None),
@@ -43,7 +44,7 @@ OBJECTS = [
     ("spider", 7, "icon", "spider"),
     ("swing", 7, "icon", "swing"),
     # --- every orb ---------------------------------------------------------------------
-    ("orb_red", 1, "orb", ("jump", 1.38)),
+    ("orb_red", 1, "orb", ("jump", 1.38)),     # (measured: 1.38)
     ("orb_green", 2, "orb", ("flipjump", 1.0)),
     ("orb_black", 3, "orb", ("down", 1.4)),
     ("orb_dash_green", 3, "orb", ("dash", False)),
@@ -52,9 +53,9 @@ OBJECTS = [
     ("orb_teleport", 3, "orb", ("none",)),
     ("orb_toggle", 3, "orb", ("none",)),
     # --- every pad -----------------------------------------------------------------------
-    ("pad_yellow", 4, "pad", ("jump", 1.43)),
-    ("pad_pink", 4, "pad", ("jump", 0.93)),
-    ("pad_red", 4, "pad", ("jump", 1.8)),
+    ("pad_yellow", 4, "pad", ("jump", 1.48)),  # (measured: ~1.5)
+    ("pad_pink", 4, "pad", ("jump", 0.95)),    # (measured: 0.96)
+    ("pad_red", 4, "pad", ("jump", 1.9)),      # (measured: ~1.9)
     ("pad_blue", 4, "pad", ("flip", 0.4)),
     ("pad_spider", 4, "pad", ("teleport_flip",)),
     # --- mode portals --------------------------------------------------------------------
