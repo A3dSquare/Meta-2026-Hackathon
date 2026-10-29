@@ -134,6 +134,13 @@ plan starting with that action survives (1.00 = no crash in 1.5 s). The
 kept (`--death-snaps N` to change, 0 = off). Send a few of these when asking
 why it dies somewhere.
 
+**GD must be the active window.** Key presses go to whatever window is in
+front. If the overlay, the console or anything else is active, SPACE never
+reaches GD: the cube can't jump and the AI learns that jumping is useless.
+The env now brings GD back to the front every ~2 s (and before pausing /
+resuming), and prints `[input] WARNING: ... presses did NOTHING` if the icon
+stops reacting to presses. If you see that, click into GD.
+
 ## 5. If it stalls
 
 - **No `[attempt ...]` line when the cube dies**: the % reader missed the

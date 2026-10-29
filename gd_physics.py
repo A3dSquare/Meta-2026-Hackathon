@@ -790,11 +790,14 @@ class ModeEstimator:
             # otherwise only when the current model keeps failing badly.
             # gravity alone changes often (orbs, pads, ball/spider presses): treat like a portal
             portal = self._hint_t > 0 or cand[0::2] == (self.mode, self.mini)
-            clearly = cur is None or best[0] < (0.85 if portal else 0.6) * cur
+            # without a portal, demand overwhelming, long-lasting evidence: real live runs
+            # showed a cube whose presses weren't reaching the game turn into an
+            # "upside-down ship" within a second -- and then every prediction was wrong
+            clearly = cur is None or best[0] < (0.85 if portal else 0.4) * cur
             c, k = self._cand_streak
             k = k + 1 if (c == cand and clearly) else (1 if clearly else 0)
             self._cand_streak = (cand, k)
-            if k >= (2 if portal else 5):
+            if k >= (2 if portal else 12):
                 self.mode, self.g, self.mini = cand
                 self._cand_streak = (None, 0)
         self.conf = float(np.clip(1.0 - best[0] / max(second, 1e-6), 0.0, 1.0))

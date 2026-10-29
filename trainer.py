@@ -624,7 +624,10 @@ class Trainer:
             pass
         for key in self._tm:
             self._tm[key] = 0.0
-        print(f"[health] {ms:.1f} ms/decision{parts}{mem}{cap}{slow}")
+        warn = ""
+        if getattr(self.env, "presses_working", True) is False:
+            warn = "  <-- PRESSES AREN'T REACHING GD (click into the game window)"
+        print(f"[health] {ms:.1f} ms/decision{parts}{mem}{cap}{slow}{warn}")
 
     def _finish_attempt(self, seg: _Seg, info: dict, peak: float, next_obs) -> None:
         cfg = self.cfg

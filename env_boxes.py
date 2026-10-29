@@ -359,6 +359,13 @@ class EntityBoxEnv(gym.Wrapper):
         self.death_keep = 30
         self._snap: deque = deque(maxlen=75)
         self._dbg: dict = {}          # set by the trainer each step: brain's choice, shield, Q
+        # input sanity: is GD the active window, and do presses do anything?
+        self._focus_n = 0
+        self._focus_warn_t = 0.0
+        self._focus_unknown_shown = False
+        self._press_pending: list = []
+        self._press_ok: deque = deque(maxlen=10)
+        self._press_warn_t = 0.0
         self._peak = 0.0
         self.motion_fix = MotionLearner()
         self.motion_path = motion_path
@@ -475,7 +482,9 @@ class EntityBoxEnv(gym.Wrapper):
             y_b = (0.75 - py) / BLOCK_H
             self.mode_est.update(y_b, hold, dt, spd, self.phys)
             me = self.mode_est
-            if me.mode == "cube" and me.g == 1 and not me.mini:
+            sc0 = getattr(ents, "scroll", None)
+            self._watch_press(y_b, hold, me.resting_before(), sc0 is not None and abs(sc0) > 0.0025 * self.frame_skip)
+            if me.mode == "cube" and me.g == 1 and not me.mini and self.presses_working:
                 # the press that reached the icon this step (input delay), and whether it
                 # was resting BEFORE this step (not counting the jump's own first motion)
                 self.phys.calibrate(y_b, vy_step, me.eff_hold(0), me.resting_before(), dt)
@@ -509,7 +518,7 @@ class EntityBoxEnv(gym.Wrapper):
         sc_ = getattr(ents, "scroll", None)
         cam_moving = sc_ is not None and abs(sc_) > 0.0025 * self.frame_skip
         if (self._mstate is not None and pl is not None and cam_moving and self._mstate[3] == key
-                and me._hint_t < 25 and abs(vy_bps) < 40):
+                and me._hint_t < 25 and abs(vy_bps) < 40 and self.presses_working):
             body0, (fl0, ce0), spd0 = self._mstate[:3]
             try:
                 self.motion_fix.observe(body0, me.eff_hold(0), fl0, ce0, spd0, dt, self.phys, vy_bps)
@@ -569,6 +578,7 @@ class EntityBoxEnv(gym.Wrapper):
         }
 
     def _new_attempt(self) -> None:
+        self._press_pending = []
         self._ceil_y = None        # ceilings belong to a section; the floor is the level's
         self._snap.clear()
         self._peak = 0.0
@@ -601,6 +611,7 @@ class EntityBoxEnv(gym.Wrapper):
     def reset(self, *, seed=None, options=None):
         info: dict = {}
         if not self._started:
+            self._ensure_focus(force=True)
             obs, info = self.env.reset(seed=seed, options=options)
             self._started = True
             frame = self._newest(obs)
@@ -651,6 +662,7 @@ class EntityBoxEnv(gym.Wrapper):
         if frame is None:
             frame = self.last_frame
         v = self._observe(frame, a == 1)
+        self._ensure_focus()
         if self.death_dir:
             try:
                 self._snap.append(self._snap_record(a, v))
@@ -713,12 +725,76 @@ class EntityBoxEnv(gym.Wrapper):
     # -- pause protocol passthrough ------------------------------------------
     def pause(self) -> None:
         if self.base is not None:
+            self._ensure_focus(force=True)     # ESC must reach GD, not another window
             self.base.pause()
 
     def resume(self) -> None:
         if self.base is not None:
+            self._ensure_focus(force=True)     # the unpause key too
             self.base.resume()
             self.motion.reset()
+
+    # -- input sanity -----------------------------------------------------------
+    def _ensure_focus(self, force: bool = False) -> None:
+        """SPACE only reaches GD when GD is the active window: check every ~2 s
+        (and before pausing / resuming); bring it back to the front if not."""
+        if self.base is None:
+            return
+        self._focus_n += 1
+        if not force and self._focus_n % 60:
+            return
+        try:
+            import winfocus
+            fg = winfocus.gd_is_foreground()
+            if fg is False:
+                ok = winfocus.focus_gd()
+                now = time.time()
+                if now - self._focus_warn_t > 20:
+                    self._focus_warn_t = now
+                    print("[input] Geometry Dash was NOT the active window -- SPACE was going to another "
+                          "window. " + ("Brought GD back to the front." if ok else
+                                        "Couldn't bring it back: click into the GD window!"))
+            elif fg is None and not self._focus_unknown_shown and self._focus_n > 1:
+                self._focus_unknown_shown = True
+                print("[input] (can't find a window titled 'Geometry Dash' to keep it in front -- "
+                      "make sure GD stays the active window yourself)")
+        except Exception as ex:
+            self._loud("focus", ex)
+
+    def _watch_press(self, y_b, hold: bool, resting: bool, alive: bool) -> None:
+        """Did SPACE do anything? After a press from rest, the icon should move
+        within ~0.4 s in every mode. If most presses do nothing, the key isn't
+        reaching the game (focus, wrong key, game paused...) -- say so loudly."""
+        if y_b is None or not alive:
+            self._press_pending = []
+            return
+        still = []
+        for left, y0 in self._press_pending:
+            if abs(y_b - y0) > 0.35:
+                self._press_ok.append(True)
+            elif left <= 1:
+                self._press_ok.append(False)
+            else:
+                still.append((left - 1, y0))
+        self._press_pending = still
+        prev = bool(self._hist and self._hist[-1][1] > 0.5)
+        if hold and not prev and resting and len(self._press_pending) < 4:
+            self._press_pending.append((12, y_b))
+        r = list(self._press_ok)
+        if len(r) >= 8 and sum(r) <= 1:
+            now = time.time()
+            if now - self._press_warn_t > 30:
+                self._press_warn_t = now
+                print(f"[input] WARNING: {len(r) - sum(r)} of the last {len(r)} presses did NOTHING (the icon "
+                      f"didn't move). SPACE isn't reaching Geometry Dash: click into the GD window so it's "
+                      f"the active one. Training on this teaches the AI that jumping is useless!")
+                self._ensure_focus(force=True)
+
+    @property
+    def presses_working(self) -> bool:
+        """False when recent presses mostly did nothing (then don't learn physics from it)."""
+        r = list(self._press_ok)
+        return not (len(r) >= 5 and sum(r) < 0.5 * len(r))
 
     def mark_trained(self) -> None:
         if self.base is not None:
