@@ -122,7 +122,7 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
                      frame_skip: int, vy_bps: float, grounded: bool, prev_hold: bool,
                      floor_rel: float | None, ceil_rel: float | None, horizon: float = 1.5,
                      dec_dt: float | None = None, motion: MotionLearner | None = None,
-                     out: dict | None = None):
+                     out: dict | None = None, state=None):
     """Mode block + action-plan outcomes for the current frame.
 
     floor_rel / ceil_rel: surface heights relative to the icon centre (None =
@@ -139,7 +139,10 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     eff_prev = est.eff_hold(0) if est.lag > 0 else prev_hold
     dtd = dec_dt or frame_skip / 60.0
     vy0 = inst_vy(est.mode, est.g, est.mini, vy_bps, eff_prev, grounded, dtd, phys)
-    body = Body(0.0, vy0, est.g, grounded, est.mode, est.mini, 0.0, eff_prev)
+    y0 = 0.0
+    if state is not None and not grounded:      # arc fit (env): steadier than 2 frames
+        y0, vy0 = float(state[0]), float(state[1])
+    body = Body(y0, vy0, est.g, grounded, est.mode, est.mini, 0.0, eff_prev)
     xo: list = []
     plan, paths = simulate_plans(body, haz, solid, floor_rel, ceil_rel, speed, phys,
                                  frame_skip=frame_skip, horizon=horizon, dec_dt=dec_dt,
@@ -377,6 +380,7 @@ class EntityBoxEnv(gym.Wrapper):
         self._press_delay: deque = deque(maxlen=15)
         self._lag_vote = (None, 0)
         self._last_yb = None
+        self._air: list = []             # (time, height) since leaving the ground (arc fit)
         self._debris: list = []          # per step: debris boxes around the icon (crash timing)
         self._last_pp = None
         self._press_warn_t = 0.0
@@ -459,9 +463,14 @@ class EntityBoxEnv(gym.Wrapper):
         last = getattr(self, "_t_obs", None)
         self._t_obs = now
         cur = getattr(self, "_dt_s", nom)
+        raw = None
         if last is not None and 0.6 * nom <= now - last <= 3.0 * nom:   # ignore pauses / hiccups
-            cur = 0.9 * cur + 0.1 * (now - last)
+            raw = now - last
+            cur = 0.9 * cur + 0.1 * raw
         self._dt_s = cur
+        # THIS step's real duration (live decisions take 2 or 3 frames: 33 or 50 ms; using
+        # the average for every step made the measured speeds wobble by ~8 blocks/s)
+        self._dt_raw = raw if raw is not None else cur
         return cur
 
     def _update_speed(self, sc, moved: bool) -> None:
@@ -489,7 +498,8 @@ class EntityBoxEnv(gym.Wrapper):
         self.timing["detect"] += _t1 - _t0
         pl = ents.player()
         spd = self.speed or SPEED_1X
-        dt = self._step_dt()
+        dt_plan = self._step_dt()                       # typical step (plan timing)
+        dt = getattr(self, "_dt_raw", None) or dt_plan  # this step's real length (motion)
         prev_hold = bool(self._hist and self._hist[-1][1] > 0.5)
         vy_step = player_vy(ents, self._prev_py) if pl is not None else 0.0
         vy_bps = vy_step / dt
@@ -566,8 +576,10 @@ class EntityBoxEnv(gym.Wrapper):
             except Exception as ex:
                 self._loud("motion-learn", ex)
         out: dict = {}
+        fit = self._air_fit(pl, grounded)
         mf, plan, self.last_arcs = physics_features(ents, spd, self.mode_est, self.phys, self.frame_skip,
-                                                    vy_bps, grounded, hold, floor_rel, ceil_rel, dec_dt=dt,
+                                                    vy_bps, grounded, hold, floor_rel, ceil_rel, dec_dt=dt_plan,
+                                                    state=fit,
                                                     motion=self.motion_fix if self.use_motion_fix else None,
                                                     out=out)
         self._mstate = (out["body"], out["surf"], spd, key) if (pl is not None and "body" in out) else None
@@ -624,6 +636,7 @@ class EntityBoxEnv(gym.Wrapper):
     def _new_attempt(self) -> None:
         self._press_pending = []
         self._last_yb = None
+        self._air = []
         self._debris = []
         self._ceil_y = None        # ceilings belong to a section; the floor is the level's
         self._ceil_hist.clear()
@@ -813,6 +826,58 @@ class EntityBoxEnv(gym.Wrapper):
                 return max(0, n - 1 - (j - 1))           # visible one step after the impact
         return None
 
+    def _air_fit(self, pl, grounded: bool):
+        """Height and speed in the air from an ARC FIT through the recent heights (known
+        gravity, real step times) instead of the last two frames. The player box wobbles
+        ~0.24 blocks, which made the 2-frame speed off by ~8 blocks/s (a jump starts at
+        ~20) and the predicted landing jumped around step to step.
+        Returns (height offset vs the measured centre, speed) or None (use the raw values)."""
+        me = self.mode_est
+        y = self._last_yb if pl is not None else None
+        if y is None or grounded or me.mode not in ("cube", "robot", "ball", "ufo", "spider"):
+            self._air = [] if y is None else [(0.0, y)]
+            self._air_from_rest = y is not None and grounded     # an arc starting from the ground
+            return None
+        t = (self._air[-1][0] + (getattr(self, "_dt_raw", None) or self.frame_skip / 60.0)) if self._air else 0.0
+        if self._air and abs(y - self._air[-1][1]) > 3.0:
+            self._air = []                       # teleport / respawn: start over
+            self._air_from_rest = False
+        if me.mode in ("ufo", "ball") and me.eff_hold(0) and not me.eff_hold(1):
+            self._air = self._air[-8:]           # a UFO tap / ball flip starts a new arc
+        self._air.append((t, y))
+        self._air = self._air[-8:]
+        if len(self._air) < 3:
+            return None
+        G = {"ball": self.phys.ball_g, "ufo": self.phys.ufo_g}.get(me.mode, self.phys.cube_g) * me.g
+        if getattr(self, "_air_from_rest", False) and me.mode == "cube" and len(self._air) <= 12:
+            # From the ground the takeoff speed is KNOWN (a jump: the measured jump speed;
+            # walking off a ledge: 0): only the takeoff moment inside the first step is
+            # unknown. Much steadier than fitting the speed from a few wobbly heights.
+            T = np.array([q[0] for q in self._air]); Y = np.array([q[1] for q in self._air])
+            y_rest, t1 = Y[0], (T[1] if len(T) > 1 else 0.0)
+            v_jump = self.phys.cube_v0 * (self.phys.mini if me.mini else 1.0) * me.g
+            best = None
+            for v0 in (v_jump, 0.0):
+                for tau in np.linspace(0.0, t1, 6):
+                    dtm = np.clip(T - tau, 0.0, None)
+                    m = y_rest + v0 * dtm - 0.5 * G * dtm ** 2
+                    err = float(np.sqrt(np.mean((Y[1:] - m[1:]) ** 2)))
+                    if best is None or err < best[0]:
+                        best = (err, v0, tau)
+            if best is not None and best[0] < 0.5:
+                err, v0, tau = best
+                tc = T[-1] - tau
+                return (float(y_rest + v0 * tc - 0.5 * G * tc * tc - y), float(v0 - G * tc))
+        for pts in (self._air, self._air[-3:]):
+            T = np.array([q[0] for q in pts]); Y = np.array([q[1] for q in pts])
+            A = np.stack([np.ones_like(T), T], 1)
+            (a, b), *_ = np.linalg.lstsq(A, Y + 0.5 * G * T ** 2, rcond=None)
+            r = Y - (a + b * T - 0.5 * G * T ** 2)
+            if float(np.max(np.abs(r))) < 0.45:
+                tc = T[-1]
+                return (float(a + b * tc - 0.5 * G * tc * tc - y), float(b - G * tc))
+        return None
+
     @staticmethod
     def _on_block(ents, py: float, g: int) -> bool:
         """Is a detected block right under (or, upside down, over) the icon?"""
@@ -863,8 +928,13 @@ class EntityBoxEnv(gym.Wrapper):
         prev = bool(self._hist and self._hist[-1][1] > 0.5)
         y_before = self._last_yb
         self._last_yb = y_b
-        if hold and not prev and resting and y_before is not None and len(self._press_pending) < 4:
-            self._press_pending.append((0, y_before))     # (steps since the press, height before it)
+        self._since_press = getattr(self, "_since_press", 99) + 1
+        if hold and not prev:
+            # only isolated presses from rest: a press soon after another one can catch the
+            # first one's (delayed) jump starting and look like "no delay"
+            if resting and y_before is not None and not self._press_pending and self._since_press >= 5:
+                self._press_pending.append((0, y_before))  # (steps since the press, height before it)
+            self._since_press = 0
         still = []
         for age, y0 in self._press_pending:
             if abs(y_b - y0) > 0.3:
@@ -879,8 +949,8 @@ class EntityBoxEnv(gym.Wrapper):
             # the measured input delay beats inferring it from motion. Live it sits between
             # 1 and 2 steps (decisions take 33 or 50 ms): round UP (pressing a hair early is
             # much safer than late) and only change after it has said so 5 presses running
-            mean = float(np.mean(self._press_delay))
-            want = int(np.clip(np.ceil(mean - 0.25), 0, ModeEstimator.MAX_LAG))
+            med = float(np.median(self._press_delay))
+            want = int(np.clip(np.ceil(med - 0.25), 0, ModeEstimator.MAX_LAG))   # 1.5 -> 2
             c, k = self._lag_vote
             k = k + 1 if c == want else 1
             self._lag_vote = (want, k)

@@ -711,7 +711,8 @@ class ModeEstimator:
             v0, v1 = vys[k - 1], vys[k]       # previous two speeds are real measurements
             h, hp = holds[k - lag], holds[k - 1 - lag]   # what reached the icon (input delay)
             resting = self._rest[k]
-            pred = self._pred(mode, g, mini, v0, h, hp, resting, dt, speed, p)
+            dt_k = dt[k] if isinstance(dt, list) else dt      # real duration of THIS step
+            pred = self._pred(mode, g, mini, v0, h, hp, resting, dt_k, speed, p)
             if pred is None:                       # spider teleport expected, towards +g
                 e = 0.0 if (abs(v1) > 20 and v1 * g > 0) else 25.0
             else:
@@ -756,12 +757,13 @@ class ModeEstimator:
     def update(self, y: float, hold: bool, dt: float, speed: float, p: Phys) -> None:
         if self.hist and abs(y - self.hist[-1][0]) > 3.0 and self.mode != "spider" and self._hint != "spider":
             self.hist.clear()          # respawn / camera jump: not motion, start the window fresh
-        self.hist.append((y, bool(hold)))
+        self.hist.append((y, bool(hold), float(dt)))
         if len(self.hist) < 6:
             return
         ys = [h[0] for h in self.hist]
         holds = [h[1] for h in self.hist]
-        vys = [0.0] + [(ys[k] - ys[k - 1]) / dt for k in range(1, len(ys))]
+        dts = [h[2] for h in self.hist]       # each step's real duration (live: 33 or 50 ms)
+        vys = [0.0] + [(ys[k] - ys[k - 1]) / dts[k] for k in range(1, len(ys))]
         if not any(holds[1:]) and sum(abs(v) > 2 * self.REST for v in vys[1:]) < 2:
             return                    # sitting still / sliding, not pressing: nothing to learn
         if self._hint_t > 0:          # (the portal window only counts informative steps)
@@ -770,11 +772,12 @@ class ModeEstimator:
             self._ghint_t -= 1
         # 'resting before step k' = barely moved over the two steps before it (two-step
         # displacement: much less sensitive to detector jitter than single-step speeds)
-        self._rest = [k >= 3 and abs(ys[k - 1] - ys[k - 3]) < self.REST * 2 * dt for k in range(len(ys))]
+        self._rest = [k >= 3 and abs(ys[k - 1] - ys[k - 3]) < self.REST * (dts[k - 1] + dts[k - 2])
+                      for k in range(len(ys))]
         self._n_upd += 1
         # input-delay check: often at first, rarely once it has been confirmed a few times
         if not getattr(self, "lag_locked", False) and self._n_upd % (8 if self._lag_ok < 5 else 40) == 0 and any(holds):
-            self._fit_lag(vys, holds, dt, speed, p)
+            self._fit_lag(vys, holds, dts, speed, p)
         L = self.lag
         if (self.mode in ("ball", "spider") and len(holds) > L + 1 and holds[-1 - L] and not holds[-2 - L]
                 and self._rest[-1]):
@@ -791,7 +794,7 @@ class ModeEstimator:
         for mode in MODES:
             for g in (1, -1):
                 for mini in (False, True):
-                    sc, n, g_end = self._score(mode, g, mini, vys, holds, dt, speed, p, self.lag)
+                    sc, n, g_end = self._score(mode, g, mini, vys, holds, dts, speed, p, self.lag)
                     if sc is None or n < 3:
                         continue
                     if self._hint == mode and self._hint_t > 0:
