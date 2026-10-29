@@ -669,8 +669,20 @@ class Trainer:
             et = getattr(self.env, "timing", None) or {}
             det, phy = et.get("detect", 0.0) * k, et.get("physics", 0.0) * k
             game = max(0.0, self._tm["env"] * k - det - phy)
+            wait = None
+            try:
+                cap_ = self.env.base.cap
+                w_now = float(getattr(cap_, "wait_s", 0.0))
+                wait = (w_now - getattr(self, "_wait0", w_now)) * k
+                self._wait0 = w_now
+            except Exception:
+                pass
+            # game/capture split: WAITING for the next game frame (idle -- shrinks by itself when
+            # the rest gets faster) vs real work (grabbing / shrinking frames, % read, death check)
+            gtxt = (f"game/capture {game:.1f} (waiting {min(wait, game):.1f}, work {max(0.0, game - wait):.1f})"
+                    if wait is not None else f"game/capture {game:.1f}")
             parts = (f"  = detect {det:.1f} + physics {phy:.1f} + brain {self._tm['brain'] * k:.1f}"
-                     f" + gui {self._tm['gui'] * k:.1f} + game/capture {game:.1f}")
+                     f" + gui {self._tm['gui'] * k:.1f} + {gtxt}")
             for key in et:
                 et[key] = 0.0
         except Exception:

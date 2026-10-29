@@ -223,7 +223,7 @@ def _iou(a, b) -> float:
     return inter / max(1e-9, ua)
 
 
-def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False, hsv=None) -> list:
+def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False, hsv=None, ref_hsv=None) -> list:
     """Spikes + blocks from one BGR frame (any resolution, 640x360 preferred).
 
     Returns list of (cls, x0, y0, x1, y1, conf) in normalized coordinates.
@@ -242,12 +242,13 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False,
     if hsv is None:
         hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
     V, S = hsv[:, :, 2], hsv[:, :, 1]
-    med_v = float(np.median(V[::4, ::4]))
+    R = hsv if ref_hsv is None else ref_hsv          # (thresholds from the whole frame)
+    med_v = float(np.median(R[::4, ::4, 2]))
     dark_v = int(min(75, 0.55 * med_v))
     dark = (V < dark_v).astype(np.uint8)
     # outlines: white, or tinted by the level colour (e.g. lavender on purple) --
     # so "bright" = clearly brighter AND clearly less saturated than the background
-    med_s = float(np.median(S[::4, ::4]))
+    med_s = float(np.median(R[::4, ::4, 1]))
     bright = (((V >= 185) & (S <= 75))
               | ((V >= max(215.0, med_v + 35)) & (S <= min(170.0, 0.75 * med_s)))).astype(np.uint8)
     dark[:ui_cut] = 0
@@ -267,7 +268,7 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False,
     if line_rows:
         import cv2 as _cv
         _edges = _cv.Canny(_cv.cvtColor(bgr, _cv.COLOR_BGR2GRAY), 40, 120)
-        _bg = float(np.percentile(V[::4, ::4], 75))
+        _bg = float(np.percentile(R[::4, ::4, 2], 75))
         band = max(3, int(0.6 * blk))
         def _solidish(a, b):
             a, b = max(ui_cut, a), min(H, b)
@@ -639,7 +640,7 @@ PAD_S, PAD_V, PAD_DH = 150, 230, 8
 PAD_STRIP_S = 999      # a pad found by its strip under a glow dome (off: on real levels it also found decoration)
 
 
-def detect_specials(bgr: np.ndarray, player_box=None, hsv=None, solids=None) -> list:
+def detect_specials(bgr: np.ndarray, player_box=None, hsv=None, solids=None, ref_hsv=None) -> list:
     """Orbs, pads and portals from one BGR frame -> [(cls, x0, y0, x1, y1, conf, hue)].
 
     GD draws these as bright, saturated sprites whose colour encodes the type
@@ -660,7 +661,7 @@ def detect_specials(bgr: np.ndarray, player_box=None, hsv=None, solids=None) -> 
     if hsv is None:
         hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
     Hh, S, V = hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2]
-    sub = hsv[::4, ::4].reshape(-1, 3)
+    sub = (hsv if ref_hsv is None else ref_hsv)[::4, ::4].reshape(-1, 3)   # (background from the whole frame)
     sat = sub[sub[:, 1] > 60]
     if len(sat) > 50:
         # dominant hue of the saturated background (circular mode via histogram)
@@ -950,6 +951,7 @@ class HeuristicDetector:
         self._cv2 = _cv2
         self.temporal = temporal
         self.icon_hue = icon_hue   # OpenCV hue range of your icon's main colour
+        self.behind_cut = 0.2      # detect only right of this (fraction of the width): behind the icon
         self._tracker = _HazardTracker()
         # extra: a learned detector (detect_yolo.YoloDetector) whose boxes are ADDED
         # where the built-in rules found nothing. extra_every > 1 runs it every N
@@ -1079,11 +1081,24 @@ class HeuristicDetector:
             pbox = (pl.x - pl.w / 2, pl.y - pl.h / 2, pl.x + pl.w / 2, pl.y + pl.h / 2)
         # coloured sprites near the icon's last spot are the icon (or its trail)
         sbox = (pl.x - pl.w / 2, pl.y - pl.h / 2, pl.x + pl.w / 2, pl.y + pl.h / 2) if pl is not None else None
-        dets = detect_hazards(src, player_box=pbox, hsv=hsv_src)
+        # Everything left of the icon is behind it (the blue line only looks ahead): detect
+        # on the rest of the frame only -- ~20% fewer pixels for both detection passes.
+        Wf = src.shape[1]
+        cx0 = int(self.behind_cut * Wf) if pl is not None and pl.x - pl.w / 2 > self.behind_cut + 0.03 else 0
+        fx = (lambda b: b) if cx0 == 0 else (lambda b: (cx0 + b * (Wf - cx0)) / Wf)
+        tx = (lambda b: b) if cx0 == 0 else (lambda b: (b * Wf - cx0) / (Wf - cx0))
+        src_c = src if cx0 == 0 else np.ascontiguousarray(src[:, cx0:])
+        hsv_c = hsv_src if cx0 == 0 else np.ascontiguousarray(hsv_src[:, cx0:])
+        pbox_c = None if pbox is None else (tx(pbox[0]), pbox[1], tx(pbox[2]), pbox[3])
+        sbox_c = None if sbox is None else (tx(sbox[0]), sbox[1], tx(sbox[2]), sbox[3])
+        dets = [(d[0], fx(d[1]), d[2], fx(d[3]), d[4]) + tuple(d[5:])
+                for d in detect_hazards(src_c, player_box=pbox_c, hsv=hsv_c, ref_hsv=hsv_src)]
         self._spec_n += 1
         if self.specials_every <= 1 or self._spec_n % self.specials_every == 1 or self._spec_n == 1:
-            solids = [tuple(d[1:5]) for d in dets if int(d[0]) == CLS_ID["wall"]]
-            specials = detect_specials(src, player_box=sbox, hsv=hsv_src, solids=solids)
+            solids = [(tx(d[1]), d[2], tx(d[3]), d[4]) for d in dets if int(d[0]) == CLS_ID["wall"]]
+            specials = [(c, fx(a), y0, fx(b), y1) + tuple(r)
+                        for c, a, y0, b, y1, *r in detect_specials(src_c, player_box=sbox_c, hsv=hsv_c, solids=solids,
+                                                                   ref_hsv=hsv_src)]
         else:
             sc = float(getattr(self._tracker, "last_scroll", None) or 0.0) if self.temporal else 0.0
             specials = [(c, x0 + sc, y0, x1 + sc, y1, cf, hu) for c, x0, y0, x1, y1, cf, hu in self._spec_cache

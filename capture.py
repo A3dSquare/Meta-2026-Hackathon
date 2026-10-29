@@ -433,6 +433,7 @@ class GDCapture:
             raise RuntimeError("GDCapture.read() called before start()")
         t_in = time.perf_counter()
         missed = self._throttle_to_fps_cap()
+        self.wait_s = getattr(self, "wait_s", 0.0) + (time.perf_counter() - t_in)   # idle: waiting for the frame
         try:
             frame, ts = self._latest_with_time()
         except Exception:  # noqa: BLE001 - DXGI lost device etc.

@@ -40,14 +40,38 @@ class YoloDetector:
             raise ImportError("pip install ultralytics   (or use --backend heuristic)") from e
         if not os.path.exists(path):
             raise FileNotFoundError(f"{path} missing: label some frames, then run python detect_yolo.py --train")
-        self._m = YOLO(path)
+        # a TensorRT engine made from this model (python detect_yolo.py --export) is ~2-3x faster
+        eng = os.path.splitext(path)[0] + ".engine"
+        self.engine = os.path.exists(eng) and os.path.getmtime(eng) >= os.path.getmtime(path)
+        if os.path.exists(eng) and not self.engine:
+            print(f"[yolo] {eng} is older than {path} (retrained since): using the .pt -- re-run --export")
+        self._m = YOLO(eng, task="detect") if self.engine else YOLO(path)
+        try:
+            import torch
+            dev = "GPU (" + torch.cuda.get_device_name(0) + ")" if torch.cuda.is_available() else "CPU -- slow!"
+        except Exception:
+            dev = "CPU -- slow!"
+        print(f"[yolo] {'TensorRT engine' if self.engine else os.path.basename(path)} on the {dev}")
         self.conf, self.imgsz, self.device = conf, imgsz, device
 
     def detect(self, bgr: np.ndarray) -> list:
         """BGR frame (any size) -> [(cls, x0, y0, x1, y1, conf)] normalized 0..1."""
         h, w = bgr.shape[:2]
+        if not hasattr(self, "_half"):
+            try:   # half precision on an NVIDIA GPU: ~2x faster, same boxes for a model this size
+                import torch
+                self._half = (bool(torch.cuda.is_available()) and str(self.device) != "cpu"
+                              and not self.engine)       # (a TensorRT engine has its precision built in)
+            except Exception:
+                self._half = False
+            try:   # newer ultralytics warns about 'half' on EVERY call: keep the console readable
+                import logging
+                from ultralytics.utils import LOGGER
+                LOGGER.setLevel(logging.ERROR)
+            except Exception:
+                pass
         res = self._m.predict(np.ascontiguousarray(bgr[:, :, :3]), imgsz=self.imgsz, conf=self.conf,
-                              verbose=False, device=self.device)[0]
+                              verbose=False, device=self.device, half=self._half)[0]
         out = []
         try:
             xyxy = res.boxes.xyxy.cpu().numpy()
@@ -279,6 +303,22 @@ def train(epochs: int = 60, imgsz: int = 640, base: str = "yolov8n.pt", device=N
     return 0
 
 
+def export(imgsz: int = 640) -> int:
+    """yolo_gd.pt -> yolo_gd.engine (TensorRT, half precision): the fastest way to run it on
+    an NVIDIA GPU. Needs: pip install tensorrt. Used automatically while newer than the .pt."""
+    try:
+        from ultralytics import YOLO
+    except ImportError:
+        print("pip install ultralytics")
+        return 1
+    if not os.path.exists(MODEL_PATH):
+        print(f"{MODEL_PATH} missing: train first (python detect_yolo.py --train)")
+        return 1
+    out = YOLO(MODEL_PATH).export(format="engine", half=True, imgsz=imgsz, device=0)
+    print(f"exported {out} -- it's used automatically from now on (until you retrain)")
+    return 0
+
+
 def check(rec: str, n: int = 6, hybrid: bool = False) -> int:
     """Preview images of what the detector sees (YOLO-only by default, the icon labelled
     with the mode YOLO thinks it's in)."""
@@ -306,6 +346,37 @@ def check(rec: str, n: int = 6, hybrid: bool = False) -> int:
     return 0
 
 
+def speed(n: int = 60) -> int:
+    """How long YOLO takes per frame on this PC (and the code around it)."""
+    import cv2
+    import time
+    vids = sorted(glob.glob("recs/*.mp4"))
+    if not vids:
+        print("no recs/*.mp4 to time on")
+        return 1
+    cap = cv2.VideoCapture(vids[0])
+    frames = []
+    while len(frames) < n:
+        ok, fr = cap.read()
+        if not ok:
+            break
+        frames.append(cv2.resize(fr, (640, 360), interpolation=cv2.INTER_AREA))
+    d = YoloOnlyDetector()
+    for f in frames[:5]:
+        d(cv2.resize(f, (320, 180)), f)
+    t = time.perf_counter()
+    for f in frames:
+        d.yolo.detect(f)
+    ty = (time.perf_counter() - t) / len(frames)
+    t = time.perf_counter()
+    for f in frames:
+        d(cv2.resize(f, (320, 180)), f)
+    tt = (time.perf_counter() - t) / len(frames)
+    print(f"YOLO itself {1000 * ty:.1f} ms/frame, whole detector {1000 * tt:.1f} ms/frame "
+          f"(on a 5070 Ti: ~3-6 with the .pt, ~2-3 with --export)")
+    return 0
+
+
 def main() -> int:
     import argparse
     p = argparse.ArgumentParser(description="train / check the YOLO object detector")
@@ -317,7 +388,14 @@ def main() -> int:
     p.add_argument("--check", default=None, help="mp4 to preview detections on (writes yolo_check_*.png)")
     p.add_argument("--hybrid", action="store_true", help="--check the built-in + YOLO mix instead of YOLO only")
     p.add_argument("--n", type=int, default=6, help="--check: how many frames")
+    p.add_argument("--export", action="store_true",
+                   help="make a TensorRT engine of yolo_gd.pt (fastest on an NVIDIA GPU; pip install tensorrt)")
+    p.add_argument("--speed", action="store_true", help="time the detector on recs/*.mp4 frames")
     a = p.parse_args()
+    if a.export:
+        return export(a.imgsz)
+    if a.speed:
+        return speed()
     if a.train:
         return train(a.epochs, a.imgsz, base=a.base, device=a.device)
     if a.check:
