@@ -191,7 +191,11 @@ class SimGD(gym.Env):
         self.input_lag = int(input_lag)   # decisions between sending SPACE and the icon reacting
         self._sent: list = []
         self.phys = gp.Phys()
+        self.mode_cal = gp.ModeCalibrator()
         self.est = gp.ModeEstimator()
+        # the live env MEASURES the delay from isolated presses (env_boxes._watch_press) and
+        # locks it; the sim has no such watcher, so it starts from the true one, locked
+        self.est.lag, self.est.lag_locked = self.input_lag, True
         self._hinted: set = set()
         self.objs, self.length = level if level is not None else stereo_like()
         self.objs.sort(key=lambda o: o.x)
@@ -319,7 +323,8 @@ class SimGD(gym.Env):
             else:
                 cls = CLS_ID["spike"]
             items.append(Entity(cls, (sx0 + sx1) / 2 + n[0], (sy0 + sy1) / 2 + n[1],
-                                sx1 - sx0, sy1 - sy0, 0.9, hue))
+                                sx1 - sx0, sy1 - sy0, 0.9, hue,
+                                pt=(1 if o.kind == "ceil" else 0) if cls == CLS_ID["spike"] else -1))
         return Entities(items)
 
     def _obs(self, hold: bool) -> np.ndarray:
@@ -350,6 +355,10 @@ class SimGD(gym.Env):
                              -(self.y + 0.5), CEIL - (self.y + 0.5))   # (tests: redo the preview)
             mf, plan, self.last_arcs = physics_features(*self._pf_args, motion=self.motion_fix, out=out)
             self._mstate = (out["body"], out["surf"], speed, key) if self.dead == 0 else None
+            fl_s, ce_s = out["surf"]
+            near = grounded or any(abs(q) < 0.45 for q in list(fl_s) + list(ce_s))
+            self.mode_cal.update(yb, e.eff_hold(0), dt, e.mode, e.g, e.mini, near, speed, self.phys,
+                                 confident=self.dead == 0 and getattr(e, "lag_locked", False))
         else:
             mf = plan = None
             self.last_arcs = []

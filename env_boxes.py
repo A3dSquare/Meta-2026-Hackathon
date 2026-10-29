@@ -55,8 +55,8 @@ N_ENT = 8                         # nearest entities ahead of the player
 ENT_CLASSES = 7                   # spike, orb_y, orb_b, orb_p, pad, portal, wall
 ENT_FEAT = 7 + ENT_CLASSES        # present, x0, x1, y0, y1, hue cos, hue sin, one-hot
 N_HIST = 8                        # past decision steps of (vertical speed, action)
-from gd_physics import (MODES, MODE_ID, N_PLANS, SEARCH_KEYS, Body, ModeEstimator, MotionLearner, Phys,
-                        inst_vy, load_motion, robust_search, save_motion, simulate_plans, surfaces_at)
+from gd_physics import (MODES, MODE_ID, N_PLANS, SEARCH_KEYS, Body, ModeCalibrator, ModeEstimator,
+                        MotionLearner, Phys, inst_vy, load_motion, robust_search, save_motion, simulate_plans, surfaces_at)
 N_MODE = len(MODES) + 3            # mode one-hot, gravity (+1/-1), mini, confidence
 N_PLAN = 3 * N_PLANS + 1           # per action plan: hits?, time to hit, clearance; + time to ledge
 N_RESERVED = 12                    # spare inputs (zero today) so future features don't need a new brain
@@ -116,9 +116,22 @@ def preview_boxes(ents: Entities, horizon_blocks: float):
             # many fatal jumps "clear" the spike, and in the simulator the shield got further
             # with this size (87% vs 76% avg). Much bigger and a triple spike -- which GD
             # lets you clear at 1x -- becomes impossible for the preview.)
+            # The hitbox sits toward the spike's BASE: which end that is depends on where
+            # the tip points (the detector knows; hanging spikes used to get an upright
+            # spike's hitbox -- shifted toward the tip, missing the part by the ceiling)
             w = x1 - x0
             hh = top - bot
-            haz.append((x0 + 0.25 * w, x1 - 0.25 * w, bot + 0.1 * hh, top - 0.3 * hh))
+            pt = int(getattr(e, "pt", -1))
+            if pt == 1:                                  # hanging: tip down
+                haz.append((x0 + 0.25 * w, x1 - 0.25 * w, bot + 0.3 * hh, top - 0.1 * hh))
+            elif pt == 2:                                # tip left (side of a pillar)
+                haz.append((x0 + 0.3 * w, x1 - 0.1 * w, bot + 0.25 * hh, top - 0.25 * hh))
+            elif pt == 3:                                # tip right
+                haz.append((x0 + 0.1 * w, x1 - 0.3 * w, bot + 0.25 * hh, top - 0.25 * hh))
+            elif pt == 0:                                # standing: tip up
+                haz.append((x0 + 0.25 * w, x1 - 0.25 * w, bot + 0.1 * hh, top - 0.3 * hh))
+            else:                                        # unknown (e.g. YOLO): centred
+                haz.append((x0 + 0.25 * w, x1 - 0.25 * w, bot + 0.2 * hh, top - 0.2 * hh))
         elif c == 6:
             solid.append((x0, x1, bot, top))
         elif c == CLS_ID["portal"]:
@@ -167,9 +180,10 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
                                  lag=est.lag, pending=pend, motion=motion, extra_out=xo)
     if search:
         try:
+            alt = est.lag_alt if getattr(est, "lag_alt", None) is not None else est.lag + 1
             sr = robust_search(body, haz, solid, floor_rel, ceil_rel, speed, phys, dtd, est.lag, pend,
-                               pending_long=est.pending(est.lag + 1), horizon=horizon, half=half,
-                               want_path=True)
+                               pending_long=est.pending(alt), horizon=horizon, half=half,
+                               want_path=True, lag_alt=alt)
             paths = list(paths) + [("best", bool(sr.get("path_hit")), sr.get("path") or [])]
             if out is not None:
                 out["search"] = sr
@@ -426,10 +440,12 @@ class EntityBoxEnv(gym.Wrapper):
         self._mstate = None
         self._motion_t = time.time()
         self._n_deaths = 0
-        if motion_path and load_motion(motion_path, self.motion_fix, self.phys, self.mode_est):
+        self.mode_cal = ModeCalibrator()         # ship / ball / UFO / wave physics, measured live
+        if motion_path and load_motion(motion_path, self.motion_fix, self.phys, self.mode_est, self.mode_cal):
             m = self.motion_fix
             print(f"[motion] loaded {motion_path}: {m.n} examples, correction trust {m.trust:.0%}, "
-                  f"jump {self.phys.apex:.2f} blocks / {self.phys.airtime:.2f}s, input delay {self.mode_est.lag}")
+                  f"jump {self.phys.apex:.2f} blocks / {self.phys.airtime:.2f}s, input delay {self.mode_est.lag}; "
+                  f"{self.mode_cal.summary(self.phys)}")
         if motion_path:
             import atexit
             atexit.register(self.save_motion)
@@ -442,9 +458,11 @@ class EntityBoxEnv(gym.Wrapper):
         self.speed = None                        # blocks/s, from the tracker
         self._speed_hist: deque = deque(maxlen=15)
         self._line_raw = [None, None]            # last raw ground / ceiling line (screen y)
+        self._line_hold = [(None, 0), (None, 0)] # last confirmed line + frames since seen
         self._lines = (None, None)               # confirmed lines this step
         self.use_lines = True
         self.use_search = True                   # the best-continuation search (shield + brain)
+        self.hazmem = None                       # hazards.HazardMemory (train_boxes sets it)
         self._last_search = None
         self._rest_true = None                   # real resting centre height (y_b) on the ground
         self._dt_frame = None
@@ -574,7 +592,20 @@ class EntityBoxEnv(gym.Wrapper):
             prev = self._line_raw[k]
             self._line_raw[k] = y
             ok = y is not None and prev is not None and abs(y - prev) < 0.012
-            out.append(y if ok else None)
+            held, age = self._line_hold[k]
+            if ok:
+                self._line_hold[k] = (y, 0)
+                out.append(y)
+            elif held is not None and age < 15 and (y is None or abs(y - held) < 0.012):
+                # not seen this frame (a spike / the icon / an effect covering it): keep the
+                # last line for up to ~0.6 s instead of falling back to the guessed floor,
+                # which made the predicted paths jump for a frame ("blips")
+                self._line_hold[k] = (held, age + 1)
+                out.append(held)
+            else:
+                if age >= 15:
+                    self._line_hold[k] = (None, 0)
+                out.append(None)
         return tuple(out)
 
     def _observe(self, frame, hold: bool) -> np.ndarray:
@@ -589,6 +620,11 @@ class EntityBoxEnv(gym.Wrapper):
         except Exception as ex:
             self._loud("detect", ex)
             ents = Entities([])
+        if self.hazmem is not None:      # hazards taught by picture / learned from deaths
+            try:
+                ents = self.hazmem.apply(ents, hi if hi is not None else self.last_hires, getattr(ents, "scroll", None))
+            except Exception as ex:
+                self._loud("hazards", ex)
         self.last_ents = ents
         _t1 = time.perf_counter()
         self.timing["detect"] += _t1 - _t0
@@ -624,8 +660,12 @@ class EntityBoxEnv(gym.Wrapper):
                     # mode / gravity portals are ~3 blocks tall (speed portals are shorter and
                     # don't change the mode); a "portal" that sits on a detected block is a
                     # pillar, not a portal (live runs: pillars turned the cube into a "UFO")
-                    if e.h / BLOCK_H >= 2.4 and not any(abs(w.x - e.x) < (w.w + e.w) / 2
-                                                         and abs(w.y - e.y) < (w.h + e.h) / 2 for w in walls_):
+                    # Live: thin glowing pillars in Stereo Madness (~0.4 blocks wide, below the
+                    # icon) were taken for portals and made the cube a "spider" / "robot".
+                    # A real portal is ~1 block wide and the icon flies THROUGH it.
+                    if (e.h / BLOCK_H >= 2.4 and e.w / BLOCK_W >= 0.6 and abs(e.y - py) < 0.45 * e.h
+                            and not any(abs(w.x - e.x) < (w.w + e.w) / 2
+                                        and abs(w.y - e.y) < (w.h + e.h) / 2 for w in walls_)):
                         self.mode_est.portal_hint(float(getattr(e, "hue", -1.0)))
                         self._portal_cool = 10
                 elif c_ in (CLS_ID["orb_y"], CLS_ID["orb_b"], CLS_ID["orb_p"], CLS_ID["pad"]) \
@@ -697,6 +737,16 @@ class EntityBoxEnv(gym.Wrapper):
                                                     motion=self.motion_fix if self.use_motion_fix else None,
                                                     out=out, search=self.use_search)
         self._mstate = (out["body"], out["surf"], spd, key) if (pl is not None and "body" in out) else None
+        if pl is not None and "surf" in out:
+            # every mode's physics from its real motion (like the cube jump). Touching or
+            # about to touch a floor / ceiling / block doesn't count: a landing inside a
+            # piece made the fall look slower than it is
+            fl_s, ce_s = out["surf"]
+            near = grounded or any(abs(q) < 0.45 for q in list(fl_s) + list(ce_s))
+            self.mode_cal.update((0.75 - ents.player_pos()[1]) / BLOCK_H, me.eff_hold(0), dt, me.mode, me.g,
+                                 me.mini, near, spd, self.phys,
+                                 confident=(self.presses_working and cam_moving
+                                            and getattr(me, "lag_locked", False)))   # delay measured
         self._last_inputs = out.get("inputs")
         self._last_search = out.get("search")
         if "search_error" in out:
@@ -710,10 +760,13 @@ class EntityBoxEnv(gym.Wrapper):
         return v
 
     def save_motion(self) -> None:
-        if not self.motion_path or self.motion_fix.n == 0:
+        # (was: only when the learned correction had data -- it's off by default, so the
+        # measured jump and input delay were never saved either)
+        if not self.motion_path or not (self.motion_fix.n or self.phys.n_cal or self.mode_est.lag
+                                        or any(self.mode_cal.counts().values())):
             return
         try:
-            save_motion(self.motion_path, self.motion_fix, self.phys, self.mode_est)
+            save_motion(self.motion_path, self.motion_fix, self.phys, self.mode_est, self.mode_cal)
         except Exception as ex:
             self._loud("motion-save", ex)
 
@@ -735,7 +788,8 @@ class EntityBoxEnv(gym.Wrapper):
         d = self._dbg
         return {
             "frame": np.array(hi, copy=True),
-            "boxes": [(int(e.cls), float(e.x), float(e.y), float(e.w), float(e.h)) for e in ents.items],
+            "boxes": [(int(e.cls), float(e.x), float(e.y), float(e.w), float(e.h), int(getattr(e, "pt", -1)))
+                      for e in ents.items],
             "player": pl is not None,
             "player_pos": tuple(float(q) for q in ents.player_pos()) if pl is not None else None,
             "arcs": list(self.last_arcs),
@@ -766,6 +820,9 @@ class EntityBoxEnv(gym.Wrapper):
         self._mstate = None
         self._n_deaths += 1
         m = self.motion_fix
+        if self._n_deaths % 10 == 0:
+            print(f"[physics] jump {self.phys.apex:.2f}b/{self.phys.airtime:.2f}s ({self.phys.n_cal} jumps), "
+                  f"delay {self.mode_est.lag}; {self.mode_cal.summary(self.phys)}  (? = not enough yet)")
         if self._n_deaths % 10 == 0 and m.n:
             print(f"[motion] {m.n} examples  formulas off by {m.err_phys:.2f} blocks/s, "
                   f"with learned fix {m.err_corr:.2f}  -> using it at {m.trust:.0%}  "
@@ -903,6 +960,8 @@ class EntityBoxEnv(gym.Wrapper):
                                      self.death_dir, self.death_keep, peak_pct=100.0 * self._peak)
                 except Exception as ex:
                     self._loud("death-snap-save", ex)
+                if self.hazmem is not None:      # unexplained crash -> remember what was there
+                    self.hazmem.on_death(list(self._snap), lag)
             self._new_attempt()
         out_info["n_entities"] = len(self.last_ents.items)
         return v, 0.0, complete, False, out_info
@@ -1092,6 +1151,11 @@ class EntityBoxEnv(gym.Wrapper):
                 print(f"[input] measured input delay: {want} step(s) between pressing and the icon moving")
                 self.mode_est.lag = want
             self.mode_est.lag_locked = True
+            # the other likely delay, for the search's second world: live the delays split
+            # between 1 and 2 steps, and "2" made jumps start a step early half the time
+            L = self.mode_est.lag
+            lo = float(np.mean([d < L for d in self._press_delay]))
+            self.mode_est.lag_alt = L - 1 if (L >= 1 and lo >= 0.25) else L + 1
         r = list(self._press_ok)
         if len(r) >= 8 and sum(r) <= 1:
             now = time.time()

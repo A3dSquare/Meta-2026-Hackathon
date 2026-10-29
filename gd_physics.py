@@ -30,7 +30,9 @@ class Phys:
     # apex 2.21 blocks, 0.43 s in the air. Still fine-tuned live from your own jumps.
     cube_v0: float = 20.5       # jump speed (blocks/s)
     cube_g: float = 95.0        # gravity (blocks/s^2)
-    ship_a: float = 55.0        # ship up/down acceleration
+    ship_a: float = 55.0        # (old single value; ship_up / ship_down are used)
+    ship_up: float = 55.0       # ship acceleration while holding / falling while released
+    ship_down: float = 55.0     # (measured live per mode: ModeCalibrator)
     ship_vmax: float = 12.0
     ball_g: float = 80.0
     ufo_v0: float = 14.0
@@ -144,7 +146,7 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
             dv = b.g * p.ufo_g * dt
             b.vy -= dv
     elif m == "ship":
-        dv = -b.g * (p.ship_a if hold else -p.ship_a) * s * dt
+        dv = -b.g * (p.ship_up if hold else -p.ship_down) * s * dt
         b.vy -= dv
         b.vy = max(-p.ship_vmax * s, min(p.ship_vmax * s, b.vy))
         b.grounded = False
@@ -492,10 +494,12 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
 
 def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, dec_dt: float,
                   lag: int, pending, pending_long=None, horizon: float = 1.5, half: float = 0.5,
-                  want_path: bool = False) -> dict:
-    """search_best in the measured world AND a slightly worse one (the press arrives one
-    step later, the level scrolls 4% faster). Replaying the real last seconds before live
-    deaths, timing that is half a step off explained many crashes the preview called safe.
+                  want_path: bool = False, lag_alt: int | None = None) -> dict:
+    """search_best in the measured world AND a slightly different one: the press arrives
+    one step EARLIER or LATER (lag_alt: whichever the measured delays say is likely --
+    live they split between 1 and 2 steps, so with "2" a jump often started a step early
+    and landed on the spike's far end) and the level scrolls 4% faster. Replaying the
+    real last seconds before live deaths, timing half a step off explained many crashes.
 
     Per first action one SAFETY score (what the brain sees and the shield uses):
       1.0          survives in both worlds
@@ -511,8 +515,9 @@ def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, de
     if all(a[k] < 1.0 for k in SEARCH_KEYS):
         b = {k: 0.0 for k in SEARCH_KEYS}   # crashes as measured -> the worse world can't help
     else:
-        pl = list(pending_long) if pending_long is not None else [False] + list(pending)
-        b = search_best(body, haz, solid, floor, ceil, speed * 1.04, p, dec_dt, lag + 1, pl[-(lag + 1):],
+        alt = lag + 1 if lag_alt is None else max(0, int(lag_alt))
+        pl = list(pending_long) if pending_long is not None else [False] * max(0, alt - len(pending)) + list(pending)
+        b = search_best(body, haz, solid, floor, ceil, speed * 1.04, p, dec_dt, alt, pl[len(pl) - alt:] if alt else [],
                         horizon, half)
     a["nominal"] = {k: a[k] for k in SEARCH_KEYS}
     a["worse"] = {k: b[k] for k in SEARCH_KEYS}
@@ -540,7 +545,7 @@ def inst_vy(mode: str, g: int, mini: bool, v_avg: float, hold: bool, grounded: b
         return v_avg
     s = p.mini if mini else 1.0
     if mode == "ship":
-        a = g * (p.ship_a if hold else -p.ship_a) * s
+        a = g * (p.ship_up if hold else -p.ship_down) * s
         return max(-p.ship_vmax * s, min(p.ship_vmax * s, v_avg + a * dt / 2))
     G = {"ball": p.ball_g, "ufo": p.ufo_g}.get(mode, p.cube_g)
     return v_avg - g * G * dt / 2
@@ -754,19 +759,185 @@ class MotionLearner:
         self.m_n, self.m_trust = np.array(e[2]).astype(np.int64), np.array(e[3])
 
 
-def save_motion(path: str, learner: MotionLearner, phys: Phys, est) -> None:
+class ModeCalibrator:
+    """Measures every mode's physics from the icon's REAL motion, the way the cube jump is
+    measured (Phys.calibrate): ship climb / fall rate and top speed, ball and UFO gravity,
+    UFO tap strength, wave angle. The defaults are guesses; your game's values replace them.
+
+    It cuts the motion into pieces where nothing changes (same mode / gravity / size,
+    same button state after the input delay, in the air, not touching anything) and fits a
+    parabola to each piece's heights (y = a + b t + c t^2): 2c is the acceleration, b the
+    speed. Fitting many frames makes the player box's wobble (~0.2 blocks) average out.
+    A value is used once it has 3 clean pieces (the median of the last 25), only within a
+    sane range, and only while the recogniser is sure of the mode (a wrong mode would teach
+    the wrong numbers)."""
+
+    PARAMS = {   # name: (low, high) sane range
+        "ship_up": (20.0, 140.0), "ship_down": (20.0, 140.0), "ship_vmax": (5.0, 25.0),
+        "ball_g": (30.0, 180.0), "ufo_g": (30.0, 180.0), "ufo_v0": (5.0, 30.0),
+        "wave_slope": (0.5, 2.0),
+    }
+    MIN_N = 3
+
+    def __init__(self) -> None:
+        self.samples: dict = {k: deque(maxlen=25) for k in self.PARAMS}
+        self._seg: list = []
+        self._key = None
+        self._t = 0.0
+        self._stable = 0
+        self._last_mode = None
+        self._prev_hold = False
+        self._seg_dt0 = 0.0
+
+    def counts(self) -> dict:
+        return {k: len(v) for k, v in self.samples.items()}
+
+    def update(self, y: float, eff_hold: bool, dt: float, mode: str, g: int, mini: bool,
+               resting: bool, speed: float, p: Phys, confident: bool = True) -> None:
+        """One step: y = icon height (blocks, up), eff_hold = the button state that drove
+        the motion INTO this sample (after the input delay), resting = on a surface."""
+        self._t += dt
+        self._stable = self._stable + 1 if mode == self._last_mode else 0
+        self._last_mode = mode
+        edge = bool(eff_hold) and not self._prev_hold
+        self._prev_hold = bool(eff_hold)
+        key = (mode, g, mini, bool(eff_hold) if mode in ("ship", "wave") else None)
+        usable = (confident and not resting and self._stable >= 5
+                  and mode in ("ship", "wave", "ball", "ufo"))
+        jumped = bool(self._seg) and abs(y - self._seg[-1][1]) > 2.0
+        split = (key != self._key or not usable or jumped
+                 or (mode == "ufo" and edge) or len(self._seg) >= 10)
+        if split:
+            self._finish(p, speed)
+            last = self._seg[-1] if self._seg else None
+            self._seg = []
+            self._key = key
+            self._seg_edge = mode == "ufo" and edge     # this piece starts right after a tap
+            self._seg_dt0 = dt
+            # the sample before a button change belongs to the new piece too (the new
+            # button state drove the motion from it); a UFO tap starts after the tap
+            if usable and last is not None and not jumped and not (mode == "ufo" and edge):
+                self._seg.append(last)
+        if usable:
+            self._seg.append((self._t, float(y)))
+
+    def _finish(self, p: Phys, speed: float) -> None:
+        seg, key = self._seg, self._key
+        if key is None or len(seg) < 4:
+            return
+        mode, g, mini, hold = key
+        T = np.array([q[0] for q in seg]) - seg[0][0]
+        Y = np.array([q[1] for q in seg])
+        try:
+            c, b, a = np.polyfit(T, Y, 2)
+        except Exception:
+            return
+        if float(np.max(np.abs(np.polyval([c, b, a], T) - Y))) > 0.22:
+            return                                 # not one smooth piece (hit something?)
+        s = p.mini if mini else 1.0
+        acc = 2.0 * c * g / s                      # acceleration, + = away from the floor
+        v0, v1 = b * g / s, (b + 2 * c * T[-1]) * g / s
+        add = self._add
+        if mode == "ship":
+            # top speed: the configured one, or what the ship is actually seen reaching
+            sg = 1.0 if hold else -1.0              # direction it's being pushed
+            a_fit, v_fit = self._ship_fit(T, (Y - Y[0]) * g / s, sg, p.ship_vmax)
+            if a_fit is not None:
+                add("ship_up" if hold else "ship_down", a_fit)
+            if v_fit is not None:
+                add("ship_vmax", v_fit)
+            elif a_fit is None and abs(acc) < 12.0 and (v1 > 0) == bool(hold) and abs(v1) > 4.0:
+                add("ship_vmax", abs(0.5 * (v0 + v1)))   # flat at full speed the whole piece
+        elif mode == "wave":
+            if abs(acc) < 15.0 and speed > 1.0:
+                add("wave_slope", abs(0.5 * (v0 + v1)) / (speed * (2.0 if mini else 1.0)))
+        elif mode in ("ball", "ufo"):
+            add("ball_g" if mode == "ball" else "ufo_g", -acc)
+            if mode == "ufo" and getattr(self, "_seg_edge", False) and v0 > 0:
+                add("ufo_v0", v0 + (-acc) * float(self._seg_dt0))   # the tap was a step earlier
+        self._apply(p)
+
+    @staticmethod
+    def _ship_fit(T, Y, sg: float, vmax_guess: float):
+        """(acceleration, top speed) of a ship piece, allowing for the speed being capped
+        (a plain parabola fit reads a capped climb as a slow one). Exact closed form on a
+        grid of (acceleration, start speed, top speed). Each is None unless the piece pins
+        it down: a third lower / higher has to fit clearly worse."""
+        A = np.arange(15.0, 152.5, 2.5)[:, None, None, None]
+        VM = np.arange(5.0, 20.5, 1.0)[None, None, :, None]
+        V0 = np.linspace(-1.0, 1.0, 33)[None, :, None, None] * VM
+        t = np.asarray(T, float)[None, None, None, :]
+        u = sg * V0                                   # start speed in the pushed direction
+        tc = np.clip((VM - u) / A, 0.0, None)         # time until it hits top speed
+        tm = np.minimum(t, tc)
+        y = u * tm + 0.5 * A * tm ** 2 + VM * (t - tm)
+        R = sg * y - np.asarray(Y, float)[None, None, None, :]
+        R = R - R.mean(axis=3, keepdims=True)          # free start height
+        err = np.sqrt((R ** 2).mean(axis=3))           # (a, v0, vmax)
+        e = err.min(axis=1)                            # best start speed
+        ia, iv = np.unravel_index(int(np.argmin(e)), e.shape)
+        e0 = float(e[ia, iv])
+        if e0 > 0.15:
+            return None, None
+        a_, v_ = float(A[ia, 0, 0, 0]), float(VM[0, 0, iv, 0])
+        e_a = e.min(axis=1)                            # best over top speed, per acceleration
+        e_v = e.min(axis=0)                            # best over acceleration, per top speed
+        def pinned(curve, grid, x):
+            lo = curve[int(np.argmin(np.abs(grid - x * 0.7)))]
+            hi = curve[int(np.argmin(np.abs(grid - x * 1.4)))]
+            return min(lo, hi) > 1.15 * e0 + 0.005
+        a_ok = pinned(e_a, A[:, 0, 0, 0], a_)
+        v_ok = pinned(e_v, VM[0, 0, :, 0], v_) and v_ < 19.5
+        return (a_ if a_ok else None), (v_ if v_ok else None)
+
+    def _add(self, name: str, v: float) -> None:
+        lo, hi = self.PARAMS[name]
+        if lo * 0.7 <= v <= hi * 1.3:              # far outside = a bad piece, not a value
+            self.samples[name].append(float(v))
+
+    def _apply(self, p: Phys) -> None:
+        for name, (lo, hi) in self.PARAMS.items():
+            q = self.samples[name]
+            if len(q) >= self.MIN_N:
+                setattr(p, name, float(np.clip(np.median(q), lo, hi)))
+
+    def state(self) -> np.ndarray:
+        """[value, count] per parameter (for saving)."""
+        return np.array([[float(np.median(self.samples[k])) if self.samples[k] else 0.0,
+                          len(self.samples[k])] for k in self.PARAMS], np.float64)
+
+    def load_state(self, arr, p: Phys) -> None:
+        for (name, _rng), (v, n) in zip(self.PARAMS.items(), np.asarray(arr)):
+            if n >= self.MIN_N:                    # keep it as that many votes for the value
+                self.samples[name].extend([float(v)] * int(min(n, 10)))
+        self._apply(p)
+
+    def summary(self, p: Phys) -> str:
+        n = self.counts()
+        parts = []
+        for k, label in (("ship_up", "ship up"), ("ship_down", "ship down"), ("ship_vmax", "ship max"),
+                         ("ball_g", "ball g"), ("ufo_g", "ufo g"), ("ufo_v0", "ufo tap"),
+                         ("wave_slope", "wave")):
+            if n[k]:
+                parts.append(f"{label} {getattr(p, k):.1f}{'' if n[k] >= self.MIN_N else '?'}({n[k]})")
+        return ", ".join(parts) if parts else "no other modes seen yet"
+
+
+def save_motion(path: str, learner: MotionLearner, phys: Phys, est, calib=None) -> None:
     """Learned correction + tuned jump + measured input delay, in one small file
     shared by every brain and level (it's the game's physics, not a level's)."""
     import os
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     d = learner.state()
     d["phys"] = np.array([phys.cube_v0, phys.cube_g, phys.n_cal, getattr(est, "lag", 0)], np.float64)
+    if calib is not None:
+        d["modes"] = calib.state()
     tmp = path + ".tmp.npz"
     np.savez_compressed(tmp, **d)
     os.replace(tmp, path)
 
 
-def load_motion(path: str, learner: MotionLearner, phys: Phys, est) -> bool:
+def load_motion(path: str, learner: MotionLearner, phys: Phys, est, calib=None) -> bool:
     import os
     if not os.path.exists(path):
         return False
@@ -774,6 +945,8 @@ def load_motion(path: str, learner: MotionLearner, phys: Phys, est) -> bool:
         with np.load(path) as d:
             learner.load_state(d)
             v0, g, n_cal, lag = d["phys"]
+            if calib is not None and "modes" in d.files:
+                calib.load_state(d["modes"], phys)
         if n_cal > 0:
             phys.cube_v0, phys.cube_g, phys.n_cal = float(v0), float(g), int(n_cal)
         est.lag = int(lag)
@@ -806,6 +979,7 @@ class ModeEstimator:
         self._cand_streak = (None, 0)
         self._hint, self._hint_t = None, 0
         self.lag = 0                  # input delay (decisions) between a press and the icon reacting
+        self.lag_alt = None           # the other likely delay (measured presses split between two)
         self._lag_votes = (None, 0)
         self._lag_ok = 0              # checks in a row that confirmed the current delay
         self._n_upd = 0
@@ -869,7 +1043,7 @@ class ModeEstimator:
         if mode == "wave":
             return [g * (1 if h else -1) * p.wave_slope * (2.0 if mini else 1.0) * speed, 0.0]
         if mode == "ship":
-            v = max(-p.ship_vmax * sc, min(p.ship_vmax * sc, v0 + g * (p.ship_a if h else -p.ship_a) * sc * dt))
+            v = max(-p.ship_vmax * sc, min(p.ship_vmax * sc, v0 + g * (p.ship_up if h else -p.ship_down) * sc * dt))
             return [v, 0.0] if resting else [v]
         G = {"cube": p.cube_g, "robot": p.cube_g, "spider": p.cube_g, "ball": p.ball_g, "ufo": p.ufo_g}[mode]
         jump = g * (p.robot_v0 if mode == "robot" else p.cube_v0) * sc - (0.0 if mode == "robot" else g * G * dt / 2)
@@ -1011,11 +1185,15 @@ class ModeEstimator:
             # without a portal, demand overwhelming, long-lasting evidence: real live runs
             # showed a cube whose presses weren't reaching the game turn into an
             # "upside-down ship" within a second -- and then every prediction was wrong
-            clearly = cur is None or best[0] < (0.85 if portal else 0.4) * cur
+            # Live deaths still showed the cube taken for a "spider" / "wave" / "ship" for a
+            # second or more without any portal (3 of 30 deaths) -- every prediction wrong.
+            # GD changes MODE only at portals: without one it now takes ~1.6 s of a far
+            # better fit (gravity alone: ~0.8 s), so a wobbly box can't do it.
+            clearly = cur is None or best[0] < (0.85 if portal else (0.4 if gravity_only else 0.3)) * cur
             c, k = self._cand_streak
             k = k + 1 if (c == cand and clearly) else (1 if clearly else 0)
             self._cand_streak = (cand, k)
-            if k >= (2 if portal else 12):
+            if k >= (2 if portal else (20 if gravity_only else 40)):
                 self.mode, self.g, self.mini = cand
                 self._cand_streak = (None, 0)
         self.conf = float(np.clip(1.0 - best[0] / max(second, 1e-6), 0.0, 1.0))
