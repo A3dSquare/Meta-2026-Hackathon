@@ -36,6 +36,7 @@ from __future__ import annotations
 from typing import Any
 
 import time
+from collections import deque
 
 import numpy as np
 
@@ -353,6 +354,12 @@ class EntityBoxEnv(gym.Wrapper):
         # learned correction of the physics preview (+ tuned jump + input delay), shared
         # by all brains and levels; trains itself on every step of play
         self.timing = {"detect": 0.0, "physics": 0.0}   # seconds since the last [health] line
+        # death snapshots (death_snaps.py): the last ~2.5 s of steps, saved on each death
+        self.death_dir: str | None = None
+        self.death_keep = 30
+        self._snap: deque = deque(maxlen=75)
+        self._dbg: dict = {}          # set by the trainer each step: brain's choice, shield, Q
+        self._peak = 0.0
         self.motion_fix = MotionLearner()
         self.motion_path = motion_path
         self._mstate = None
@@ -482,14 +489,20 @@ class EntityBoxEnv(gym.Wrapper):
                         self._portal_cool = 10
             self._portal_cool -= 1
             if grounded:   # remember where it stood: lowest = floor, highest (upside down) = ceiling
+                # (screen y grows downward: a ceiling is a SMALLER y than the floor)
                 if self.mode_est.g == 1:
-                    self._floor_y = py if self._floor_y is None or abs(py - self._floor_y) > 6 * BLOCK_H else max(self._floor_y, py)
-                else:
+                    if self._ceil_y is None or py - self._ceil_y > 1.5 * BLOCK_H:
+                        self._floor_y = py if self._floor_y is None or abs(py - self._floor_y) > 6 * BLOCK_H else max(self._floor_y, py)
+                elif self._floor_y is None or self._floor_y - py > 1.5 * BLOCK_H:
+                    # only a real ceiling: standing still ON the floor while the recogniser
+                    # briefly thinks "upside down" must not turn the floor into a ceiling
+                    # (that made every predicted jump hit an invisible ceiling)
                     self._ceil_y = py if self._ceil_y is None or abs(py - self._ceil_y) > 6 * BLOCK_H else min(self._ceil_y, py)
             if self._floor_y is not None:
                 floor_rel = (py - self._floor_y) / BLOCK_H - 0.5
-            if self._ceil_y is not None:
-                ceil_rel = (py - self._ceil_y) / BLOCK_H + 0.5
+            if self._ceil_y is not None and self.mode_est.g == -1:
+                ceil_rel = (py - self._ceil_y) / BLOCK_H + 0.5   # only matters upside down
+        self._last_floor_rel, self._last_ceil_rel = floor_rel, ceil_rel
         # learn from the step that just happened: what the preview expected vs what the icon did
         me = self.mode_est
         key = (me.mode, me.g, me.mini)
@@ -522,7 +535,43 @@ class EntityBoxEnv(gym.Wrapper):
         except Exception as ex:
             self._loud("motion-save", ex)
 
+    def _snap_record(self, a: int, v) -> dict:
+        """One step for the death snapshots (frame + what the AI knew and did)."""
+        import death_snaps
+        hi = self.last_hires
+        if hi is None:
+            import cv2
+            hi = cv2.resize(np.ascontiguousarray(self.last_frame[:, :, ::-1]), (640, 360))
+        ents = self.last_ents
+        pl = ents.player()
+        me = self.mode_est
+        prog = None
+        try:
+            prog = float(self.base.reward.last_pct) / 100.0     # best effort, may not exist
+        except Exception:
+            pass
+        d = self._dbg
+        return {
+            "frame": np.array(hi, copy=True),
+            "boxes": [(int(e.cls), float(e.x), float(e.y), float(e.w), float(e.h)) for e in ents.items],
+            "player": pl is not None,
+            "player_pos": tuple(float(q) for q in ents.player_pos()) if pl is not None else None,
+            "arcs": list(self.last_arcs),
+            "a": int(a), "a_brain": int(d.get("a_brain", a)), "shielded": bool(d.get("shielded", False)),
+            "qdiff": d.get("qdiff"),
+            "mode": me.mode, "g": int(me.g), "mini": bool(me.mini), "lag": int(me.lag),
+            "plan": death_snaps.plan_summary(v[OFF_PLAN:OFF_PLAN + N_PLAN]),
+            "n_spikes": sum(1 for e in ents.items if int(e.cls) == 0),
+            "y": (0.75 - ents.player_pos()[1]) / BLOCK_H if pl is not None else None,
+            "vy": float(self._hist[-1][0]) / self._step_dt(peek=True) if self._hist else 0.0,
+            "dt": self._step_dt(peek=True), "speed": float(self.speed or SPEED_1X), "prog": prog,
+            "floor_rel": getattr(self, "_last_floor_rel", None), "ceil_rel": getattr(self, "_last_ceil_rel", None),
+        }
+
     def _new_attempt(self) -> None:
+        self._ceil_y = None        # ceilings belong to a section; the floor is the level's
+        self._snap.clear()
+        self._peak = 0.0
         self._mstate = None
         self._n_deaths += 1
         m = self.motion_fix
@@ -602,6 +651,11 @@ class EntityBoxEnv(gym.Wrapper):
         if frame is None:
             frame = self.last_frame
         v = self._observe(frame, a == 1)
+        if self.death_dir:
+            try:
+                self._snap.append(self._snap_record(a, v))
+            except Exception as ex:
+                self._loud("death-snap", ex)
         sc = getattr(self.last_ents, "scroll", None)
         if sc is not None:   # tracked hazards: frozen camera == they stopped moving
             ref = float(np.median(self._scroll_hist)) if len(self._scroll_hist) >= 5 else 0.009 * self.frame_skip
@@ -615,6 +669,8 @@ class EntityBoxEnv(gym.Wrapper):
         self._last_moved = moved
         self._update_speed(sc, moved)
         self.last_shift = float(sc) if sc is not None else -1.0
+        if isinstance(info.get("prog"), (int, float)) and not died:
+            self._peak = max(self._peak, float(info["prog"]))
         out_info = {
             "moving": moved, "prog": info.get("prog"), "attempts": self._prev_attempts,
             "died": died, "complete": complete, "paused": paused,
@@ -643,6 +699,13 @@ class EntityBoxEnv(gym.Wrapper):
                 lag = min(lag, max(0, len(self._moving) - 1))
             out_info["death_lag"], out_info["death_lag_src"] = lag, src
             out_info["attempt_steps"] = len(self._moving)
+            if self.death_dir and self._snap:
+                try:
+                    import death_snaps
+                    death_snaps.save(list(self._snap), lag, int(self._dbg.get("attempt", self._n_deaths + 1)),
+                                     self.death_dir, self.death_keep, peak_pct=100.0 * self._peak)
+                except Exception as ex:
+                    self._loud("death-snap-save", ex)
             self._new_attempt()
         out_info["n_entities"] = len(self.last_ents.items)
         return v, 0.0, complete, False, out_info

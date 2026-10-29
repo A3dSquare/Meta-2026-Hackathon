@@ -527,6 +527,7 @@ class Trainer:
     def act(self, obs, deterministic: bool = False):
         a, extra = self.learner.act(obs, deterministic)
         self.last_q = extra.get("q")
+        a_brain = a
         if self.cfg.shield and self.cfg.algo == "dqn":
             a2 = safety_shield(obs, a)
             if a2 != a:
@@ -534,6 +535,12 @@ class Trainer:
                 extra = dict(extra, shielded=True)
                 a = a2
         self.shield_steps += 1
+        try:    # for the death snapshots: what the brain wanted vs what was sent
+            q = self.last_q
+            self.env._dbg = {"a_brain": int(a_brain), "shielded": int(a) != int(a_brain), "attempt": self.attempts + 1,
+                             "qdiff": float(q[1] - q[0]) if q is not None and len(q) == 2 else None}
+        except Exception:
+            pass
         return a, extra
 
     def hold_prob(self, obs) -> float:

@@ -122,6 +122,18 @@ every level (the old version started each level from scratch).
   magenta = keep holding (ship / wave / robot), dots = don't press. A path
   turns red when it would hit something.
 
+## 4b. Death snapshots (what it saw before each crash)
+
+Every death saves `logs_boxes/deaths/death_NNNNN.png`: 12 frames, 0.1 s apart,
+ending just after the crash (red border). Each frame shows the boxes, the
+predicted paths, what was pressed (`PRESS` / `-----`), `SHIELD(brain ...)`
+when the shield overrode the brain, the mode, the input delay `dN`, the
+brain's jump urge `Q`, and `press-now` / `release-now` = how long the best
+plan starting with that action survives (1.00 = no crash in 1.5 s). The
+`.json` next to it has the same numbers per step. The newest 30 deaths are
+kept (`--death-snaps N` to change, 0 = off). Send a few of these when asking
+why it dies somewhere.
+
 ## 5. If it stalls
 
 - **No `[attempt ...]` line when the cube dies**: the % reader missed the
