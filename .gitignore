@@ -12,7 +12,6 @@ best*.pt
 
 # --- training telemetry (logs, tensorboard, monitor csv) ---
 logs/
-logs_boxes/
 tb/
 tb_boxes/
 runs/
@@ -31,7 +30,7 @@ candidates/
 
 # --- ad-hoc debug screenshots at repo root ---
 detect_debug*.png
-preview_check.png
+preview_check.pngq
 preview*.png
 detect_probe.png
 pct_capture.png
