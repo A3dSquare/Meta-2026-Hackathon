@@ -13,7 +13,10 @@ a hazard picture becomes a hazard box -- the predicted path (cyan line), the saf
 shield and the brain all treat it like a spike. A match of a safe picture removes the
 detector's hazard boxes there.
 
-Learning from deaths: after each death it looks at the crash moment. If the detector
+Learning from deaths is OFF (HazardMemory.LEARN = False): it once learned a jump pad as
+"deadly", and the shield then jumped over the pad onto spikes 1000+ times. hazards/learned/
+is no longer read; death_cause.py reports how each death happened instead. (Old notes:)
+after each death it looks at the crash moment. If the detector
 had NOTHING deadly at the icon (no spike, no wall it ran into) and the predicted path
 called it safe, whatever was right in front of the icon probably killed it. That
 picture is kept as a candidate (hazards/candidates/); when a second unexplained death
@@ -75,8 +78,8 @@ class HazardMemory:
         """(Re)read the picture folders (cheap; done every ~10 s so deleting a file works live)."""
         import cv2
         out = []
-        for kind, d in (("hazard", self.root), ("hazard", os.path.join(self.root, "learned")),
-                        ("safe", os.path.join(self.root, "safe"))):
+        dirs = [("hazard", self.root)] + ([("learned", os.path.join(self.root, "learned"))] if self.LEARN else [])
+        for kind, d in dirs + [("safe", os.path.join(self.root, "safe"))]:
             try:
                 names = sorted(n for n in os.listdir(d) if n.lower().endswith(".png"))
             except OSError:
@@ -107,7 +110,14 @@ class HazardMemory:
         elif scroll:
             self._cache = [(k, x0 + scroll, y0, x1 + scroll, y1) for k, x0, y0, x1, y1 in self._cache
                            if x1 + scroll > 0]
-        hz = [(x0, y0, x1, y1) for k, x0, y0, x1, y1 in self._cache if k == "hazard"]
+        # pads / orbs / portals the detector sees right now: a LEARNED picture on one of them
+        # is wrong (live: a yellow jump pad got learned as "deadly"; the shield then jumped
+        # over the pad onto the spikes it launches you over -- 1000+ deaths at 1%)
+        objs = [(e.x - e.w / 2 - 0.02, e.y - e.h / 2 - 0.04, e.x + e.w / 2 + 0.02, e.y + e.h / 2 + 0.04)
+                for e in ents.items if int(e.cls) in (1, 2, 3, 4, 5)]
+        hz = [(x0, y0, x1, y1) for k, x0, y0, x1, y1 in self._cache
+              if k == "hazard" or (k == "learned" and not any(
+                  x0 < b1 and x1 > a1 and y0 < b2 and y1 > a2 for a1, a2, b1, b2 in objs))]
         safe = [(x0, y0, x1, y1) for k, x0, y0, x1, y1 in self._cache if k == "safe"]
         items = []
         for e in ents.items:
@@ -158,16 +168,21 @@ class HazardMemory:
                 continue
             for x, y in picked:
                 bx0, by0, bx1, by1 = (x_lo + x) / W, y / H, (x_lo + x + tw) / W, (y + th) / H
-                if pl is not None and kind == "hazard" and bx0 < pl.x + pl.w / 2 and bx1 > pl.x - pl.w / 2 \
+                if pl is not None and kind != "safe" and bx0 < pl.x + pl.w / 2 and bx1 > pl.x - pl.w / 2 \
                         and by0 < pl.y + pl.h / 2 and by1 > pl.y - pl.h / 2:
                     continue                    # on the icon: it's the icon (it's alive), not a hazard
                 out.append((kind, bx0, by0, bx1, by1))
         return out
 
     # -- after a death -----------------------------------------------------------
+    LEARN = False     # learning hazard pictures from deaths: OFF (it learned a jump pad as
+                      # "deadly"); death_cause.py says how each death happened instead
+
     def on_death(self, buf: list, lag: int) -> None:
         """buf: the env's death-snapshot records (oldest first); lag: steps from the crash
-        to the death signal. Learns from crashes the detector can't explain."""
+        to the death signal. Learns from crashes the detector can't explain (off: LEARN)."""
+        if not self.LEARN:
+            return
         try:
             self._on_death(buf, lag)
         except Exception as ex:          # never let this break training
@@ -229,6 +244,14 @@ class HazardMemory:
             # an unknown hazard (else the block's underside got learned as "deadly")
             if c == 6 and abs(x - px) < w / 2 + 0.5 * bw and abs((y + h / 2) - (py - 0.5 * bh)) < 0.6 * bh:
                 return
+        # a pad / orb / portal there (in any of the last few pictures: they aren't found in
+        # every one): that is what it hit, it isn't a hazard (live: a jump pad got learned)
+        for r_ in buf[max(0, i - 8):crash + 1]:
+            for b in r_.get("boxes") or []:
+                c, x, y, w, h = b[:5]
+                if int(c) in (1, 2, 3, 4, 5) and x + w / 2 > pr - 0.5 * bw and x - w / 2 < pr + 3.0 * bw \
+                        and abs(y - py) < h / 2 + 1.2 * bh:
+                    return
         # only if the predicted path thought it was fine (else it was a known risk)
         sr = rec.get("search") or {}
         if sr and max(sr.get("1", 1.0), sr.get("00", 1.0), sr.get("01", 1.0)) < 0.9:
@@ -264,6 +287,10 @@ class HazardMemory:
         # the death explosion is a white / pale flash: not an object
         hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
         if float(((hsv[..., 2] > 200) & (hsv[..., 1] < 90)).mean()) > 0.15:
+            return
+        # a bright yellow glow low in the picture is a jump pad (or its sparks), not a hazard
+        yel = (hsv[..., 0] >= 15) & (hsv[..., 0] <= 40) & (hsv[..., 1] > 80) & (hsv[..., 2] > 190)
+        if float(yel.mean()) > 0.01:      # (the learned pad picture: 2%; a block / spike: 0)
             return
         # a level object SCROLLS: a few steps earlier it was further right on the screen.
         # The icon, its trail and the explosion stay where the icon is. (Live, the icon's

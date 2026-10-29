@@ -120,7 +120,8 @@ def _header(tile, rec, t_rel: float, is_crash: bool) -> None:
         cv2.rectangle(tile, (0, 0), (TILE_W - 1, TILE_H - 1), (0, 0, 255), 3)
 
 
-def save(buf: list, lag: int, attempt: int, out_dir: str, keep: int = 30, peak_pct=None) -> str | None:
+def save(buf: list, lag: int, attempt: int, out_dir: str, keep: int = 30, peak_pct=None,
+         cause: dict | None = None) -> str | None:
     """buf: per-step records (oldest first); lag: steps from the crash to the death
     signal (the env's measured death lag). Returns the PNG path."""
     import cv2
@@ -143,13 +144,15 @@ def save(buf: list, lag: int, attempt: int, out_dir: str, keep: int = 30, peak_p
     sheet = np.vstack(rows)
     title = np.zeros((26, sheet.shape[1], 3), np.uint8)
     pk = f"  died at {peak_pct:.0f}%" if peak_pct is not None else ""
-    cv2.putText(title, f"attempt {attempt}{pk}  (red border = crash moment, cut {lag} steps after it)",
+    how = f"  --  {cause['text']}" if cause else ""
+    cv2.putText(title, f"attempt {attempt}{pk}{how}  (red border = crash moment, cut {lag} steps after it)",
                 (6, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1, cv2.LINE_AA)
     sheet = np.vstack([title, sheet])
     base = os.path.join(out_dir, f"death_{attempt:05d}")
     cv2.imwrite(base + ".png", sheet)
     lo = max(0, crash - 45)
     data = {"attempt": attempt, "peak_pct": peak_pct, "cut_steps": int(lag), "crash_index": crash - lo,
+            "cause": cause,
             "steps": [{k: v for k, v in r.items() if k not in ("frame", "arcs")} for r in buf[lo:]]}
     with open(base + ".json", "w") as f:
         json.dump(data, f, default=float)

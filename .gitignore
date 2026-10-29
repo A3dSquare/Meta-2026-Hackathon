@@ -61,3 +61,7 @@ Thumbs.db
 yolo_ds/
 runs_yolo/
 yolo_check_*.png
+
+# --- hazard pictures it learns by itself (machine-local; a wrong one came back via git) ---
+hazards/learned/
+hazards/candidates/

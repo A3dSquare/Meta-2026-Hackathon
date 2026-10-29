@@ -587,7 +587,7 @@ class Trainer:
         self._w = csv.writer(self._csv)
         if new:
             self._w.writerow(["time", "attempt", "total_steps", "survived_steps", "peak_pct",
-                              "death_lag", "lag_src", "updates", "route"])
+                              "death_lag", "lag_src", "updates", "route", "cause"])
 
     # -- helpers ------------------------------------------------------------
     def act(self, obs, deterministic: bool = False):
@@ -718,14 +718,30 @@ class Trainer:
         fpd = f"  ({fpd:.1f} game frames/decision, target {getattr(self.env, 'frame_skip', 2)})" if fpd else ""
         print(f"[health] {ms:.1f} ms/decision{fpd}{parts}{mem}{cap}{slow}{warn}")
 
+    def _note_cause(self, info: dict) -> None:
+        """Tally how it died (death_cause.py); a summary every 25 deaths."""
+        d = info.get("death_cause_d")
+        if not d:
+            return
+        if not hasattr(self, "_causes"):
+            from death_cause import Tally
+            self._causes = Tally(50)
+            self._n_cause = 0
+        self._causes.add(d)
+        self._n_cause += 1
+        if self._n_cause % 25 == 0:
+            print(f"[deaths] how the last {len(self._causes.q)} died: {self._causes.summary()}")
+
     def _log_route_attempt(self, seg: _Seg, info: dict, peak: float, tag: str = "route") -> None:
         """A route-memory practice attempt (or any --play attempt): counted and logged, never
         learned from."""
         self.attempts += 1
         lag = int(info.get("death_lag", 0)) if self.cfg.trim_death else 0
         survived = int(info.get("attempt_total", len(seg)))
+        self._note_cause(info)
         self._w.writerow([f"{time.time():.1f}", self.attempts, self.steps, survived,
-                          f"{peak * 100:.1f}", lag, info.get("death_lag_src", ""), self.updates, tag])
+                          f"{peak * 100:.1f}", lag, info.get("death_lag_src", ""), self.updates, tag,
+                          info.get("death_cause", "")])
         self._csv.flush()
         self.best_prog = max(self.best_prog, peak) if tag == "play" else self.best_prog
         if self.cfg.verbose:
@@ -746,10 +762,12 @@ class Trainer:
         self._push(seg, next_obs, True)
         self.attempts += 1
         survived = int(info.get("attempt_total", len(seg)))
+        self._note_cause(info)
         self.recent.append((survived, peak))
         self.recent = self.recent[-50:]
         self._w.writerow([f"{time.time():.1f}", self.attempts, self.steps, survived,
-                          f"{peak * 100:.1f}", lag, info.get("death_lag_src", ""), self.updates, tag])
+                          f"{peak * 100:.1f}", lag, info.get("death_lag_src", ""), self.updates, tag,
+                          info.get("death_cause", "")])
         self._csv.flush()
         if tag == "frontier":
             # (the brain only played the end of it: doesn't count as the brain's own best)
@@ -768,7 +786,8 @@ class Trainer:
                   f"best={max(self.best_prog, 0) * 100:.0f}%  (cut {lag} post-crash steps, "
                   f"{info.get('death_lag_src', '')}"
                   + (f", this one read {info['death_lag_raw']}" if info.get("death_lag_src") == "median" else "")
-                  + ")" + ("  NEW BEST" if improved else ""))
+                  + ")" + ("  NEW BEST" if improved else "")
+                  + (f"\n    how: {info['death_cause']}" if info.get("death_cause") else ""))
         if self.on_attempt is not None:
             self.on_attempt(self, survived, peak, info)
 

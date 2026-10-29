@@ -1143,15 +1143,22 @@ class EntityBoxEnv(gym.Wrapper):
                 lag, src = lag2, src + "+explosion"
             out_info["death_lag"], out_info["death_lag_src"] = lag, src
             out_info["attempt_steps"] = len(self._moving)
+            cause = None
+            if self._snap:
+                try:                             # how it died (death_cause.py)
+                    import death_cause
+                    cause = death_cause.classify(list(self._snap), lag)
+                    out_info["death_cause"] = cause["text"]
+                    out_info["death_cause_d"] = cause
+                except Exception as ex:
+                    self._loud("death-cause", ex)
             if self.death_dir and self._snap:
                 try:
                     import death_snaps
                     death_snaps.save(list(self._snap), lag, int(self._dbg.get("attempt", self._n_deaths + 1)),
-                                     self.death_dir, self.death_keep, peak_pct=100.0 * self._peak)
+                                     self.death_dir, self.death_keep, peak_pct=100.0 * self._peak, cause=cause)
                 except Exception as ex:
                     self._loud("death-snap-save", ex)
-                if self.hazmem is not None:      # unexplained crash -> remember what was there
-                    self.hazmem.on_death(list(self._snap), lag)
             self._new_attempt()
         out_info["n_entities"] = len(self.last_ents.items)
         self._update_in_level(info)

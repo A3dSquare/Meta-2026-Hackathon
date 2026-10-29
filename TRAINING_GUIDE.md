@@ -223,16 +223,21 @@ line, the shield and the brain treat like a spike.
   coloured spike...) and press ENTER. Training picks it up within ~10 s.
 - `python hazards.py --grab safe` -- the same for something harmless that the
   detector calls a hazard (red box on decoration): its hazard boxes are dropped.
-- **Learning from deaths** (automatic, needs death snapshots on): when it dies
-  and the detector had nothing deadly at the icon while the cyan line called it
-  safe, the picture right in front of the icon is kept in
-  `hazards/candidates/`. A second unexplained death in front of something that
-  looks the same makes it a learned hazard (`hazards/learned/`, the console
-  says so). Empty ground and repeating background are never learned, and
-  neither is anything that doesn't scroll with the level (the icon, its pieces,
-  the death flash -- older versions learned those; delete any learned picture
-  that shows bits of your icon or a white flash). Wrong one? Delete the file,
-  or move it into `hazards/safe/`.
+- **Learning hazards from deaths is OFF** (since fix51): it once learned a yellow
+  jump pad as "deadly", and the shield then jumped over the pad onto the spikes
+  1000+ times. `hazards/learned/` is no longer read (delete it). Pictures you
+  grab yourself (above) still work.
+- **How it died** (`death_cause.py`, every death): what it hit -- `spike`,
+  `block side`, `head hit`, `unknown` (nothing detected there) -- and why:
+  `blue line wrong` (the prediction said its move was safe 0.3 s before: physics
+  or detection off), `chosen wrong` (a safe move existed, the brain / shield took
+  the other), `trapped` (no safe move left by then: the mistake came earlier);
+  `(shield acted)` if the shield overrode the brain. It is on each death
+  snapshot's title, in its JSON (`"cause"`), after each `[attempt N]` line
+  (`how: ...`), in attempts.csv's last column, and every 25 deaths as a tally:
+  `[deaths] how the last 50 died: spike/blue line wrong 30, ...`. Lots of
+  `blue line wrong` at one spot = send me that snapshot (physics); lots of
+  `chosen wrong` = the brain is still learning; `unknown` = detection misses something.
 - `python hazards.py --list` shows what's in use. `--hazards none` turns it off.
 
 Spikes also carry which way they point now: hanging spikes (tip down) and
