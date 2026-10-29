@@ -470,10 +470,18 @@ def safety_shield(obs: np.ndarray, a: int) -> int:
     plans = [(plan, f[3 * pi:3 * pi + 3]) for pi, (_n, plan) in enumerate(PLANS)]
     if np.any(fx):
         plans += [(plan, fx[3 * pi:3 * pi + 3]) for pi, (_n, plan) in enumerate(EXTRA_PLANS)]
-    for plan, f3 in plans:
+    slack_ok = False                        # a release-first plan that survives AND doesn't
+    for plan, f3 in plans:                  # need a press within the next step
         first = int(bool(plan(0)))
         surv = 1.0 if f3[0] < 0.5 else float(f3[1])
         best[first] = max(best[first], surv)
+        if first == 0 and surv >= 1.0 and not plan(1):
+            slack_ok = True
+    if int(a) == 0 and best[0] >= 1.0 and not slack_ok and best[1] >= 1.0:
+        # waiting is only safe if it presses in EXACTLY one step; pressing now is safe too.
+        # Tight timings flip between steps (step-time jitter, input delay): press now.
+        # (live deaths: "press in 1" safe -> next step nothing safe)
+        return 1
     mine, other = best[int(a)], best[1 - int(a)]
     if mine < 1.0 and other >= 1.0:
         return 1 - int(a)                   # only the other action has a path that survives

@@ -375,6 +375,7 @@ class EntityBoxEnv(gym.Wrapper):
         self._press_pending: list = []
         self._press_ok: deque = deque(maxlen=10)
         self._press_delay: deque = deque(maxlen=15)
+        self._lag_vote = (None, 0)
         self._last_yb = None
         self._debris: list = []          # per step: debris boxes around the icon (crash timing)
         self._last_pp = None
@@ -875,12 +876,17 @@ class EntityBoxEnv(gym.Wrapper):
                 still.append((age + 1, y0))
         self._press_pending = still
         if len(self._press_delay) >= 5:
-            # the measured input delay (median of recent presses) beats inferring it from
-            # motion: live data showed a real delay of 1 step while the inference said 0
-            lag = int(np.clip(np.median(self._press_delay), 0, ModeEstimator.MAX_LAG))
-            if lag != self.mode_est.lag:
-                print(f"[input] measured input delay: {lag} step(s) between pressing and the icon moving")
-            self.mode_est.lag = lag
+            # the measured input delay beats inferring it from motion. Live it sits between
+            # 1 and 2 steps (decisions take 33 or 50 ms): round UP (pressing a hair early is
+            # much safer than late) and only change after it has said so 5 presses running
+            mean = float(np.mean(self._press_delay))
+            want = int(np.clip(np.ceil(mean - 0.25), 0, ModeEstimator.MAX_LAG))
+            c, k = self._lag_vote
+            k = k + 1 if c == want else 1
+            self._lag_vote = (want, k)
+            if want != self.mode_est.lag and (k >= 5 or not self.mode_est.__dict__.get("lag_locked")):
+                print(f"[input] measured input delay: {want} step(s) between pressing and the icon moving")
+                self.mode_est.lag = want
             self.mode_est.lag_locked = True
         r = list(self._press_ok)
         if len(r) >= 8 and sum(r) <= 1:
