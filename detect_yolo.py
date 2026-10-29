@@ -314,7 +314,14 @@ def export(imgsz: int = 640) -> int:
     if not os.path.exists(MODEL_PATH):
         print(f"{MODEL_PATH} missing: train first (python detect_yolo.py --train)")
         return 1
-    out = YOLO(MODEL_PATH).export(format="engine", half=True, imgsz=imgsz, device=0)
+    try:
+        out = YOLO(MODEL_PATH).export(format="engine", half=True, imgsz=imgsz, device=0)
+    except ModuleNotFoundError as ex:
+        # newer ultralytics does half-precision engines through nvidia-modelopt; without it,
+        # build a full-precision engine (a bit slower than half, still faster than the .pt)
+        print(f"[export] {ex} -- building a full-precision engine instead "
+              f"(pip install nvidia-modelopt for the half-precision one)")
+        out = YOLO(MODEL_PATH).export(format="engine", half=False, imgsz=imgsz, device=0)
     print(f"exported {out} -- it's used automatically from now on (until you retrain)")
     return 0
 
