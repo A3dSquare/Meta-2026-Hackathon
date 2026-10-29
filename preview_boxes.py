@@ -32,6 +32,50 @@ _COL = {0: (0, 0, 255), 1: (0, 255, 255), 2: (255, 160, 0), 3: (255, 0, 255),
         4: (0, 165, 255), 5: (255, 0, 200), 6: (170, 170, 170), 7: (0, 255, 0)}
 
 
+class _Env:
+    """What the drawing needs, grabbed on the main thread (cheap: references, a few numbers),
+    so the GUI thread never reads the live env while it changes."""
+
+    def __init__(self, env, tr) -> None:
+        self.last_hires = env.last_hires
+        self.last_frame = env.last_frame
+        self.last_ents = env.last_ents
+        self.last_arcs = list(getattr(env, "last_arcs", []) or [])
+        self._lines = getattr(env, "_lines", None)
+        me = getattr(env, "mode_est", None)
+        self.mode_est = None if me is None else type("ME", (), {"mode": me.mode, "mini": me.mini, "g": me.g,
+                                                              "lag": me.lag})()
+        ph = getattr(env, "phys", None)
+        self.phys = None if ph is None else type("PH", (), {"apex": ph.apex, "airtime": ph.airtime,
+                                                          "n_cal": ph.n_cal})()
+        mfx = getattr(env, "motion_fix", None)
+        self.motion_fix = None if mfx is None else type("MF", (), {"n": mfx.n, "m_trust": np.array(mfx.m_trust)})()
+        self.speed = env.speed
+
+
+class _Tr:
+    def __init__(self, tr) -> None:
+        try:
+            self._ph = float(tr.hold_prob(tr._last_obs))
+        except Exception:
+            self._ph = 0.0
+        self.attempts, self.best_prog, self.updates = tr.attempts, tr.best_prog, tr.updates
+        try:
+            self._eps = float(tr.learner.epsilon())
+        except Exception:
+            self._eps = 0.0
+
+    def hold_prob(self, _obs) -> float:
+        return self._ph
+
+    @property
+    def learner(self):
+        e = self._eps
+        return type("L", (), {"epsilon": staticmethod(lambda: e)})()
+
+    _last_obs = None
+
+
 def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
     from detect import CLASSES
     from gd_physics import MODE_ID
@@ -110,7 +154,7 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
         mtxt += f"  jump {ph_.apex:.1f}b/{ph_.airtime:.2f}s{'*' if ph_.n_cal else ''}  delay {me.lag}"
         mfx = getattr(env, "motion_fix", None)
         if mfx is not None and mfx.n:   # how much the learned correction is used in this mode
-            mtxt += f"  fix {mfx.m_trust[MODE_ID.get(me.mode, 0)]:.0%}"
+            mtxt += f"  fix {float(mfx.m_trust[MODE_ID.get(me.mode, 0)]):.0%}"
     txt = (f"att {tr.attempts + 1}  best {max(tr.best_prog, 0) * 100:.0f}%  {mtxt}  spikes {ns}  "
            f"speed {spd:.1f}x  icon {icon}  eps {eps:.2f}  "
            f"{'MOVING' if info.get('moving') else 'FROZEN'}  upd {tr.updates}")
@@ -133,7 +177,37 @@ def main() -> int:
                         "length uneven, so only together with --fast-steps)")
     args = p.parse_args()
     cap, base, env, cfg = build(args)
-    cv2.namedWindow("BOX policy view", cv2.WINDOW_NORMAL)
+    import threading
+    gui = {"view": None, "keys": [], "stop": False, "ms": 0.0}
+    lock = threading.Lock()
+
+    def gui_loop():
+        """The window lives on its own thread: drawing + showing it (~4-5 ms) no longer
+        holds up the game loop. It always draws the newest view and skips older ones."""
+        cv2.namedWindow("BOX policy view", cv2.WINDOW_NORMAL)
+        while not gui["stop"]:
+            with lock:
+                v, gui["view"] = gui["view"], None
+            if v is not None:
+                try:
+                    cv2.imshow("BOX policy view", render(*v, args.scale))
+                except Exception as ex:
+                    if not gui.get("warned"):
+                        gui["warned"] = True
+                        print(f"[overlay] drawing failed: {ex!r}")
+            k = cv2.waitKey(5 if v is not None else 15) & 0xFF
+            if k != 255:
+                with lock:
+                    gui["keys"].append(k)
+        cv2.destroyAllWindows()
+
+    gui_thread = threading.Thread(target=gui_loop, daemon=True)
+    gui_thread.start()
+
+    def key() -> int:
+        with lock:
+            return gui["keys"].pop(0) if gui["keys"] else 255
+
     state = {"n": 0}
     t_end = time.time() + args.minutes * 60 if args.minutes > 0 else None
 
@@ -144,7 +218,8 @@ def main() -> int:
         env.pause()
         print("PAUSED -- press F8 (from any window) or p (in this window) to continue, F9 / q to quit")
         while True:
-            k = cv2.waitKey(50) & 0xFF
+            time.sleep(0.05)
+            k = key()
             cmd = winfocus.user_command()
             if cmd == "quit" or k in (ord("q"), 27):
                 return False
@@ -168,10 +243,11 @@ def main() -> int:
             return False
         if cmd == "pause" and not pause_until_resumed():
             return False
-        if state["n"] % max(1, args.render_every):
-            return True
-        cv2.imshow("BOX policy view", render(env, tr, a, info, args.scale))
-        k = cv2.waitKey(1) & 0xFF
+        k = key()
+        if not state["n"] % max(1, args.render_every):
+            view = (_Env(env, tr), _Tr(tr), a, dict(info))
+            with lock:
+                gui["view"] = view          # (an older one not drawn yet is simply replaced)
         if k in (ord("q"), 27):
             return False
         if k == ord("p") and not pause_until_resumed():
@@ -179,7 +255,7 @@ def main() -> int:
         return True
 
     tr = Trainer(env, cfg, model_path=args.model, on_step=on_step)
-    tr.on_train_tick = lambda: cv2.waitKey(1)   # keep the window responsive while training
+    tr.on_train_tick = None    # (the window has its own thread: it stays responsive while training)
     if args.eps is not None and cfg.algo == "dqn":
         tr.learner.steps_seen = 0
         tr.best_prog = -1.0   # --eps = new level: start a fresh best %
@@ -193,7 +269,8 @@ def main() -> int:
         except Exception:
             pass
         cap.stop()
-        cv2.destroyAllWindows()
+        gui["stop"] = True
+        gui_thread.join(timeout=2.0)
     return 0
 
 

@@ -259,8 +259,18 @@ class PctReader:
         self._age += 1
         return self._last_accept, False, self._age
 
+    EVERY = 4   # decode the % on every 4th game frame (15 reads/s; the % changes ~1x/s)
+
     def tick(self, full_bgr: np.ndarray | None) -> tuple[Optional[float], bool, int]:
-        """60Hz alias for read(). No 1Hz cadence: ROI is tiny, cost <<2ms."""
+        """Called every game frame. Decodes on every EVERY-th one (live it cost a few ms per
+        frame, twice per decision); in between it answers "no new read" and the age keeps
+        counting in frames, so everything timed by it (the 0% reset, 'in a level', the 90s
+        rule for 100%) works as before -- at most 3 frames (50 ms) later. Until the first
+        read is accepted it decodes every frame."""
+        self._tick_n = getattr(self, "_tick_n", 0) + 1
+        if self.EVERY > 1 and self._last_accept is not None and self._tick_n % self.EVERY:
+            self._age += 1
+            return self._last_accept, False, self._age
         return self.read(full_bgr)
 
     def calibrate_dump(self, full_bgr: np.ndarray | None) -> str:
