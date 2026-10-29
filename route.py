@@ -181,8 +181,15 @@ class RouteMemory:
             # change (the brain gets the first go at a new spot); replays that keep drifting
             # leave the last second to the brain
             sp = sp or lv["spots"].setdefault(key, {"deaths": 0, "tried": [], "worked": None, "drift": 0})
-            if sp.get("drift", 0) >= 4:
-                change, iv = "the brain (replay timing drifts here)", None
+            if sp.get("drift", 0) >= 2:
+                # replaying the best run keeps dying BEFORE the spot: the saved run doesn't hold
+                # (its timing is off) -- the brain plays the whole attempt instead of a replay
+                # that dies at the same early spot every time
+                if self.verbose and not getattr(self, "_told_drift", False):
+                    self._told_drift = True
+                    print(f"[play] the saved best run keeps dying before {lv['best_T']:.1f} s -- "
+                          f"the brain plays on its own until it beats that run")
+                return
             else:
                 base = [iv for iv in lv["best"] if iv[1] > w0 and iv[0] < lv["best_T"] + self.AFTER]
                 change, iv = self._next_change(sp, base, w0, lv["best_T"])
@@ -249,15 +256,19 @@ class RouteMemory:
                         self.plan = None                    # the plan was for another level
                         self.level = lv
                     lv["last_seen"] = time.time()
+        self.phase = None
         if self.plan is None:
             return a, False
         w0, w1, iv, _ = self.plan
         if t < w0:
             out = int(any(s <= t < e for s, e in self.level["best"]))
+            self.phase = "replay"
         elif t < w1 and iv is not None:
             out = int(any(s <= t < e for s, e in iv))
+            self.phase = "try"
         else:
             self.controlled = self.controlled or self.play
+            self.phase = None
             return a, False                 # the brain (past the spot, or its turn at it)
         self.controlled = True
         return out, True
@@ -269,8 +280,11 @@ class RouteMemory:
             self._cur.append([self._down, t])
             self._down = None
 
-    def end_attempt(self, t_crash: float, complete: bool = False) -> None:
-        """The attempt ended (death at t_crash, or the level completed)."""
+    def end_attempt(self, t_crash: float, complete: bool = False, clock_ok: bool = True) -> None:
+        """The attempt ended (death at t_crash, or the level completed). clock_ok=False: this
+        attempt's clock didn't start at a respawn (the first one after starting the bot), so
+        its times may be off -- it may recognise the level but never becomes the best run
+        (live: a best run with shifted times made every replay die early)."""
         if self._down is not None:
             self._cur.append([self._down, t_crash])
             self._down = None
@@ -281,6 +295,9 @@ class RouteMemory:
                 self.level = lv = self._recognise()
             else:
                 return                           # died before the level could be recognised
+        if not clock_ok:
+            self.plan = None
+            return
         lv["attempts"] = lv.get("attempts", 0) + 1
         plan = self.plan
         T = lv["best_T"]

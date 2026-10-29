@@ -560,6 +560,7 @@ class Trainer:
                                      verbose=bool(self.cfg.verbose), fixed_level=self.cfg.route_level,
                                      play=bool(self.cfg.play))
         self._att_k = 0                  # decisions since the attempt started (clock fallback)
+        self._clock_ok = False           # the first attempt after starting isn't timed from a respawn
         self._att_times: list = []
         self._csv_path = os.path.join(self.cfg.log_dir, "attempts.csv")
         new = not os.path.exists(self._csv_path)
@@ -761,6 +762,13 @@ class Trainer:
                         self.route.start_attempt()
                     t_att = self._attempt_t()
                     a2, forced = self.route.action(t_att, a, getattr(self.env, "last_hires", None))
+                    if forced and getattr(self.route, "phase", None) == "replay" and cfg.shield and cfg.algo == "dqn":
+                        # replaying the best run: the safety shield still watches -- a replay a
+                        # frame off can walk into what the recorded run just missed
+                        a_sh = safety_shield(obs, a2)
+                        if a_sh != a2:
+                            self.shield_n += 1
+                            a2 = a_sh
                     if forced:
                         try:
                             self.env._dbg = dict(getattr(self.env, "_dbg", {}) or {}, shielded=a2 != a, route=True)
@@ -799,10 +807,11 @@ class Trainer:
                     if self.route is not None and self._att_times:
                         lag = int(info.get("death_lag", 0))
                         tc = self._att_times[max(0, len(self._att_times) - 1 - lag)]
-                        self.route.end_attempt(tc, bool(info.get("complete")))
+                        self.route.end_attempt(tc, bool(info.get("complete")), clock_ok=self._clock_ok)
                     self._att_times = []
                     # after a death the env's step already ran into the new attempt: count it
                     self._att_k = 1 if info.get("died") else 0
+                    self._clock_ok = bool(info.get("died"))   # the next attempt starts at a respawn
                     if cfg.play:
                         self._log_route_attempt(seg, info, peak, tag="play")   # nothing is learned
                     elif self.route is not None and self.route.attempt_was_route:
