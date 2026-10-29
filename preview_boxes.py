@@ -53,15 +53,17 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
         cv2.rectangle(img, (x0, y0), (x1, y1), c, 3 if e is near else 1)
         if e is near or int(e.cls) in (1, 2, 3, 4, 5):
             cv2.putText(img, CLASSES[int(e.cls)], (x0, max(12, y0 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, c, 1)
-    # physics preview (in the current mode): thick = tap now, thin yellow = tap in 4 steps,
-    # thin magenta = keep holding (ship / wave / robot), white dots = don't press,
-    # thick cyan = the best line the search found (what the safety shield goes by),
+    # physics preview (in the current mode): thin magenta = keep holding (ship / wave /
+    # robot), white dots = don't press, thick cyan = the best line the search found
+    # (what the safety shield goes by),
     # red X = where that path would crash
     try:
         from env_boxes import BLOCK_W, BLOCK_H
         ppx, ppy = ents.player_pos()
         for name, hit, pts in getattr(env, "last_arcs", []):
-            if name not in ("tap now", "tap in 4", "release", "hold", "best") or len(pts) < 2:
+            # (green "tap now" / yellow "tap in 4" are no longer drawn: the shield goes by the
+            # cyan search line; the brain still gets those plans as inputs)
+            if name not in ("release", "hold", "best") or len(pts) < 2:
                 continue
             if name == "hold" and getattr(getattr(env, "mode_est", None), "mode", "cube") not in ("ship", "wave", "robot"):
                 continue

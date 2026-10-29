@@ -133,11 +133,12 @@ every level (the old version started each level from scratch).
   completed within ~100 attempts.)
 - Boxes in the overlay: red = spike (small and mini spikes too), gray =
   block/wall, green = player. The thick box is the nearest hazard ahead.
-- Paths in the overlay: thick green = tap now, thin yellow = tap in 4 steps,
-  thin magenta = keep holding (ship / wave / robot), dots = don't press,
+- Paths in the overlay: thin magenta = keep holding (ship / wave / robot),
+  dots = don't press,
   **thick cyan = the best line the search found** (waits as long as it safely
   can, so where it leaves the ground is the latest safe moment to jump). A red
   X marks where a path would hit something. Light blue = detected ground line.
+  (The death snapshots still also draw green = tap now and yellow = tap in 4.)
 
 ## 4b. Death snapshots (what it saw before each crash)
 
