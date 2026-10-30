@@ -1,0 +1,3 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793338650.6,1,24,2,1.0,22,measured,0,,"unknown, blue line wrong",20261030_003729_222730cd
+1793338685.9,2,678,637,39.0,17,measured,0,,"unknown, chose wrong (shield acted)",20261030_003729_222730cd

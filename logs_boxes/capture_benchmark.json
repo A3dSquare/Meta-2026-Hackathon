@@ -1,0 +1,142 @@
+[
+  {
+    "prefetch": false,
+    "simulated_work_ms": 0.0,
+    "samples": 90,
+    "elapsed_s": 1.4994363998994231,
+    "drops": 0,
+    "overruns": 0,
+    "stages": {
+      "capture_pacing": {
+        "n": 90,
+        "mean_ms": 0.004767779157393509,
+        "p95_ms": 0.005500158295035362
+      },
+      "capture_fetch": {
+        "n": 90,
+        "mean_ms": 15.05116887597574,
+        "p95_ms": 15.572499949485064
+      },
+      "capture_frame_age": {
+        "n": 90,
+        "mean_ms": 19.01036667275346,
+        "p95_ms": 19.888699986040592
+      },
+      "capture_resize": {
+        "n": 90,
+        "mean_ms": 0.649128893079857,
+        "p95_ms": 0.753199914470315
+      },
+      "read_total": {
+        "n": 90,
+        "mean_ms": 16.658699998839033,
+        "p95_ms": 17.25320005789399
+      }
+    }
+  },
+  {
+    "prefetch": false,
+    "simulated_work_ms": 18.0,
+    "samples": 90,
+    "elapsed_s": 2.825532700167969,
+    "drops": 0,
+    "overruns": 79,
+    "stages": {
+      "capture_pacing": {
+        "n": 90,
+        "mean_ms": 0.005849986337125301,
+        "p95_ms": 0.008699949830770493
+      },
+      "capture_fetch": {
+        "n": 90,
+        "mean_ms": 2.3342688852507205,
+        "p95_ms": 2.605399815365672
+      },
+      "capture_frame_age": {
+        "n": 90,
+        "mean_ms": 18.484032234280473,
+        "p95_ms": 26.46449999883771
+      },
+      "capture_resize": {
+        "n": 90,
+        "mean_ms": 0.7305433378658361,
+        "p95_ms": 1.0712998919188976
+      },
+      "read_total": {
+        "n": 90,
+        "mean_ms": 3.8686077653740845,
+        "p95_ms": 4.587800009176135
+      }
+    }
+  },
+  {
+    "prefetch": true,
+    "simulated_work_ms": 0.0,
+    "samples": 90,
+    "elapsed_s": 1.4988412000238895,
+    "drops": 0,
+    "overruns": 0,
+    "stages": {
+      "capture_pacing": {
+        "n": 90,
+        "mean_ms": 11.508126665527621,
+        "p95_ms": 19.534700084477663
+      },
+      "capture_fetch": {
+        "n": 90,
+        "mean_ms": 3.638707781727943,
+        "p95_ms": 9.191100019961596
+      },
+      "capture_frame_age": {
+        "n": 90,
+        "mean_ms": 19.690548892443378,
+        "p95_ms": 23.429800057783723
+      },
+      "capture_resize": {
+        "n": 90,
+        "mean_ms": 0.6812122236523364,
+        "p95_ms": 0.8452001493424177
+      },
+      "read_total": {
+        "n": 90,
+        "mean_ms": 16.652067797258496,
+        "p95_ms": 21.130400011315942
+      }
+    }
+  },
+  {
+    "prefetch": true,
+    "simulated_work_ms": 18.0,
+    "samples": 90,
+    "elapsed_s": 2.8224291999358684,
+    "drops": 0,
+    "overruns": 78,
+    "stages": {
+      "capture_pacing": {
+        "n": 90,
+        "mean_ms": 0.16060888818982574,
+        "p95_ms": 0.015200115740299225
+      },
+      "capture_fetch": {
+        "n": 90,
+        "mean_ms": 0.018555539039274056,
+        "p95_ms": 0.030499882996082306
+      },
+      "capture_frame_age": {
+        "n": 90,
+        "mean_ms": 18.67636001099729,
+        "p95_ms": 26.19869983755052
+      },
+      "capture_resize": {
+        "n": 90,
+        "mean_ms": 0.7310844466297163,
+        "p95_ms": 0.9071000386029482
+      },
+      "read_total": {
+        "n": 90,
+        "mean_ms": 1.7482977722667985,
+        "p95_ms": 1.848400104790926
+      }
+    }
+  }
+]

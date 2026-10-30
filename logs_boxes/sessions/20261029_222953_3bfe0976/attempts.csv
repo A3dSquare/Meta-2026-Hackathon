@@ -1,0 +1,6 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793330994.9,1,24,4,1.0,20,measured,0,,"unknown, blue line wrong",20261029_222953_3bfe0976
+1793331000.7,2,160,106,5.0,30,measured,0,,"spike, chose wrong (shield acted)",20261029_222953_3bfe0976
+1793331010.4,3,366,179,8.0,27,measured,0,,"spike, trapped (shield acted)",20261029_222953_3bfe0976
+1793331053.4,4,1106,712,42.0,28,measured,1,,"block side, chose wrong (shield acted)",20261029_222953_3bfe0976
+1793331063.6,5,1182,38,1.0,38,measured,2,,"unknown, chose wrong (shield acted)",20261029_222953_3bfe0976

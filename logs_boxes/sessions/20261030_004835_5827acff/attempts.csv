@@ -1,0 +1,41 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793339316.6,1,12,1,1.0,11,measured,0,,"spike, trapped",20261030_004835_5827acff
+1793339321.4,2,136,77,3.0,47,measured,0,,"spike, chose wrong (shield acted)",20261030_004835_5827acff
+1793339326.9,3,240,73,3.0,31,measured,0,,"spike, trapped",20261030_004835_5827acff
+1793339336.2,4,440,172,9.0,28,measured,0,,"unknown, chose wrong",20261030_004835_5827acff
+1793339397.8,5,1426,960,63.0,26,measured,1,,"spike, chose wrong (shield acted)",20261030_004835_5827acff
+1793339449.6,6,2206,753,50.0,27,measured,2,,"spike, trapped",20261030_004835_5827acff
+1793339508.4,7,3112,877,58.0,29,measured,3,,"spike, trapped (shield acted)",20261030_004835_5827acff
+1793339561.0,8,3910,770,51.0,28,measured,4,,"unknown, trapped",20261030_004835_5827acff
+1793339583.9,9,4234,294,16.0,30,measured,5,,"block side, chose wrong",20261030_004835_5827acff
+1793339636.7,10,5056,795,52.0,27,measured,6,,"unknown, chose wrong",20261030_004835_5827acff
+1793339664.1,11,5454,373,22.0,25,measured,7,,"unknown, chose wrong",20261030_004835_5827acff
+1793339682.5,12,5698,206,12.0,38,measured,8,,"unknown, trapped (shield acted)",20261030_004835_5827acff
+1793339704.7,13,6016,290,16.0,28,measured,9,,"spike, chose wrong",20261030_004835_5827acff
+1793339732.7,14,6448,403,23.0,29,measured,10,,"spike, chose wrong",20261030_004835_5827acff
+1793339756.7,15,6782,305,18.0,29,measured,11,,"spike, chose wrong",20261030_004835_5827acff
+1793339795.0,16,7368,571,34.0,15,measured,12,,"unknown, chose wrong",20261030_004835_5827acff
+1793339853.9,17,8288,890,58.0,30,measured,13,,"spike, trapped",20261030_004835_5827acff
+1793339897.2,18,8956,641,39.0,27,measured,14,,"unknown, trapped (shield acted)",20261030_004835_5827acff
+1793339950.8,19,9786,801,52.0,29,measured,15,,"unknown, trapped (shield acted)",20261030_004835_5827acff
+1793340007.5,20,9900,87,5.0,27,measured,16,,"unknown, blue line wrong (shield acted)",20261030_004835_5827acff
+1793340031.4,21,10408,463,25.0,45,measured,16,,"spike, trapped",20261030_004835_5827acff
+1793340047.7,22,10602,164,8.0,30,measured,17,,"spike, chose wrong (shield acted)",20261030_004835_5827acff
+1793340069.1,23,10918,288,16.0,28,measured,18,,"unknown, chose wrong (shield acted)",20261030_004835_5827acff
+1793340122.4,24,11734,786,52.0,30,measured,19,,"unknown, trapped",20261030_004835_5827acff
+1793340147.5,25,12116,320,18.0,62,measured,20,,"spike, trapped",20261030_004835_5827acff
+1793340210.2,26,13120,979,63.0,25,measured,21,,"spike, chose wrong (shield acted)",20261030_004835_5827acff
+1793340232.4,27,13430,284,16.0,26,measured,22,,"spike, chose wrong (shield acted)",20261030_004835_5827acff
+1793340293.4,28,14404,946,62.0,28,measured,23,,"spike, chose wrong (shield acted)",20261030_004835_5827acff
+1793340347.2,29,15218,787,52.0,27,measured,24,,"head hit, trapped",20261030_004835_5827acff
+1793340364.5,30,15434,188,10.0,28,measured,25,,"spike, chose wrong (shield acted)",20261030_004835_5827acff
+1793340420.5,31,16294,834,56.0,26,measured,26,,"unknown, chose wrong (shield acted)",20261030_004835_5827acff
+1793340436.2,32,16482,159,8.0,29,measured,27,,"spike, chose wrong (shield acted)",20261030_004835_5827acff
+1793340471.8,33,17056,553,33.0,21,measured,28,,"head hit, chose wrong (shield acted)",20261030_004835_5827acff
+1793340495.6,34,17402,316,18.0,30,measured,29,,"spike, chose wrong",20261030_004835_5827acff
+1793340546.1,35,18172,737,48.0,33,measured,30,,"unknown, chose wrong (shield acted)",20261030_004835_5827acff
+1793340557.5,36,18262,65,3.0,25,measured,31,,"spike, blue line wrong (shield acted)",20261030_004835_5827acff
+1793340612.7,37,19254,964,63.0,28,measured,31,,"spike, chose wrong (shield acted)",20261030_004835_5827acff
+1793340628.8,38,19444,161,8.0,29,measured,32,,"spike, trapped",20261030_004835_5827acff
+1793340657.9,39,19898,426,25.0,28,measured,33,,"spike, trapped (shield acted)",20261030_004835_5827acff
+1793340686.2,40,20322,397,23.0,27,measured,34,,"spike, trapped (shield acted)",20261030_004835_5827acff

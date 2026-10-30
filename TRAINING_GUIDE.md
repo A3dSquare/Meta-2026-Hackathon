@@ -1,5 +1,252 @@
 # Training Guide — cross-level GD box policy (v2)
 
+### Tracking availability and the visible flight area
+
+A frozen-terrain vote is no longer latched through frames with no comparable
+terrain, or through ambiguous shifts. Coherent pixel motion vetoes that vote.
+This fixes a regression where a live ship in an empty room was hidden from
+the controller while its last hold continued. Snapshots now distinguish
+`player_raw` (before the freeze filter) from `player`, and record
+`pixel_moving` alongside the terrain/freezing evidence.
+
+The flight planner also uses the captured viewport as a **soft visibility
+limit** for clearance and recovery. It does not feed these limits into the
+physical landing/collision surfaces: no imaginary floor or ceiling is added.
+Holding into unobserved space therefore loses clearance preference even when
+no ceiling objects have been detected. This is not a screen-centre reward;
+positions with adequate visible headroom remain equivalent. The limits are
+logged as `flight_search.visibility_bounds`. A constant-hold controller is
+covered by an empty-room closed-loop regression test.
+
+## Buffered flight shield and learning to use thrust
+
+Ship/wave now use a trajectory-based safety selector by default. It checks
+survival in the measured and alternate-timing/faster-scroll worlds first;
+clearance cannot overrule a safer survival level. Among surviving options,
+it prefers recovery-adjusted clearance from lower AND upper hazards/solids
+and known boundaries. The desired soft buffer is **0.75 blocks**; narrow
+corridors can still be traversed when that margin is unattainable. Use
+`--flight-buffer 0` to restore the ordinary collision-only flight shield, or
+choose a value up to 2 blocks.
+
+The planner keeps first-action histories separate so one action cannot
+inherit another action's clearance. Near-term clearance receives greater
+weight than distant empty space. A two-decision wait is checked separately
+from "wait, then thrust", preventing a rescue from being postponed every
+frame. Thin hazards are checked against swept flight segments rather than
+only the endpoint. Ship chord checks include a small acceleration-curvature
+allowance; wave segments use their linear motion.
+
+Queued inputs are projected before computing a braking-envelope hint. Ship
+braking room uses velocity squared divided by twice the opposing acceleration,
+with 85% of the fitted acceleration as a conservative allowance. Wave uses
+one decision's travel distance, not ship inertia. A hint is only considered
+among options at the same survival level and cannot force a materially worse
+clearance path. With similar safety/clearance the brain remains in control.
+Clearance overrides require a score advantage above 0.05; an existing override
+can persist down to 0.025 to limit switching. Collision vetoes bypass this
+hysteresis immediately. Flight replay receives the same buffered protection;
+cube/other-mode replay keeps its lighter existing shield.
+
+**Separate thrust threshold:** `--flight-margin` defaults to **0** for ship
+and wave. `--jump-margin` now applies to the other modes. The same distinction
+is used in Double-DQN's next-action targets, not just inference. Thus keeping
+`--jump-margin 1.0` no longer imposes that extra threshold on thrust.
+Checkpoint dimensions are unchanged; existing brains can be resumed.
+
+**Conservative coaching:** `--flight-teacher-weight` defaults to **0.05**
+(range 0..0.2; 0 disables). A small hinge loss teaches the brain an unambiguous
+safe shield action, rather than relying only on sparse death feedback. Labels
+require a robustly surviving intervention and either a survival-level advantage
+or a clearance advantage of at least 0.1. Ship ascent, descent and maximum
+speed must EACH have three accepted calibration samples; wave needs three
+slope samples. Input delay must be verified and current tracking/calibration
+usable. Mere braking hints or near ties are not automatically taught.
+
+Replay-forced/menu-suppressed actions are not coaching examples, and examples
+inside the final 1.5 s before a death are discarded after crash-time trimming.
+The unbanked rollout tail covers that horizon even at frame-skip 1. Coaching
+is DQN-only and is disabled in `--play` or with the shield off. Unlike the
+optional potential reward, this is an additional learning objective; its
+quality depends on the model's recommendations, hence these gates and opt-out.
+Cube/other-mode samples never receive the coaching loss.
+
+Death snapshots record `flight_control` (brain choice, selected action and
+reason), `flight_search` (per-first-action survival, clearance and recovery
+hint), `flight_teacher` (candidate label, potentially discarded later), and
+the fitted ship/wave parameters. Updates report `teacher_loss` and
+`teacher_draws` (sample draws, not unique examples). Search time remains in
+the timing log. A local replay benchmark on 27 saved ship states averaged
+about 6.4 ms with the buffer versus 3.9 ms without; live decision timing and
+completion improvements require a new run.
+
+## Optional ship/wave clearance shaping
+
+`--clearance-reward` enables a small geometry potential for ship and wave;
+the flag alone uses weight **0.05**, or pass a value from 0 to 0.1, e.g.
+`--clearance-reward 0.02`. Default is **off**. Both live entry points accept
+it, including `--backend yolo-only`. No checkpoint dimensions or YOLO weights
+change; existing brains can be resumed. `--play` ignores shaping and never
+trains.
+
+The score uses edge-to-edge clearance from reliable detected hazards and
+solids ahead/overlapping the player. Objects up to about half a second ahead
+have increasing influence as they approach. Portals, orbs, pads, objects
+behind the player, low-confidence boxes and guessed floor/ceiling planes
+do not contribute. Only confirmed surface lines contribute as boundaries.
+Clearance saturates at 0.75 blocks; there is no screen-centre target, infinite
+distance bonus, or preferred thrust direction. Missing/uncertain player or
+mode tracking and absent relevant geometry have zero potential.
+
+The added reward is exactly `gamma * Phi(next) - Phi(current)`, with Phi the
+weighted score. Potentials are bounded and the difference is not separately
+clipped. Inactive modes have zero Phi; mode/tracking boundaries retain the
+necessary correction, rather than skipping one side and creating free reward.
+Deaths and completions have zero terminal Phi. Death corrections apply at
+the retained crash transition **after** delayed-death trimming. Replay
+prefixes remain excluded from learning, and long-rollout cuts retain Phi
+alignment. For a complete episode, discounted shaping sums to minus the
+initial Phi: it redistributes feedback without changing the base objective.
+This is a learning aid, not a guarantee of faster learning or safer flight.
+
+Session settings and checkpoint metadata record the weight. Death snapshots
+include the normalized `clearance` score, validity and mode; `clearance.jsonl`
+contains per-attempt **retained-tail** accounting (long-run steps may already
+have been banked). Timing reports include the clearance calculation.
+
+To preserve the original brain while trying it:
+
+```
+python preview_boxes.py --backend yolo-only --model checkpoints/preview_boxes.pt --name clearance_test --clearance-reward --minutes 10
+```
+
+Compare with the flag absent using the same starting checkpoint and all
+other settings held fixed. Keep jump-margin, hold-cost, route mode and level
+the same in both runs. Compare ship survival, independent thrust choices,
+clearance and death locations over multiple attempts. This shaping does not
+train YOLO or directly calibrate the blue-line physics.
+
+## Session diagnostics and raw YOLO viewer
+
+Run `python preview_yolo.py` for a standalone live detection window. It shows
+raw YOLO boxes, exact class names, confidence, and inference time, with no
+policy, physics, heuristic icon fallback, route memory, or game inputs.
+Use `--video recs/level.mp4` for a recording, `--conf .25` to change the
+threshold, `--model yolo_gd.pt`, `--device cpu` or `--device 0`, and
+`--region LEFT TOP RIGHT BOTTOM` to crop live capture. Q/Escape or closing the
+window exits; Space pauses the viewer. Live capture defaults to monitor 0.
+
+New training runs print their directory under `logs_boxes/sessions/`.
+Each session has `settings.json` (arguments and training configuration),
+`environment.jsonl` (effective backend/settings), `attempts.csv` (including
+cause and session ID), `timing.jsonl` (mean and p95 stage times plus capture
+wait/work estimates), and `summary.jsonl`. Attempt numbers are local to a
+unique session; old logs are preserved. Death images and JSON live in that
+session's `deaths/` folder. Survival counts include the replay prefix and
+cannot go negative; replay steps remain excluded from brain learning.
+
+The grounded check now requires nearby surface support, preventing a still
+icon at a jump apex from becoming grounded or teaching a false floor height.
+Accepted cube arc fits also stabilize the policy's velocity/history inputs;
+raw positions and velocities remain available for calibration and diagnosis.
+The observation dimensions and checkpoint format are unchanged.
+
+`python training_diagnostics.py --output logs_boxes/physics_audit.json`
+compares airborne cube predictions against detections 1, 3, and 5 decisions
+later. It scans both legacy and session snapshots; use `--snapshots` with a
+quoted glob to select one session. New snapshots include actual motion dt,
+raw velocity, and tracked velocity. Per-death errors are also written to
+`deaths/physics_errors.jsonl` when snapshots are enabled. These are combined
+tracking/model residuals, not ground-truth collision tests; old snapshots use
+smoothed dt. Contacts and mode changes are excluded, but unseen special-object
+impulses or camera motion can still create outliers.
+
+The twelve takeoff-fit candidates are evaluated as one vectorized operation,
+preserving candidate selection and reducing small per-decision overhead.
+Timing reports separate fixed plans from continuation search, plus detector,
+brain/route, GUI, and environment time. `physics_total` includes plans and
+search; these overlapping values must not be added together. Live timing and
+completion improvements require a new game run to measure.
+
+### Crash feedback and decision-boundary correction
+
+Current camera-freeze measurements now take precedence over historical median
+death delays. The median is only a fallback when the current attempt has no
+measurable freeze. Explosion-object guesses cannot override a measured freeze
+or an explicitly fixed delay. Multiple static terrain boxes provide independent
+scroll evidence; after three frozen observations following active scrolling,
+player detections are suppressed until terrain movement resumes. This keeps
+green explosion effects/UI out of player-motion calibration. New snapshots
+record `terrain_scroll` and `death_frozen` for inspection.
+
+Both fixed plans and the continuation search now split their near-term time
+grid at actual decision boundaries. This applies even with `--ms-delay` off:
+the default still uses the measured number of delayed decisions. Previously
+two 41 ms decisions could become 100 ms on the search's 33 ms grid instead of
+82 ms, changing the predicted jump. The millisecond-delay estimator remains
+opt-in; no brain or YOLO checkpoint format changes are required.
+
+### Tracking gaps and input diagnostics
+
+Missing player detections now interrupt cube, ship/mode, launch and motion
+fits. The first reacquired position is a new baseline, not a one-frame jump
+from the last sighting. Delayed action history continues advancing through
+these gaps independently of position history. Training pause/resume also
+breaks unfinished fits and clears the pre-pause action queue. Accepted physics
+values and the brain remain intact.
+
+Snapshots include `input` (requested/applied action, paused/focus state,
+cached keyboard hold, OS key state when available, and resend count),
+`tracking_age`, `calibration_valid`, `held_rest_steps`, and ship calibration
+counts/delay verification. OS key state is not confirmation that GD accepted
+an input. A sustained held-but-grounded cube produces an `[input]` diagnostic.
+Focus is checked before a new key press; a lost focus invalidates the cached
+hold. If Windows reports that a supposedly held SPACE is up, the real input
+backend periodically re-sends keyDown. Normal uninterrupted holds remain
+change-only. The trainer/route memory record the action actually passed through
+the environment's input gate, including menu/paused suppression.
+
+`detector.jsonl` records the selected model/engine path and SHA-256 fingerprint
+per session. Restart the trainer after retraining/exporting YOLO: model weights
+are loaded once, not hot-reloaded. CPU explicitly selects the weights rather
+than a TensorRT engine.
+
+For an isolated diagnostic run preserving the original brain and physics file:
+
+```
+python preview_boxes.py --backend yolo-only --model checkpoints/preview_boxes.pt --name diagnostic_boxes --motion-model none --minutes 10
+```
+
+This resumes the brain but writes `diagnostic_boxes.pt` and
+`diagnostic_boxes_best.pt`. It starts from default physics, calibrates in
+memory, and does not load or overwrite `motion_model.npz`. Route memory still
+operates as usual. Inspect the new session before deciding to reset a brain.
+
+### Inferred floors near gaps and in flight
+
+An inferred resting height is no longer clamped to half a block under an
+airborne player when the cached height is on the wrong side of the icon.
+When there is no real ground line in a platform scene, detected blocks supply
+support individually; the cached height cannot become an infinite floor
+through a gap. Rejected estimates are cleared so they cannot reappear after
+the icon leaves a block. The corresponding inferred-ceiling clamp is also
+guarded. Snapshots record `floor_source` (`line`, `inferred`, `unknown`, or
+`rejected inferred floor`) for checking the next live run. These conservative
+checks can remove support predictions when terrain detection is incomplete;
+they do not guarantee a level completion or prevent all repeated deaths.
+
+### Platform-side contact while falling
+
+Fixed plans and the continuation search now test the cube/robot's inner
+hitbox at the instant its leading edge enters a detected block. This happens
+before vertical landing snap: a cube already too low at that edge is marked
+as a side crash instead of being lifted onto the top. Existing corner-landing
+tolerance is retained, including upside-down robot/cube cases. Intervals
+containing orb/pad events retain their existing event handling. This uses the
+shared physics model, so it applies to YOLO-only mode without retraining YOLO.
+The recorded 22% regression fixture changes a previously safe two-step wait
+to an unsafe wait while retaining a surviving press-first prediction.
+
 The box policy sees **detector boxes, not pixels**: spikes, blocks, orbs, pads,
 portals, player. It also gets the scroll **speed**, the icon's **size**, and
 the last 8 steps of how the icon moved and what it pressed (that's how it
@@ -367,3 +614,69 @@ the new, longer best run, so the hand-over point moves forward with it.
 
 Inputs are also only sent while a level is on screen (its % showing, nothing
 paused / frozen): on the menus SPACE is never pressed.
+
+### Ship paths near the screen edge
+
+With the flight buffer enabled (the default), ship/wave search only certifies
+routes while the full simulated player remains inside the captured view. A
+route that leaves the view ends at that edge as **unverified**, rather than
+being labelled safe because no offscreen geometry was detected. This prevents
+the search from recommending an unseen detour above a hanging block. This is
+a limit of the observation, not a claim that the screen edge is a solid wall;
+the search rebuilds the visible region on every capture as the camera moves.
+It can be conservative during vertical camera movement.
+
+The cyan line is the best planned route, including future input changes; it
+does not predict holding the current button forever. The preview identifies
+when its continuation is unverified. Green/other fixed-action paths retain
+their existing meaning. Snapshot JSON includes `path_unknown` and per-root
+`visibility_limited` to distinguish an unseen continuation from a collision.
+
+Ship/swing displacement now integrates the time before and after reaching the
+speed cap exactly. Velocity initialization uses the actual capture interval,
+while future decisions use the smoothed decision interval. This avoids
+confusing a slow planning step with the duration of the observed motion.
+
+`python audit_ship_planner.py <death_snapshot.json>` replays saved observations
+offline at several search widths. It never controls the game. Old snapshots
+omit some alternate input history and portal types, so this is a diagnostic
+comparison, not a recreation of the entire run or proof of live success.
+
+### Decision timing and capture experiments
+
+For the new predictor/planner/mode-controller architecture, separate checkpoints,
+persistent balanced experience and frozen evaluation, see [CONTROLLER_GUIDE.md](CONTROLLER_GUIDE.md).
+
+Normal startup now uses one PyTorch CPU thread for the small brain
+(`--cpu-threads 1`). `--cpu-threads 0` keeps the library's thread setting;
+positive values select a thread count. This does not move YOLO off its GPU.
+OpenCV's thread setting is unchanged because limiting it did not improve
+the recorded-frame benchmark on this machine.
+
+The attempt-banner check processes only the band it uses, with exactly the
+same pixel criteria as before. Frame-stack output also avoids a redundant
+copy. Capture pacing uses a private Windows high-resolution waitable timer
+when available, with a short final spin and a portable fallback. It does not
+alter the system timer resolution or the capture FPS.
+
+Timing logs now separate `capture_pacing`, `capture_fetch`, `capture_resize`,
+`percent_read`, and `reward_check`. `capture_frame_age` and `observation_age`
+measure freshness at acquisition and after perception/planning respectively
+when the backend timestamp shares the process clock. Capture/reward samples
+are per captured tick; search/observation samples are per decision, so do not
+sum all rolling stage means as if their sample counts were identical.
+
+`--threaded-capture` is an **experimental, opt-in** additional reader. It
+keeps only the newest owned frame and paired timestamp; no unbounded queue.
+Repeated/old frames count as drops, and old reader queues are discarded on
+camera restart. The default remains synchronous (`--sync-capture` explicitly
+selects it). A live CPU-stress comparison found shorter reads but older frames
+and many drops with the extra reader, so it is not enabled for normal play.
+DXCam already acquires frames in its own background thread. Moving the Python
+trajectory search to another Python thread would still compete for the GIL.
+
+`python benchmark_runtime.py` compares CPU settings on recorded frames and a
+temporary network, without changing trained models. `python benchmark_capture.py`
+compares live read-only capture paths, with and without synthetic Python work;
+it never sends gameplay inputs or saves screen images. These are component
+benchmarks, not claims of a particular live gameplay decision rate.

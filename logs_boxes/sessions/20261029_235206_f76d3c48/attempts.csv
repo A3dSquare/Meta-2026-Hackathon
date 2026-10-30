@@ -1,0 +1,64 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793335935.7,1,214,162,9.0,52,measured,0,,"spike, trapped",20261029_235206_f76d3c48
+1793335945.4,2,422,179,8.0,29,measured,0,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793335974.5,3,912,463,25.0,27,measured,1,,"spike, trapped",20261029_235206_f76d3c48
+1793335990.7,4,1120,180,9.0,28,measured,2,,"unknown, chose wrong",20261029_235206_f76d3c48
+1793336019.5,5,1594,446,25.0,28,measured,3,,"spike, trapped",20261029_235206_f76d3c48
+1793336056.1,6,2202,589,33.0,19,measured,4,,"unknown, chose wrong",20261029_235206_f76d3c48
+1793336168.3,7,2810,587,33.0,21,measured,5,,"block side, chose wrong",20261029_235206_f76d3c48
+1793336205.9,8,3398,567,33.0,21,measured,6,,"unknown, chose wrong",20261029_235206_f76d3c48
+1793336223.6,9,3616,190,10.0,28,measured,7,,"spike, trapped",20261029_235206_f76d3c48
+1793336260.5,10,4232,585,33.0,31,measured,8,,"unknown, chose wrong",20261029_235206_f76d3c48
+1793336286.4,11,4594,332,20.0,30,measured,9,,"unknown, blue line wrong",20261029_235206_f76d3c48
+1793336323.3,12,5184,570,33.0,20,measured,10,,"unknown, chose wrong",20261029_235206_f76d3c48
+1793336360.9,13,5776,574,33.0,18,measured,11,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793336384.3,14,6088,287,16.0,25,measured,12,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793336405.4,15,6374,260,14.0,26,measured,13,,"unknown, chose wrong",20261029_235206_f76d3c48
+1793336426.1,16,6616,218,14.0,24,measured,14,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793336442.2,17,6810,166,8.0,28,measured,15,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793336458.0,18,6998,159,8.0,29,measured,16,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793336493.5,19,7624,606,33.0,20,measured,17,,"block side, chose wrong",20261029_235206_f76d3c48
+1793336510.0,20,7848,170,8.0,54,measured,18,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793336546.5,21,8484,604,33.0,32,measured,19,,"block side, chose wrong",20261029_235206_f76d3c48
+1793336583.6,22,9100,596,33.0,20,measured,20,,"block side, chose wrong",20261029_235206_f76d3c48
+1793336620.3,23,9726,607,33.0,19,measured,21,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793336650.8,24,10214,463,26.0,25,measured,22,,"spike, trapped",20261029_235206_f76d3c48
+1793336693.3,25,10906,674,39.0,18,measured,23,,"unknown, chose wrong",20261029_235206_f76d3c48
+1793336720.4,26,11314,383,22.0,25,measured,24,,"unknown, trapped",20261029_235206_f76d3c48
+1793336733.9,27,11460,116,6.0,30,measured,25,,"head hit, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793336745.1,28,11606,118,6.0,28,measured,26,,"spike, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793336760.2,29,11846,210,11.0,30,measured,27,,"spike, chose wrong",20261029_235206_f76d3c48
+1793336787.0,30,12272,397,22.0,29,measured,28,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793336833.5,31,13028,728,45.0,28,measured,29,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793336892.0,32,13982,925,58.0,29,measured,30,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793336937.2,33,14700,700,42.0,18,measured,31,,"spike, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793336964.6,34,15122,391,22.0,31,measured,32,,"spike, chose wrong",20261029_235206_f76d3c48
+1793336980.0,35,15320,170,8.0,28,measured,33,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793337001.4,36,15652,305,16.0,27,measured,34,,"unknown, chose wrong",20261029_235206_f76d3c48
+1793337038.1,37,16260,587,33.0,21,measured,35,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337066.1,38,16702,415,23.0,27,measured,36,,"spike, chose wrong",20261029_235206_f76d3c48
+1793337103.4,39,17332,599,33.0,31,measured,37,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337140.5,40,17946,594,33.0,20,measured,38,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337155.9,41,18144,169,8.0,29,measured,39,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793337191.2,42,18756,594,33.0,18,measured,40,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337229.9,43,19382,610,34.0,16,measured,41,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337266.7,44,19994,593,33.0,19,measured,42,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337289.9,45,20336,293,16.0,49,measured,43,,"block side, chose wrong",20261029_235206_f76d3c48
+1793337336.7,46,21082,703,45.0,43,measured,44,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337368.3,47,21562,459,26.0,21,measured,45,,"spike, trapped",20261029_235206_f76d3c48
+1793337395.2,48,21968,378,22.0,28,measured,46,,"spike, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337410.7,49,22164,167,8.0,29,measured,47,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793337423.2,50,22310,117,6.0,29,measured,48,,"spike, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337458.9,51,22930,603,34.0,17,measured,49,,"block side, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337483.0,52,23284,325,18.0,29,measured,50,,"spike, trapped",20261029_235206_f76d3c48
+1793337512.2,53,23744,430,24.0,30,measured,51,,"unknown, trapped (shield acted)",20261029_235206_f76d3c48
+1793337542.1,54,24224,452,25.0,28,measured,52,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793337571.4,55,24702,429,24.0,49,measured,53,,"spike, trapped",20261029_235206_f76d3c48
+1793337587.2,56,24900,170,8.0,28,measured,54,,"spike, trapped",20261029_235206_f76d3c48
+1793337637.0,57,25718,789,50.0,29,measured,55,,"spike, trapped",20261029_235206_f76d3c48
+1793337666.4,58,26184,410,23.0,56,measured,56,,"spike, chose wrong",20261029_235206_f76d3c48
+1793337703.9,59,26794,579,33.0,31,measured,57,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337726.1,60,27112,292,16.0,26,measured,58,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337742.5,61,27328,165,8.0,51,measured,59,,"spike, trapped (shield acted)",20261029_235206_f76d3c48
+1793337784.1,62,28000,654,39.0,18,measured,60,,"unknown, chose wrong (shield acted)",20261029_235206_f76d3c48
+1793337793.4,63,28054,27,1.0,27,measured,61,,"spike, chose wrong (shield acted)",20261029_235206_f76d3c48

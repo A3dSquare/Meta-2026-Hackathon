@@ -1,0 +1,21 @@
+{
+  "cases": 45,
+  "changed_cases": [],
+  "baseline": {
+    "mean_ms": 8.730313342271579,
+    "median_ms": 8.044700138270855,
+    "p95_ms": 20.590299973264337
+  },
+  "optimized": {
+    "mean_ms": 8.494626214313838,
+    "median_ms": 6.482099997811019,
+    "p95_ms": 24.16439983062446
+  },
+  "limitation": "Recorded CPU search only; live end-to-end timing must be measured after restart.",
+  "paired_reference": {
+    "mean_ms": 10.183160899517437,
+    "median_ms": 7.27190007455647,
+    "p95_ms": 32.47090009972453
+  },
+  "paired_speedup_percent": 16.581636113435227
+}

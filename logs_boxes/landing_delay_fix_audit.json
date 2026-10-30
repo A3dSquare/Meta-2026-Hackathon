@@ -1,0 +1,2607 @@
+{
+  "summary": {
+    "states": 117,
+    "new_verified": 36,
+    "action_changes": 22,
+    "search_median_ms": 10.942100081592798,
+    "search_p95_ms": 17.114599933847785,
+    "verified_with_failed_checked_delay": 0
+  },
+  "rows": [
+    {
+      "attempt": 12,
+      "index": 4,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0548208007316426,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06167340082309792,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06852600091455324,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07537860100600857,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0822312010974639,
+          "survival": 0.896544548264874
+        }
+      ],
+      "ms": 16.664399998262525
+    },
+    {
+      "attempt": 12,
+      "index": 9,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0613654338715882,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06903611310553673,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07670679233948526,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08437747157343378,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0920481508073823,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09971883004133084,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10738950927527935,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.11506018850922788,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.1227308677431764,
+          "survival": 1.0
+        }
+      ],
+      "ms": 17.114599933847785
+    },
+    {
+      "attempt": 12,
+      "index": 17,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.05894200613346725,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06630975690015066,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07367750766683406,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08104525843351747,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08841300920020087,
+          "survival": 0.9572332462498391
+        }
+      ],
+      "ms": 14.46500001475215
+    },
+    {
+      "attempt": 12,
+      "index": 31,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 15.393499983474612
+    },
+    {
+      "attempt": 12,
+      "index": 32,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.059230156505651645,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0666339260688581,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07403769563206455,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08144146519527101,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08884523475847747,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09624900432168393,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10365277388489039,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.11105654344809683,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.11846031301130329,
+          "survival": 1.0
+        }
+      ],
+      "ms": 10.981699917465448
+    },
+    {
+      "attempt": 12,
+      "index": 33,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.060474480855246524,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06803379096215234,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07559310106905816,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08315241117596398,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09071172128286978,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09827103138977561,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10583034149668141,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.11338965160358723,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.12094896171049305,
+          "survival": 1.0
+        }
+      ],
+      "ms": 11.894299881532788
+    },
+    {
+      "attempt": 12,
+      "index": 34,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.06210839277232898,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0698719418688701,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07763549096541122,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08539904006195234,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09316258915849346,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10092613825503459,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.1086896873515757,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.11645323644811684,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.12421678554465795,
+          "survival": 1.0
+        }
+      ],
+      "ms": 11.719800066202879
+    },
+    {
+      "attempt": 12,
+      "index": 35,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 13.777600135654211
+    },
+    {
+      "attempt": 12,
+      "index": 37,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.061302712739481825,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06896555183191705,
+          "survival": 0.08684550971426591
+        }
+      ],
+      "ms": 16.113900113850832
+    },
+    {
+      "attempt": 12,
+      "index": 39,
+      "old_action": 0,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 12.260599993169308
+    },
+    {
+      "attempt": 12,
+      "index": 40,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 10.298899840563536
+    },
+    {
+      "attempt": 12,
+      "index": 41,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.24135542004776397
+        }
+      ],
+      "ms": 10.942100081592798
+    },
+    {
+      "attempt": 12,
+      "index": 42,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.07931111934872191
+        }
+      ],
+      "ms": 14.291099971160293
+    },
+    {
+      "attempt": 12,
+      "index": 43,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 11.97859994135797
+    },
+    {
+      "attempt": 12,
+      "index": 44,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.07862078665623361
+        }
+      ],
+      "ms": 13.156600063666701
+    },
+    {
+      "attempt": 14,
+      "index": 0,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.4222222222222222
+        }
+      ],
+      "ms": 7.936700014397502
+    },
+    {
+      "attempt": 14,
+      "index": 1,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.4666666666666666
+        }
+      ],
+      "ms": 10.442599887028337
+    },
+    {
+      "attempt": 14,
+      "index": 2,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012084095250713765,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.02416819050142753,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.036252285752141296,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.04833638100285506,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.060420476253568826,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07250457150428259,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08458866675499635,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09667276200571012,
+          "survival": 1.0
+        }
+      ],
+      "ms": 11.971699772402644
+    },
+    {
+      "attempt": 14,
+      "index": 3,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.2807141032068486
+        }
+      ],
+      "ms": 11.261200066655874
+    },
+    {
+      "attempt": 14,
+      "index": 4,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012516693654327487,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025033387308654974,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03755008096298246,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.05006677461730995,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06258346827163744,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07510016192596491,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0876168555802924,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.1001335492346199,
+          "survival": 1.0
+        }
+      ],
+      "ms": 12.427800102159381
+    },
+    {
+      "attempt": 14,
+      "index": 5,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012468326792458202,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.024936653584916403,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03740498037737461,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.049873307169832806,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.062341633962291004,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07480996075474922,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08727828754720741,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09974661433966561,
+          "survival": 1.0
+        }
+      ],
+      "ms": 14.261200092732906
+    },
+    {
+      "attempt": 14,
+      "index": 6,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012426661607693812,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.024853323215387624,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03727998482308144,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.04970664643077525,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06213330803846906,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07455996964616288,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08698663125385668,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0994132928615505,
+          "survival": 1.0
+        }
+      ],
+      "ms": 16.41810010187328
+    },
+    {
+      "attempt": 14,
+      "index": 7,
+      "old_action": 0,
+      "new_action": 1,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012394230447978093,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.024788460895956186,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03718269134393428,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.04957692179191237,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06197115223989046,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07436538268786856,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08675961313584665,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09915384358382474,
+          "survival": 1.0
+        }
+      ],
+      "ms": 15.486299991607666
+    },
+    {
+      "attempt": 14,
+      "index": 8,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.01242406990258908,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.02484813980517816,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.037272209707767234,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.04969627961035632,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0621203495129454,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07454441941553447,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08696848931812355,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09939255922071263,
+          "survival": 1.0
+        }
+      ],
+      "ms": 12.701699975878
+    },
+    {
+      "attempt": 14,
+      "index": 9,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012472732911900198,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.024945465823800396,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0374181987357006,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.04989093164760079,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.062363664559500986,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0748363974714012,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08730913038330139,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09978186329520158,
+          "survival": 1.0
+        }
+      ],
+      "ms": 17.310600029304624
+    },
+    {
+      "attempt": 14,
+      "index": 10,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012477404625042989,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.024954809250085978,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03743221387512897,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.049909618500171955,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06238702312521494,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07486442775025794,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08734183237530092,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09981923700034391,
+          "survival": 1.0
+        }
+      ],
+      "ms": 17.752400133758783
+    },
+    {
+      "attempt": 14,
+      "index": 11,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012616419163105753,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025232838326211506,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03784925748931726,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.05046567665242301,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06308209581552876,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07569851497863452,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08831493414174027,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10093135330484602,
+          "survival": 1.0
+        }
+      ],
+      "ms": 17.43290014564991
+    },
+    {
+      "attempt": 14,
+      "index": 12,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012786137243581519,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025572274487163038,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03835841173074456,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.051144548974326076,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0639306862179076,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07671682346148911,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08950296070507063,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10228909794865215,
+          "survival": 1.0
+        }
+      ],
+      "ms": 17.63290003873408
+    },
+    {
+      "attempt": 14,
+      "index": 13,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.01279738352122139,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.02559476704244278,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03839215056366417,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.05118953408488556,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06398691760610695,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07678430112732834,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08958168464854972,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10237906816977112,
+          "survival": 1.0
+        }
+      ],
+      "ms": 17.40440004505217
+    },
+    {
+      "attempt": 14,
+      "index": 14,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.01277228766777871,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.02554457533555742,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03831686300333613,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.05108915067111484,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06386143833889354,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07663372600667226,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08940601367445096,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10217830134222967,
+          "survival": 1.0
+        }
+      ],
+      "ms": 16.457000048831105
+    },
+    {
+      "attempt": 14,
+      "index": 15,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012753603903202411,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025507207806404822,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03826081170960723,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.051014415612809644,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06376801951601205,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07652162341921447,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08927522732241688,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10202883122561929,
+          "survival": 1.0
+        }
+      ],
+      "ms": 15.870999777689576
+    },
+    {
+      "attempt": 14,
+      "index": 16,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012737131008960557,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025474262017921113,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.038211393026881674,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.05094852403584223,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06368565504480278,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07642278605376335,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0891599170627239,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10189704807168445,
+          "survival": 1.0
+        }
+      ],
+      "ms": 15.927599975839257
+    },
+    {
+      "attempt": 14,
+      "index": 17,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012715845407340156,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025431690814680313,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03814753622202047,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.050863381629360625,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06357922703670078,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07629507244404093,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0890109178513811,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10172676325872125,
+          "survival": 1.0
+        }
+      ],
+      "ms": 15.863299835473299
+    },
+    {
+      "attempt": 14,
+      "index": 18,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012654213368419091,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025308426736838183,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.037962640105257274,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.050616853473676365,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06327106684209546,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07592528021051455,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08857949357893363,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10123370694735273,
+          "survival": 1.0
+        }
+      ],
+      "ms": 16.470500035211444
+    },
+    {
+      "attempt": 14,
+      "index": 19,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012617734532470209,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025235469064940418,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03785320359741062,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.050470938129880835,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06308867266235105,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07570640719482125,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08832414172729146,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10094187625976167,
+          "survival": 1.0
+        }
+      ],
+      "ms": 16.63110009394586
+    },
+    {
+      "attempt": 14,
+      "index": 20,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012709508580135288,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025419017160270577,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.038128525740405865,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.05083803432054115,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06354754290067643,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07625705148081173,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08896656006094703,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.1016760686410823,
+          "survival": 1.0
+        }
+      ],
+      "ms": 16.472999937832355
+    },
+    {
+      "attempt": 14,
+      "index": 21,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 8.999899961054325
+    },
+    {
+      "attempt": 14,
+      "index": 22,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.6444444444444444
+        }
+      ],
+      "ms": 7.780899992212653
+    },
+    {
+      "attempt": 14,
+      "index": 23,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 7.963499985635281
+    },
+    {
+      "attempt": 14,
+      "index": 24,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 8.196299895644188
+    },
+    {
+      "attempt": 14,
+      "index": 26,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.6444444444444444
+        }
+      ],
+      "ms": 8.068399969488382
+    },
+    {
+      "attempt": 14,
+      "index": 27,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 7.003200007602572
+    },
+    {
+      "attempt": 14,
+      "index": 28,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 6.984899984672666
+    },
+    {
+      "attempt": 14,
+      "index": 29,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 5.33799990080297
+    },
+    {
+      "attempt": 14,
+      "index": 30,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 6.6535999067127705
+    },
+    {
+      "attempt": 14,
+      "index": 31,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.011944152102089404,
+          "survival": 0.3264734907904437
+        }
+      ],
+      "ms": 7.67019996419549
+    },
+    {
+      "attempt": 14,
+      "index": 33,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0117620477050329,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0235240954100658,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0352861431150987,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0470481908201316,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.058810238525164496,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0705722862301974,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08233433393523029,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0940963816402632,
+          "survival": 1.0
+        }
+      ],
+      "ms": 10.536600137129426
+    },
+    {
+      "attempt": 14,
+      "index": 34,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 7.893699919804931
+    },
+    {
+      "attempt": 14,
+      "index": 35,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.19897139836923805
+        }
+      ],
+      "ms": 9.429399855434895
+    },
+    {
+      "attempt": 14,
+      "index": 36,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 8.34470009431243
+    },
+    {
+      "attempt": 14,
+      "index": 37,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.1537147633450592
+        }
+      ],
+      "ms": 8.713599992915988
+    },
+    {
+      "attempt": 14,
+      "index": 38,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.12063865630542264
+        }
+      ],
+      "ms": 7.539099780842662
+    },
+    {
+      "attempt": 14,
+      "index": 39,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.011367934125562687,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.022735868251125373,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03410380237668806,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.04547173650225075,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.056839670627813435,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06820760475337612,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07957553887893881,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0909434730045015,
+          "survival": 1.0
+        }
+      ],
+      "ms": 10.967999929562211
+    },
+    {
+      "attempt": 14,
+      "index": 40,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 4.932299954816699
+    },
+    {
+      "attempt": 14,
+      "index": 41,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 4.2098998092114925
+    },
+    {
+      "attempt": 14,
+      "index": 42,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.015031541002026673
+        }
+      ],
+      "ms": 10.170199908316135
+    },
+    {
+      "attempt": 14,
+      "index": 43,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.015174070236033031
+        }
+      ],
+      "ms": 9.737299988046288
+    },
+    {
+      "attempt": 14,
+      "index": 44,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.014779809878643599
+        }
+      ],
+      "ms": 9.822800057008862
+    },
+    {
+      "attempt": 16,
+      "index": 0,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.7777777777777777
+        }
+      ],
+      "ms": 8.588599972426891
+    },
+    {
+      "attempt": 16,
+      "index": 1,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.7333333333333333
+        }
+      ],
+      "ms": 8.307300042361021
+    },
+    {
+      "attempt": 16,
+      "index": 2,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 7.520999992266297
+    },
+    {
+      "attempt": 16,
+      "index": 3,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 8.183900034055114
+    },
+    {
+      "attempt": 16,
+      "index": 4,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 7.352899992838502
+    },
+    {
+      "attempt": 16,
+      "index": 5,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 6.91589992493391
+    },
+    {
+      "attempt": 16,
+      "index": 6,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 6.609399802982807
+    },
+    {
+      "attempt": 16,
+      "index": 7,
+      "old_action": 0,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 5.812699906527996
+    },
+    {
+      "attempt": 16,
+      "index": 8,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 5.0582000985741615
+    },
+    {
+      "attempt": 16,
+      "index": 9,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 6.205799989402294
+    },
+    {
+      "attempt": 16,
+      "index": 10,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 4.352200077846646
+    },
+    {
+      "attempt": 23,
+      "index": 22,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.4666666666666666
+        }
+      ],
+      "ms": 7.312800036743283
+    },
+    {
+      "attempt": 23,
+      "index": 23,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 5.664600059390068
+    },
+    {
+      "attempt": 26,
+      "index": 1,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 7.108299992978573
+    },
+    {
+      "attempt": 26,
+      "index": 2,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 8.30180011689663
+    },
+    {
+      "attempt": 26,
+      "index": 8,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.897521819728436
+        }
+      ],
+      "ms": 15.787699958309531
+    },
+    {
+      "attempt": 26,
+      "index": 9,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 11.801399989053607
+    },
+    {
+      "attempt": 26,
+      "index": 13,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.9167140127236603
+        }
+      ],
+      "ms": 10.28260006569326
+    },
+    {
+      "attempt": 26,
+      "index": 32,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 6.22900016605854
+    },
+    {
+      "attempt": 26,
+      "index": 34,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 11.704199947416782
+    },
+    {
+      "attempt": 26,
+      "index": 36,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 8.085600100457668
+    },
+    {
+      "attempt": 26,
+      "index": 38,
+      "old_action": 0,
+      "new_action": 1,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.37270017001040867
+        }
+      ],
+      "ms": 12.34299992211163
+    },
+    {
+      "attempt": 26,
+      "index": 41,
+      "old_action": 0,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 11.671700049191713
+    },
+    {
+      "attempt": 26,
+      "index": 42,
+      "old_action": 0,
+      "new_action": 1,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.2583329697163424
+        }
+      ],
+      "ms": 12.351199984550476
+    },
+    {
+      "attempt": 26,
+      "index": 43,
+      "old_action": 0,
+      "new_action": 1,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.24595700331209533
+        }
+      ],
+      "ms": 11.596000054851174
+    },
+    {
+      "attempt": 26,
+      "index": 44,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 8.15919996239245
+    },
+    {
+      "attempt": 28,
+      "index": 3,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 14.93289996869862
+    },
+    {
+      "attempt": 28,
+      "index": 4,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 13.700699899345636
+    },
+    {
+      "attempt": 28,
+      "index": 10,
+      "old_action": 0,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 7.933699991554022
+    },
+    {
+      "attempt": 28,
+      "index": 13,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 15.098399948328733
+    },
+    {
+      "attempt": 28,
+      "index": 14,
+      "old_action": 0,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 9.610499953851104
+    },
+    {
+      "attempt": 28,
+      "index": 20,
+      "old_action": 0,
+      "new_action": 1,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.9392220946061037
+        }
+      ],
+      "ms": 14.583799988031387
+    },
+    {
+      "attempt": 28,
+      "index": 21,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 12.42149993777275
+    },
+    {
+      "attempt": 28,
+      "index": 26,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.9163228294720733
+        }
+      ],
+      "ms": 12.482699938118458
+    },
+    {
+      "attempt": 28,
+      "index": 41,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 9.726299904286861
+    },
+    {
+      "attempt": 31,
+      "index": 0,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.014067544061464666,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.028135088122929332,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.042202632184394,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.056270176245858665,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07033772030732333,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.084405264368788,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09847280843025266,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.11254035249171733,
+          "survival": 1.0
+        }
+      ],
+      "ms": 15.119600109755993
+    },
+    {
+      "attempt": 31,
+      "index": 1,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.013880087158439396,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.027760174316878793,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.041640261475318185,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.055520348633757585,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06940043579219698,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08328052295063637,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09716061010907577,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.11104069726751517,
+          "survival": 1.0
+        }
+      ],
+      "ms": 15.860299812629819
+    },
+    {
+      "attempt": 31,
+      "index": 2,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.013761865940181096,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.027523731880362192,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.041285597820543286,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.055047463760724384,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06880932970090547,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08257119564108657,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09633306158126767,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.11009492752144877,
+          "survival": 1.0
+        }
+      ],
+      "ms": 16.625399934127927
+    },
+    {
+      "attempt": 31,
+      "index": 3,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.013571489347497162,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.027142978694994324,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.040714468042491486,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.05428595738998865,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06785744673748581,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08142893608498297,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09500042543248013,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.1085719147799773,
+          "survival": 1.0
+        }
+      ],
+      "ms": 15.954599948599935
+    },
+    {
+      "attempt": 31,
+      "index": 4,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.013424365412202065,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.02684873082440413,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.040273096236606194,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.05369746164880826,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06712182706101033,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08054619247321239,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09397055788541445,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10739492329761652,
+          "survival": 1.0
+        }
+      ],
+      "ms": 15.818399842828512
+    },
+    {
+      "attempt": 31,
+      "index": 5,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.013361813872695269,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.026723627745390537,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.040085441618085804,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.053447255490781075,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06680906936347634,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08017088323617161,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09353269710886689,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10689451098156215,
+          "survival": 1.0
+        }
+      ],
+      "ms": 15.518900007009506
+    },
+    {
+      "attempt": 31,
+      "index": 6,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.013411122482181239,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.026822244964362477,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.04023336744654372,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.053644489928724955,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.0670556124109062,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08046673489308744,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09387785737526867,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10728897985744991,
+          "survival": 1.0
+        }
+      ],
+      "ms": 15.949700027704239
+    },
+    {
+      "attempt": 31,
+      "index": 7,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.013264152737627013,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.026528305475254026,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.039792458212881035,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.05305661095050805,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06632076368813507,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07958491642576207,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09284906916338909,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.1061132219010161,
+          "survival": 1.0
+        }
+      ],
+      "ms": 16.209200024604797
+    },
+    {
+      "attempt": 31,
+      "index": 8,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.01304243996169679,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.02608487992339358,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03912731988509037,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.05216975984678716,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06521219980848394,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07825463977018074,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.09129707973187752,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10433951969357431,
+          "survival": 1.0
+        }
+      ],
+      "ms": 16.861699987202883
+    },
+    {
+      "attempt": 31,
+      "index": 9,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012687010966701918,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025374021933403837,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.038061032900105755,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.050748043866807674,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06343505483350959,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07612206580021151,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08880907676691344,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10149608773361535,
+          "survival": 1.0
+        }
+      ],
+      "ms": 16.254400135949254
+    },
+    {
+      "attempt": 31,
+      "index": 10,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.012554559866520642,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.025109119733041283,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.037663679599561926,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.050218239466082566,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06277279933260321,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07532735919912385,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.08788191906564449,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.10043647893216513,
+          "survival": 1.0
+        }
+      ],
+      "ms": 16.29739999771118
+    },
+    {
+      "attempt": 31,
+      "index": 11,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.7777777777777777
+        }
+      ],
+      "ms": 8.992699906229973
+    },
+    {
+      "attempt": 31,
+      "index": 12,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.6444444444444444
+        }
+      ],
+      "ms": 8.867100114002824
+    },
+    {
+      "attempt": 31,
+      "index": 13,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.6444444444444444
+        }
+      ],
+      "ms": 8.889900054782629
+    },
+    {
+      "attempt": 31,
+      "index": 14,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 7.790100062265992
+    },
+    {
+      "attempt": 31,
+      "index": 16,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 7.513700053095818
+    },
+    {
+      "attempt": 31,
+      "index": 17,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.5111111111111111
+        }
+      ],
+      "ms": 7.2864999528974295
+    },
+    {
+      "attempt": 31,
+      "index": 18,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.6444444444444444
+        }
+      ],
+      "ms": 7.453700061887503
+    },
+    {
+      "attempt": 31,
+      "index": 20,
+      "old_action": 0,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 7.344499928876758
+    },
+    {
+      "attempt": 31,
+      "index": 21,
+      "old_action": 1,
+      "new_action": 1,
+      "verified": false,
+      "checks": [],
+      "ms": 5.453599849715829
+    },
+    {
+      "attempt": 31,
+      "index": 22,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 6.330099888145924
+    },
+    {
+      "attempt": 31,
+      "index": 42,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": true,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.009205810894970653,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.018411621789941306,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.027617432684911958,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.03682324357988261,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.04602905447485327,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.055234865369823916,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.06444067626479458,
+          "survival": 1.0
+        },
+        {
+          "delay": 0.07364648715976523,
+          "survival": 1.0
+        }
+      ],
+      "ms": 14.061199966818094
+    },
+    {
+      "attempt": 31,
+      "index": 43,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [],
+      "ms": 9.603400016203523
+    },
+    {
+      "attempt": 31,
+      "index": 44,
+      "old_action": 1,
+      "new_action": 0,
+      "verified": false,
+      "checks": [
+        {
+          "delay": 0.0,
+          "survival": 0.02731965886827444
+        }
+      ],
+      "ms": 9.953900007531047
+    }
+  ]
+}

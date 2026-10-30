@@ -1,0 +1,17 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793330160.6,1,6,1,3.0,5,measured,0,,"spike, trapped",20261029_221559_8af7d88e
+1793330182.6,2,478,443,24.0,29,measured,0,,"spike, trapped",20261029_221559_8af7d88e
+1793330209.0,3,892,391,22.0,23,measured,1,,"unknown, trapped",20261029_221559_8af7d88e
+1793330237.8,4,1376,455,23.0,29,measured,2,,"spike, trapped",20261029_221559_8af7d88e
+1793330301.3,5,2262,854,3.0,32,measured,3,,"spike, trapped",20261029_221559_8af7d88e
+1793330330.7,6,2706,418,24.0,26,measured,4,,"unknown, trapped",20261029_221559_8af7d88e
+1793330359.7,7,3150,415,24.0,29,measured,5,,"unknown, trapped",20261029_221559_8af7d88e
+1793330389.5,8,3612,413,24.0,49,measured,6,,"unknown, chose wrong",20261029_221559_8af7d88e
+1793330405.0,9,3806,166,8.0,28,measured,7,,"spike, trapped (shield acted)",20261029_221559_8af7d88e
+1793330433.2,10,4250,415,24.0,29,measured,8,,"spike, chose wrong",20261029_221559_8af7d88e
+1793330460.9,11,4666,395,23.0,21,measured,9,,"spike, trapped",20261029_221559_8af7d88e
+1793330478.7,12,4902,206,11.0,30,measured,10,,"spike, chose wrong (shield acted)",20261029_221559_8af7d88e
+1793330507.4,13,5350,420,24.0,28,measured,11,,"spike, trapped",20261029_221559_8af7d88e
+1793330533.4,14,5730,355,20.0,25,measured,12,,"spike, trapped (shield acted)",20261029_221559_8af7d88e
+1793330552.0,15,5980,222,12.0,28,measured,13,,"spike, chose wrong (shield acted)",20261029_221559_8af7d88e
+1793330581.6,16,6414,408,24.0,26,measured,14,,"spike, trapped",20261029_221559_8af7d88e

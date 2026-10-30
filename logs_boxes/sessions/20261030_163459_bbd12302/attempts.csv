@@ -1,0 +1,5 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793396099.8,1,8,1,1.0,7,measured,0,,"unknown, blue line wrong",20261030_163459_bbd12302
+1793396151.3,2,1290,1250,58.0,32,measured,0,,"spike, trapped",20261030_163459_bbd12302
+1793396186.9,3,1552,231,10.0,31,measured,1,,"spike, trapped",20261030_163459_bbd12302
+1793396208.3,4,1934,350,16.0,32,measured,2,,"unknown, forecast became unsafe",20261030_163459_bbd12302

@@ -36,6 +36,7 @@ from __future__ import annotations
 from typing import Any
 
 import time
+from training_diagnostics import Timings, supported_ground, terrain_scroll, select_death_lag, inferred_surface
 from collections import deque
 
 import math
@@ -199,7 +200,7 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
                      floor_rel: float | None, ceil_rel: float | None, horizon: float = 1.5,
                      dec_dt: float | None = None, motion: MotionLearner | None = None,
                      out: dict | None = None, state=None, search: bool = True, half: float = 0.5,
-                     prefer=None):
+                     prefer=None, flight_buffer=.75, motion_dt=None, explicit_plan=False):
     """Mode block + action-plan outcomes for the current frame.
 
     floor_rel / ceil_rel: surface heights relative to the icon centre (None =
@@ -229,15 +230,16 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     specials = special_boxes(ents)
     # just landed? Standing level with a known surface and not moving counts as on the
     # ground right away (the 3-still-frames rule alone misses taps right after a landing)
-    if not grounded and est.mode not in ("ship", "wave") and est.g * vy_bps < 1.5 * ModeEstimator.REST:
+    if est.mode not in ("ship", "wave"):
         # (the landing step's measured speed is still the fall speed; "not rising" is enough)
         fl, ce = surfaces_at(0.0, solid, floor_rel, ceil_rel)
         # (0.25, not 0.12: the box centre sits up to ~0.3 off the icon's real centre)
-        grounded = any(abs(q) < 0.25 for q in (fl if est.g == 1 else ce))
+        grounded = supported_ground(grounded, vy_bps, est.g, fl if est.g == 1 else ce)
     # input delay: the icon is still reacting to actions sent `est.lag` steps ago
     eff_prev = est.eff_hold(0) if est.lag > 0 else prev_hold
     dtd = dec_dt or frame_skip / 60.0
-    vy0 = inst_vy(est.mode, est.g, est.mini, vy_bps, eff_prev, grounded, dtd, phys)
+    vy0 = inst_vy(est.mode, est.g, est.mini, vy_bps, eff_prev, grounded,
+                  dtd if motion_dt is None else motion_dt, phys)
     y0 = 0.0
     if state is not None and not grounded:      # arc fit (env): steadier than 2 frames
         y0, vy0 = float(state[0]), float(state[1])
@@ -254,11 +256,17 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
     body = Body(y0, vy0, est.g, grounded, est.mode, est.mini, 0.0, eff_prev)
     xo: list = []
     pend = est.pending()
+    _plan_t = time.perf_counter()
     plan, paths = simulate_plans(body, haz, solid, floor_rel, ceil_rel, speed, phys,
                                  frame_skip=frame_skip, horizon=horizon, dec_dt=dec_dt, half=half,
                                  lag=est.lag, pending=pend, motion=motion, extra_out=xo)
+    if out is not None:
+        out['plans_s'] = time.perf_counter() - _plan_t
+    _search_t = time.perf_counter()
     if search:
         try:
+            position = ents.player_pos()[1] if ents.player() is not None else None
+            view = ((position-1.)/BLOCK_H,position/BLOCK_H) if position is not None else None
             alt = est.lag_alt if getattr(est, "lag_alt", None) is not None else est.lag + 1
             # (the ms delay is opt-in: --ms-delay. Live, the runs after it went in did worse
             #  -- back to whole steps by default until it's proven)
@@ -270,26 +278,36 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
                                    est.pending(int(np.ceil(D / dtd - 1e-6))),
                                    pending_long=est.pending(int(np.ceil(Da / dtd - 1e-6))), horizon=horizon,
                                    half=half, want_path=True, portals=portals, specials=specials,
-                                   prefer=prefer, delay=D, delay_alt=Da)
+                                   prefer=prefer, delay=D, delay_alt=Da,flight_buffer=flight_buffer,flight_view=view,explicit_plan=explicit_plan)
             else:
                 sr = robust_search(body, haz, solid, floor_rel, ceil_rel, speed, phys, dtd, est.lag, pend,
-                                   pending_long=est.pending(alt), horizon=horizon, half=half,
+                                   pending_long=est.pending(max(alt,est.lag+1)) if explicit_plan else est.pending(alt), horizon=horizon, half=half,
                                    want_path=True, lag_alt=alt, portals=portals, specials=specials,
-                                   prefer=prefer)
+                                   prefer=prefer,flight_buffer=flight_buffer,flight_view=view,explicit_plan=explicit_plan)
             paths = list(paths) + [("best", bool(sr.get("path_hit")), sr.get("path") or [])]
             if out is not None:
                 out["search"] = sr
         except Exception as ex:   # never let the search take the preview down
             if out is not None:
                 out["search_error"] = repr(ex)
+    if out is not None:
+        out['search_s'] = time.perf_counter() - _search_t
     if out is not None and xo:
         out["extra_plans"] = xo[0]   # "tap in 1" / "tap in 3" -> the brain's spare inputs
     if out is not None:   # the state the preview started from (to learn from what happens next)
         out["inputs"] = {"grounded": bool(grounded), "vy0": float(vy0), "y0": float(y0),
                          "floor_rel": floor_rel, "ceil_rel": ceil_rel,
                          "lag": int(est.lag), "pending": [bool(x) for x in pend],
+                         "eff_prev": bool(eff_prev),
                          "motion": bool(motion is not None and motion.active_for(est.mode)),
                          "cube_v0": float(phys.cube_v0), "cube_g": float(phys.cube_g)}
+        out['inputs'].update(ship_up=float(phys.ship_up),ship_down=float(phys.ship_down),
+                             ship_vmax=float(phys.ship_vmax),wave_slope=float(phys.wave_slope),
+                             flight_buffer=float(flight_buffer),decision_dt=float(dtd),
+                             motion_dt=float(dtd if motion_dt is None else motion_dt),
+                             lag_alt=int(alt) if search else int(est.lag),
+                             pending_long=[bool(q) for q in est.pending(max(alt,est.lag+1) if explicit_plan else alt)] if search else [],
+                             flight_view=view if search else None)
         out["body"] = body
         out["surf"] = surfaces_at(0.0, solid, floor_rel, ceil_rel)
     mf = np.zeros(N_MODE, dtype=np.float32)
@@ -302,7 +320,7 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
 
 def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
                player_found: bool | None = None, speed: float = SPEED_1X,
-               hist=None, mode=None, plan=None, extra=None, search=None) -> np.ndarray:
+               hist=None, mode=None, plan=None, extra=None, search=None, velocity_step=None) -> np.ndarray:
     """Entities -> flat (OBS_DIM,) float32. Player-relative, in block units / 8.
 
     Globals tell the policy what the boxes can't:
@@ -317,7 +335,7 @@ def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
     found = (pl is not None and pl.conf > 0.6) if player_found is None else bool(player_found)
     out = np.zeros(OBS_DIM, dtype=np.float32)
     out[0] = (0.75 - py) / BLOCK_H / UNIT          # height above the usual floor line
-    out[1] = player_vy(ents, prev_py)
+    out[1] = player_vy(ents, prev_py) if velocity_step is None else velocity_step
     out[2] = 1.0 if hold else 0.0
     out[3] = 1.0 if found else 0.0
     out[4] = float(np.clip(speed / SPEED_1X, 0.0, 2.0))
@@ -510,10 +528,26 @@ class EntityBoxEnv(gym.Wrapper):
         self._pct_ever = False
         self.fast_steps = False          # see step(): observe as soon as frame_skip capture slots passed
         self.timing = {"detect": 0.0, "physics": 0.0}   # seconds since the last [health] line
-        # death snapshots (death_snaps.py): the last ~2.5 s of steps, saved on each death
+        self.profile = Timings()
+        if self.base is not None:
+            self.base.profile = self.profile
+            cap_profile = getattr(self.base,'cap',None)
+            if cap_profile is not None:
+                cap_profile.profile = self.profile
+        self._terrain_prev = []
+        self._terrain_shift = None
+        self._scroll_seen = 0
+        self._freeze_run = 0
+        self._death_frozen = False
+        self._tracking_age = 0
+        self._calibration_valid = False
+        self.clearance_enabled = False
+        self.flight_buffer = .75
+        self.last_clearance = None
+        # Death snapshots retain approach decisions as well as the animation tail.
         self.death_dir: str | None = None
         self.death_keep = 30
-        self._snap: deque = deque(maxlen=75)
+        self._snap: deque = deque(maxlen=150)  # retain approach decisions before the death-animation tail
         self._dbg: dict = {}          # set by the trainer each step: brain's choice, shield, Q
         # input sanity: is GD the active window, and do presses do anything?
         self._focus_n = 0
@@ -637,9 +671,13 @@ class EntityBoxEnv(gym.Wrapper):
         THIS step's real length, then the median of the last ~15 (was the average step
         length + a fast average: live speeds wobbled 7.6..13 blocks/s around a true 10.4,
         so where a spike would be in 1 s moved by +-2 blocks step to step)."""
-        if sc is None or not moved:
+        if sc is None or not moved or sc>=0:
             return
         bps = abs(sc) / BLOCK_W / max(1e-3, self._motion_dt())
+        # A detected speed portal resets the reference and history. Reject
+        # octave aliases from repeated tiles/stale intervals between portals.
+        reference=self.speed or SPEED_1X
+        if not .65*reference<=bps<=1.35*reference:return
         if 3.0 <= bps <= 30.0:
             self._speed_hist.append(bps)
             self.speed = float(np.median(self._speed_hist))
@@ -743,6 +781,38 @@ class EntityBoxEnv(gym.Wrapper):
         except Exception as ex:
             self._loud("detect", ex)
             ents = Entities([])
+        boxes = [(int(e.cls), float(e.x), float(e.y), float(e.w), float(e.h)) for e in ents.items]
+        self._raw_player_seen = ents.player() is not None
+        dt_plan = self._step_dt()
+        self._frame_time_step()
+        dt = self._motion_dt()
+        expected_shift=-(self.speed or SPEED_1X)*BLOCK_W*dt
+        self._terrain_shift = terrain_scroll(self._terrain_prev, boxes,expected_shift=expected_shift)
+        self._terrain_prev = boxes
+        if self._terrain_shift is not None:
+            if abs(self._terrain_shift) > .004:
+                self._scroll_seen += 1
+                self._freeze_run = 0
+                self._death_frozen = False
+            elif abs(self._terrain_shift) < .002:
+                self._freeze_run += 1
+                if self._scroll_seen >= 3 and self._freeze_run >= 3:
+                    self._death_frozen = True
+            else:
+                self._freeze_run = 0
+                self._death_frozen = False
+        else:
+            # Missing terrain is not evidence of a frozen camera. A latched
+            # freeze here hid a live ship throughout an otherwise empty room.
+            self._freeze_run = 0
+            self._death_frozen = False
+        if getattr(self,'_pixel_moving',False):
+            self._freeze_run = 0
+            self._death_frozen = False
+        if self._death_frozen:
+            # Explosion fragments and green UI can look like an icon. Do not
+            # calibrate motion or mode from them while the terrain is frozen.
+            ents.items = [e for e in ents.items if int(e.cls) != CLS_ID['player']]
         try:                             # the detector recognised the icon's mode (YOLO)
             _pl = ents.player()
             self.mode_est.icon_hint(getattr(_pl, "mode", None) if _pl is not None else None,
@@ -757,19 +827,26 @@ class EntityBoxEnv(gym.Wrapper):
         self.last_ents = ents
         _t1 = time.perf_counter()
         self.timing["detect"] += _t1 - _t0
+        self.profile.add('detect', _t1 - _t0)
         pl = ents.player()
+        self._tracking_age = self._tracking_age + 1 if pl is not None else 0
+        if pl is None:
+            self._invalidate_tracking(hold)
         spd = self.speed or SPEED_1X
-        dt_plan = self._step_dt()                       # typical step (plan timing)
-        self._frame_time_step()
-        dt = self._motion_dt()                          # this step's real length (motion)
         line_fl, line_ce = self._surface_lines(frame) if self.use_lines else (None, None)
         self._lines = (line_fl, line_ce)
         prev_hold = bool(self._hist and self._hist[-1][1] > 0.5)
         vy_step = player_vy(ents, self._prev_py) if pl is not None else 0.0
         vy_bps = vy_step / dt
+        self._raw_vy = vy_bps
         recent = [h[0] for h in list(self._hist)[-2:]] + [vy_step]
-        grounded = len(recent) >= 2 and all(abs(v) / dt < ModeEstimator.REST for v in recent)
+        grounded = self._tracking_age >= 2 and len(recent) >= 2 and all(abs(v) / dt < ModeEstimator.REST for v in recent)
+        motion_scroll = self._terrain_shift if self._terrain_shift is not None else getattr(ents, 'scroll', None)
+        self._calibration_valid = bool(self._tracking_age >= 2 and self.presses_working
+                                       and not getattr(self, '_input_trace', {}).get('paused', False)
+                                       and motion_scroll is not None and motion_scroll < -.0025*self.frame_skip)
         floor_rel = ceil_rel = None
+        self._floor_source = 'unknown'
         if pl is not None:
             py = ents.player_pos()[1]
             y_b = (0.75 - py) / BLOCK_H
@@ -777,7 +854,7 @@ class EntityBoxEnv(gym.Wrapper):
             me = self.mode_est
             sc0 = getattr(ents, "scroll", None)
             self._watch_press(y_b, hold, me.resting_before(), sc0 is not None and abs(sc0) > 0.0025 * self.frame_skip)
-            if me.mode == "cube" and me.g == 1 and not me.mini and self.presses_working:
+            if me.mode == "cube" and me.g == 1 and not me.mini and self._calibration_valid and not getattr(self,'route_controller',False):
                 # the press that reached the icon this step (input delay), and whether it
                 # was resting BEFORE this step (not counting the jump's own first motion)
                 self.phys.calibrate(y_b, vy_step, me.eff_hold(0), me.resting_before(), dt)
@@ -829,6 +906,15 @@ class EntityBoxEnv(gym.Wrapper):
             # piece under the icon wasn't detected -- not the level's ground
             at_plat = any(int(e.cls) == CLS_ID["wall"] and abs((e.y - e.h / 2) - (py + 0.5 * BLOCK_H)) < 0.3 * BLOCK_H
                           and abs(e.x - ents.player_pos()[0]) < 8 * BLOCK_W for e in ents.items)
+            # A still icon at a jump apex cannot teach us a new ground height.
+            # Accept an initial floor only during sustained rest; thereafter require
+            # support at an already known floor, line, or detected platform.
+            stable_rest = len(self._hist) >= 5 and all(abs(h[0]) < .04 for h in list(self._hist)[-5:])
+            support_line = line_fl if g_ == 1 else line_ce
+            known_y = self._floor_y if g_ == 1 else self._ceil_y
+            supported = (on_block or (support_line is not None and .15 * BLOCK_H < g_ * (support_line - py) < .9 * BLOCK_H)
+                         or (known_y is not None and abs(py - known_y) < .3 * BLOCK_H))
+            grounded = grounded and (supported or (known_y is None and stable_rest))
             if grounded and not on_block and scrolling and not at_plat:
                 if g_ == 1 and (self._ceil_y is None or py - self._ceil_y > 1.5 * BLOCK_H):
                     if self._floor_hist and abs(py - float(np.median(self._floor_hist))) > 3 * BLOCK_H:
@@ -851,16 +937,26 @@ class EntityBoxEnv(gym.Wrapper):
                 # the ground line: exact. Relative to the box centre, which may sit off the
                 # icon's real centre (the preview corrects for that while standing)
                 floor_rel = min(-0.15, (py - line_fl) / BLOCK_H)
+                self._floor_source = 'line'
             elif self._floor_y is not None:
-                floor_rel = (py - self._floor_y) / BLOCK_H - 0.5
-                if (grounded and g_ == 1 and not on_block and floor_rel > -1.0) or floor_rel > -0.5:
-                    floor_rel = -0.5                      # standing on it / never inside the icon
+                floor_rel = inferred_surface(py, self._floor_y, BLOCK_H, 1,
+                                             grounded and g_ == 1, on_block or at_plat, me.mode)
+                if floor_rel is None:
+                    # Do not resurrect this stale plane after walking off the
+                    # nearby block. Wait for a real line or a new ground sample.
+                    self._floor_y = None
+                    self._floor_hist.clear()
+                    self._floor_source = 'rejected inferred floor'
+                else:
+                    self._floor_source = 'inferred'
             if line_ce is not None and line_ce < py - 0.2 * BLOCK_H:
                 ceil_rel = max(0.15, (py - line_ce) / BLOCK_H)   # a real ceiling line
             elif self._ceil_y is not None and g_ == -1:
-                ceil_rel = (py - self._ceil_y) / BLOCK_H + 0.5   # only matters upside down
-                if (grounded and not on_block) or ceil_rel < 0.5:
-                    ceil_rel = 0.5
+                ceil_rel = inferred_surface(py, self._ceil_y, BLOCK_H, -1,
+                                            grounded, on_block, me.mode)
+                if ceil_rel is None:
+                    self._ceil_y = None
+                    self._ceil_hist.clear()
         self._last_floor_rel, self._last_ceil_rel = floor_rel, ceil_rel
         # learn from the step that just happened: what the preview expected vs what the icon did
         me = self.mode_est
@@ -875,11 +971,22 @@ class EntityBoxEnv(gym.Wrapper):
             except Exception as ex:
                 self._loud("motion-learn", ex)
         out: dict = {}
+        if pl is not None and me.mode not in ('ship','wave'):
+            # Use the SAME support decision for arc tracking and simulation.
+            # Previously the simulator found a platform landing only AFTER
+            # _air_fit had continued the old falling arc through the bounce.
+            _,near_solids,_=preview_boxes(ents,1.)
+            fl_support,ce_support=surfaces_at(0.,near_solids,floor_rel,ceil_rel,.5)
+            supports=fl_support if me.g==1 else ce_support
+            grounded=supported_ground(grounded,vy_bps,me.g,supports)
+            self._cube_supports=[(0.75-ents.player_pos()[1])/BLOCK_H+q for q in supports]
+            if grounded and supports:
+                self._rest_true=(0.75-ents.player_pos()[1])/BLOCK_H+min(supports,key=abs)
         if pl is not None and grounded and floor_rel is not None and self.mode_est.g == 1:
             # where the icon's REAL centre rests (for the takeoff model of the next jump)
-            self._rest_true = (0.75 - ents.player_pos()[1]) / BLOCK_H + floor_rel + 0.5 \
-                if abs(floor_rel + 0.5) < 0.35 else None
-        elif grounded:
+            if abs(floor_rel + 0.5)<.35:
+                self._rest_true = (0.75 - ents.player_pos()[1]) / BLOCK_H + floor_rel + 0.5
+        elif grounded and not getattr(self,'_cube_supports',None):
             self._rest_true = None
         fit = self._air_fit(pl, grounded)
         mf, plan, self.last_arcs = physics_features(ents, spd, self.mode_est, self.phys, self.frame_skip,
@@ -887,8 +994,20 @@ class EntityBoxEnv(gym.Wrapper):
                                                     state=fit,
                                                     motion=self.motion_fix if self.use_motion_fix else None,
                                                     out=out, search=self.use_search,
-                                                    prefer=self._prefer_path(spd, dt_plan, pl))
+                                                    prefer=self._prefer_path(spd, dt_plan, pl),flight_buffer=self.flight_buffer,
+                                                    motion_dt=dt,explicit_plan=getattr(self,'route_controller',False))
         sr_ = out.get("search") or {}
+        if out.get('inputs') is not None:
+            out['inputs']['state_source']=getattr(self,'_cube_fit_status','legacy arc') if me.mode=='cube' else 'mode physics'
+        stalled = (pl is not None and hold and self.mode_est.mode == 'cube'
+                   and self._calibration_valid and (out.get('inputs') or {}).get('grounded')
+                   and abs(vy_bps) < ModeEstimator.REST)
+        self._held_rest_steps = getattr(self, '_held_rest_steps', 0) + 1 if stalled else 0
+        if self._held_rest_steps == max(6, self.mode_est.lag + 3):
+            print('[input] held jump but cube stayed grounded: ' + str(getattr(self, '_input_trace', {}))
+                  + ' -- keyboard state alone cannot confirm the game received the hold')
+        for stage in ('plans', 'search'):
+            self.profile.add(stage, out.get(stage + '_s', 0.0))
         self._last_path = (list(sr_.get("path") or []), float(pl.y)) if pl is not None else None
         self._mstate = (out["body"], out["surf"], spd, key) if (pl is not None and "body" in out) else None
         if pl is not None and "surf" in out:
@@ -899,25 +1018,75 @@ class EntityBoxEnv(gym.Wrapper):
             near = grounded or any(abs(q) < 0.45 for q in list(fl_s) + list(ce_s))
             self.mode_cal.update((0.75 - ents.player_pos()[1]) / BLOCK_H, me.eff_hold(0), dt, me.mode, me.g,
                                  me.mini, near, spd, self.phys,
-                                 confident=(self.presses_working and cam_moving
+                                 confident=(self._calibration_valid and cam_moving
                                             and getattr(me, "lag_locked", False)))   # delay measured
             # pads / orbs the icon is touching now -> their real launch strength
             touching = [(k_, fx_, n_) for x0_, x1_, b_, t_, k_, fx_, _i, n_ in special_boxes(ents, 2.0)
                         if x0_ < 0.5 and x1_ > -0.5 and b_ < 0.5 and t_ > -0.5]
             self.launch_cal.update((0.75 - ents.player_pos()[1]) / BLOCK_H, dt, me.mode, me.g, me.mini,
                                    me.eff_hold(0), touching, self.phys,
-                                   confident=self.presses_working and cam_moving)
+                                   confident=self._calibration_valid and cam_moving)
         self._last_inputs = out.get("inputs")
         self._last_search = out.get("search")
         if "search_error" in out:
             self._loud("search", RuntimeError(out["search_error"]))
         self.timing["physics"] += time.perf_counter() - _t1
-        v = encode_obs(ents, hold=hold, prev_py=self._prev_py,
+        self.profile.add('physics_total', time.perf_counter() - _t1)
+        # Keep raw detections for calibration and diagnostics. The policy's
+        # velocity/history use the accepted multi-frame arc instead of a noisy
+        # two-picture difference; convert instantaneous velocity back to the
+        # historical per-decision displacement units expected by checkpoints.
+        tracked_step = vy_step
+        if fit is not None and self.mode_est.mode == 'cube' and not grounded:
+            tracked_step = float((fit[1] + .5 * self.mode_est.g * self.phys.cube_g * dt) * dt)
+        self._tracked_vy = tracked_step / dt
+        v = encode_obs(ents, hold=hold, prev_py=self._prev_py, velocity_step=tracked_step,
                        speed=spd, hist=self._hist, mode=mf, plan=plan, extra=out.get("extra_plans"),
                        search=out.get("search"))
-        self._hist.append((player_vy(ents, self._prev_py) if pl is not None else 0.0, 1.0 if hold else 0.0))
-        self._prev_py = ents.player_pos()[1] if pl is not None else self._prev_py
+        self._hist.append((tracked_step if pl is not None else 0.0, 1.0 if hold else 0.0))
+        self._prev_py = ents.player_pos()[1] if pl is not None else None
+        if self._obs_ts is not None:
+            age = time.perf_counter()-self._obs_ts
+            if 0 <= age < 10.:
+                self.profile.add('observation_age',age)
+        if self.clearance_enabled:
+            _clearance_t = time.perf_counter()
+            self.last_clearance = self._clearance_sample(ents)
+            self.profile.add('clearance', time.perf_counter() - _clearance_t)
         return v
+
+    def _clearance_sample(self, ents):
+        from flight_reward import flight_clearance
+        pl = ents.player()
+        me = self.mode_est
+        reliable = bool(pl is not None and pl.conf >= .6 and self._tracking_age >= 2
+                        and not self._death_frozen and self._in_level
+                        and not getattr(self, '_input_trace', {}).get('paused', False)
+                        and (getattr(me, '_icon_lock', 0) > 0 or me.conf >= .6))
+        if pl is None:
+            return flight_clearance(me.mode, (0.,0.), (), 0., reliable=False)
+        px, py = ents.player_pos()
+        objects = ((int(e.cls), (e.x-e.w/2-px)/BLOCK_W, (e.x+e.w/2-px)/BLOCK_W,
+                    (py-e.y-e.h/2)/BLOCK_H, (py-e.y+e.h/2)/BLOCK_H, float(e.conf))
+                   for e in ents.items)
+        return flight_clearance(me.mode, (pl.w/(2*BLOCK_W), pl.h/(2*BLOCK_H)), objects,
+                                float(self.speed or SPEED_1X), reliable=reliable,
+                                floor=self._last_floor_rel if self._floor_source == 'line' else None,
+                                ceiling=self._last_ceil_rel if self._lines[1] is not None else None)
+
+    def _invalidate_tracking(self, hold: bool) -> None:
+        """Break every in-progress motion fit at a detection gap; retain learned values."""
+        self._prev_py = self._last_yb = None
+        self._air = []
+        self._rest_true = None
+        self._mstate = None
+        self._press_pending = []
+        self.phys._track = None
+        self.mode_cal._seg = []
+        self.mode_cal._key = None
+        self.mode_cal._stable = 0
+        self.launch_cal.pending = None
+        self.mode_est.missing(hold)
 
     def save_motion(self) -> None:
         # (was: only when the learned correction had data -- it's off by default, so the
@@ -971,16 +1140,36 @@ class EntityBoxEnv(gym.Wrapper):
             "boxes": [(int(e.cls), float(e.x), float(e.y), float(e.w), float(e.h), int(getattr(e, "pt", -1)))
                       for e in ents.items],
             "player": pl is not None,
+            "player_raw": getattr(self,'_raw_player_seen',pl is not None),
+            "pixel_moving": getattr(self,'_pixel_moving',False),
             "player_pos": tuple(float(q) for q in ents.player_pos()) if pl is not None else None,
             "arcs": list(self.last_arcs),
             "a": int(a), "a_brain": int(d.get("a_brain", a)), "shielded": bool(d.get("shielded", False)),
             "qdiff": d.get("qdiff"),
+            "flight_control": d.get('flight_control'),
+            "flight_teacher": d.get('flight_teacher',-1),
+            "controller_role": d.get('controller_role','legacy'),
+            "motion_prediction": d.get('motion_prediction'),
+            "route_plan": (self._last_search or {}).get('plan') if getattr(self,'route_controller',False) else None,
+            "flight_search": (self._last_search or {}).get('flight'),
+            "path_unknown": bool((self._last_search or {}).get('path_unknown',False)),
             "mode": me.mode, "g": int(me.g), "mini": bool(me.mini), "lag": int(me.lag),
             "plan": death_snaps.plan_summary(v[OFF_PLAN:OFF_PLAN + N_PLAN], v[OFF_RES:OFF_RES + 6]),
             "n_spikes": sum(1 for e in ents.items if int(e.cls) == 0),
             "y": (0.75 - ents.player_pos()[1]) / BLOCK_H if pl is not None else None,
-            "vy": float(self._hist[-1][0]) / self._step_dt(peek=True) if self._hist else 0.0,
+            "vy": getattr(self, '_raw_vy', 0.0),
             "dt": self._step_dt(peek=True), "speed": float(self.speed or SPEED_1X), "prog": prog,
+            "motion_dt": self._motion_dt(),
+            "terrain_scroll": self._terrain_shift, "death_frozen": self._death_frozen,
+            "tracking_age": self._tracking_age, "calibration_valid": self._calibration_valid,
+            "floor_source": getattr(self, '_floor_source', 'unknown'),
+            "clearance": self.last_clearance if self.clearance_enabled else None,
+            "input": getattr(self, '_input_trace', None),
+            "held_rest_steps": getattr(self, '_held_rest_steps', 0),
+            "ship_calibration": {"delay_verified": bool(getattr(me, 'lag_locked', False)),
+                                 "counts": self.mode_cal.counts()},
+            "tracked_vy": getattr(self, '_tracked_vy', None),
+            "cube_physics": dict(getattr(getattr(self,'cube_physics_learner',None),'last',{})),
             "floor_rel": getattr(self, "_last_floor_rel", None), "ceil_rel": getattr(self, "_last_ceil_rel", None),
             "preview_inputs": getattr(self, "_last_inputs", None),
             "search": ({k: round(float(self._last_search[k]), 3) for k in SEARCH_KEYS}
@@ -989,6 +1178,17 @@ class EntityBoxEnv(gym.Wrapper):
         }
 
     def _new_attempt(self) -> None:
+        self.last_clearance = None
+        self._tracking_age = 0
+        self._calibration_valid = False
+        self.phys._track = None
+        self.mode_cal._seg = []
+        self.mode_cal._key = None
+        self.mode_cal._stable = 0
+        self._terrain_prev = []
+        self._terrain_shift = None
+        self._scroll_seen = self._freeze_run = 0
+        self._death_frozen = False
         self.launch_cal.pending = None       # (a launch measurement cut by the death)
         self._press_pending = []
         self._last_yb = None
@@ -1051,8 +1251,18 @@ class EntityBoxEnv(gym.Wrapper):
 
     def step(self, action):
         a = int(np.asarray(action).reshape(-1)[0])
+        requested_action = a
         if not self._in_level:
             a = 0          # menus / loading / level-complete screen: never press SPACE there
+        inp = getattr(self.base, 'inp', None)
+        self._ensure_focus(force=bool(a and inp is not None and not inp.held))
+        observed=getattr(self,'_obs_ts',None)
+        self._action_observation_age_s=None
+        if observed is not None:
+            age=time.perf_counter()-observed
+            if 0<=age<10.:
+                self._action_observation_age_s=age
+                self.profile.add('action_observation_age',age)
         died = complete = paused = False
         px_moved = None          # pixel-shift verdict over this step's frames
         info: dict = {}
@@ -1111,15 +1321,24 @@ class EntityBoxEnv(gym.Wrapper):
                 0.05 * max(1, self._slot_mark - (s_mark if s_mark is not None else self._slot_mark - self.frame_skip))
         if frame is None:
             frame = self.last_frame
+        a = int(info.get('action_applied', a))
+        self._input_trace = dict(requested=requested_action, applied=a,
+                                 paused=bool(info.get('paused')), foreground=getattr(self, '_focus_state', None),
+                                 keyboard=info.get('input_health'),
+                                 observation_age_ms=(None if self._action_observation_age_s is None else self._action_observation_age_s*1000.))
+        self._pixel_moving = bool(px_moved)
         v = self._observe(frame, a == 1)
-        self._ensure_focus()
         self._debris.append(self._debris_count())
         if self.death_dir:
             try:
                 self._snap.append(self._snap_record(a, v))
             except Exception as ex:
                 self._loud("death-snap", ex)
-        sc = getattr(self.last_ents, "scroll", None)
+        sc = self._terrain_shift
+        if sc is None:
+            sc = getattr(self.last_ents, "scroll", None)
+        if self._pixel_moving and sc is not None and abs(sc) < .002:
+            sc = None # coherent pixel motion contradicts a stationary-box vote
         if sc is not None:   # tracked hazards: frozen camera == they stopped moving
             ref = float(np.median(self._scroll_hist)) if len(self._scroll_hist) >= 5 else 0.009 * self.frame_skip
             moved = abs(sc) > max(0.0025 * self.frame_skip, 0.4 * ref)
@@ -1138,6 +1357,7 @@ class EntityBoxEnv(gym.Wrapper):
             "moving": moved, "prog": info.get("prog"), "attempts": self._prev_attempts,
             "died": died, "complete": complete, "paused": paused,
             "death_lag": 0, "death_lag_src": "",
+            "action_applied": a,
         }
         if not paused:
             self._moving.append(moved)
@@ -1150,17 +1370,11 @@ class EntityBoxEnv(gym.Wrapper):
                 out_info["death_lag_raw"] = raw
                 if src == "measured":
                     self._lag_hist.append(raw)
-                # GD's crash -> respawn delay is the same every death, but a single
-                # measurement is noisy (explosion over the hazard, % read jitter):
-                # live logs showed 15..42 steps around a true ~24. Over-cutting
-                # removes the very jump that caused the death, so once a few deaths
-                # are measured use their running median for every death.
-                if len(self._lag_hist) >= 5:
-                    lag, src = int(np.median(self._lag_hist)), "median"
-                else:
-                    lag = raw
+                lag, src = select_death_lag(raw, src, self._lag_hist)
                 lag = min(lag, max(0, len(self._moving) - 1))
-            lag2 = self._explosion_lag(lag)
+            # Guessed debris detections must not move a measured camera freeze
+            # into the middle of an already visible explosion.
+            lag2 = self._explosion_lag(lag) if src not in ('fixed', 'measured') else None
             if lag2 is not None and lag2 != lag:
                 lag, src = lag2, src + "+explosion"
             out_info["death_lag"], out_info["death_lag_src"] = lag, src
@@ -1168,6 +1382,15 @@ class EntityBoxEnv(gym.Wrapper):
             cause = None
             if self._snap:
                 try:                             # how it died (death_cause.py)
+                    from training_diagnostics import flight_errors
+                    import json
+                    import os
+                    if self.death_dir:
+                        os.makedirs(self.death_dir, exist_ok=True)
+                        errors = list(flight_errors(list(self._snap), max(0, len(self._snap) - 1 - lag)))
+                        with open(os.path.join(self.death_dir, 'physics_errors.jsonl'), 'a') as f:
+                            f.write(json.dumps(dict(attempt=self._dbg.get('attempt'), peak_pct=100*self._peak,
+                                                   errors=errors)) + '\n')
                     import death_cause
                     cause = death_cause.classify(list(self._snap), lag)
                     out_info["death_cause"] = cause["text"]
@@ -1218,6 +1441,10 @@ class EntityBoxEnv(gym.Wrapper):
             self._ensure_focus(force=True)     # the unpause key too
             self.base.resume()
             self.motion.reset()
+            self._invalidate_tracking(False)
+            self.mode_est._actions.clear()
+            self._tracking_age = 0
+            self._hist.clear()
 
     # -- input sanity -----------------------------------------------------------
     def _debris_count(self) -> int:
@@ -1254,6 +1481,8 @@ class EntityBoxEnv(gym.Wrapper):
         ~20) and the predicted landing jumped around step to step.
         Returns (height offset vs the measured centre, speed) or None (use the raw values)."""
         me = self.mode_est
+        if me.mode=='cube':return self._cube_air_fit(pl,grounded)
+        self._cube_key=None
         y = self._last_yb if pl is not None else None
         if y is None or grounded or me.mode not in ("cube", "robot", "ball", "ufo", "spider"):
             self._air = [] if y is None else [(0.0, y)]
@@ -1290,14 +1519,16 @@ class EntityBoxEnv(gym.Wrapper):
             T = np.array([q[0] for q in self._air]); Y = np.array([q[1] for q in self._air])
             rest = getattr(self, "_air_rest", None)
             y_rest, t1 = (Y[0] if rest is None else float(rest)), (T[1] if len(T) > 1 else 0.0)
-            best = None
-            for v0 in (v_jump, 0.0):
-                for tau in np.linspace(0.0, t1, 6):
-                    dtm = np.clip(T - tau, 0.0, None)
-                    m = y_rest + v0 * dtm - 0.5 * G * dtm ** 2
-                    err = float(np.sqrt(np.mean((Y[1:] - m[1:]) ** 2)))
-                    if best is None or err < best[0]:
-                        best = (err, v0, tau)
+            # Evaluate the same twelve candidate arcs together, avoiding twelve
+            # allocations/reductions on every airborne decision. argmin preserves
+            # the previous first-candidate tie breaking.
+            taus = np.tile(np.linspace(0.0, t1, 6), 2)
+            velocities = np.repeat([v_jump, 0.0], 6)
+            dtm = np.maximum(T[None, :] - taus[:, None], 0.0)
+            models = y_rest + velocities[:, None] * dtm - .5 * G * dtm ** 2
+            errors = np.sqrt(np.mean((Y[None, 1:] - models[:, 1:]) ** 2, axis=1))
+            best_i = int(np.argmin(errors))
+            best = (float(errors[best_i]), float(velocities[best_i]), float(taus[best_i]))
             if best is not None and best[0] < 0.5:
                 err, v0, tau = best
                 tc = T[-1] - tau
@@ -1311,6 +1542,67 @@ class EntityBoxEnv(gym.Wrapper):
                 tc = T[-1]
                 return (float(a + b * tc - 0.5 * G * tc * tc - y), float(b - G * tc))
         return None
+
+    def _cube_air_fit(self,pl,grounded):
+        from cube_motion import fit_arc,CubePhysicsLearner
+        if not hasattr(self,'cube_physics_learner'):self.cube_physics_learner=CubePhysicsLearner()
+        learner=self.cube_physics_learner;me=self.mode_est
+        y=self._last_yb if pl is not None else None;dt=self._motion_dt()
+        key=(me.mode,me.g,me.mini)
+        valid=bool(y is not None and getattr(pl,'conf',0.)>=.6 and self._calibration_valid)
+        interval=getattr(self,'_dt_frame',None)
+        if interval is None and getattr(self,'_obs_ts_prev',None) is not None:
+            interval=self._obs_ts-self._obs_ts_prev
+        if interval is not None and not .005<=interval<=.1:valid=False
+        learn=bool(getattr(self,'route_controller',False))
+        if not valid:
+            self._air=[];self._air_from_rest=False;self._air_rest=None
+            self._cube_launch_window=None;self._cube_key=key
+            self._cube_fit_status='invalid observation; arc reset'
+            if learn:learner.observe(y,dt,False,me.g,me.mini,False,self.phys)
+            return None
+        if y is None or grounded:
+            self._air=[] if y is None else [(0.,float(y))]
+            self._air_from_rest=y is not None and grounded
+            self._air_rest=self._rest_true if grounded and self._rest_true is not None else y
+            self._cube_launch_window=None;self._cube_key=key
+            self._cube_fit_status='supported rest' if grounded else 'missing player'
+            if learn:learner.observe(y,dt,grounded,me.g,me.mini,valid,self.phys,rest=self._air_rest)
+            return None
+        fresh=not self._air or getattr(self,'_cube_key',None)!=key
+        reset=False
+        if fresh:
+            self._air=[];self._air_from_rest=False;self._air_rest=None;self._cube_launch_window=None
+            self._cube_key=key;reset=True
+        t=self._air[-1][0]+dt if self._air else 0.
+        if self._air and (abs(y-self._air[-1][1])>3. or not .005<=dt<=.1):
+            self._air=[];self._air_from_rest=False;self._cube_launch_window=None;t=0.;reset=True
+        if len(self._air)>=2:
+            t0,y0=self._air[-2];t1,y1=self._air[-1]
+            previous=(y1-y0)/max(1e-3,t1-t0);current=(y-y1)/max(1e-3,dt)
+            impulse=(me.g*(current-previous)>.5*self.phys.cube_v0
+                     and me.g*(y-y1)>.12)
+            if impulse:
+                supports=getattr(self,'_cube_supports',[])
+                near=[s for s in supports if abs(y1-s)<=.35]
+                rest=min(near,key=lambda s:abs(y1-s)) if near else None
+                self._air=[(0.,y1)];t=dt
+                self._air_from_rest=rest is not None;self._air_rest=rest
+                self._cube_launch_window=dt if rest is not None else None
+                reset=True
+                if learn:
+                    learner.reset(None if rest is None else rest*me.g,(me.g,me.mini))
+                    learner.suspended=False;reset=False
+        if self._air_from_rest and self._cube_launch_window is None:self._cube_launch_window=dt
+        self._air.append((t,float(y)));self._air=self._air[-8:]
+        if learn:learner.observe(y,dt,False,me.g,me.mini,valid,self.phys,reset=reset)
+        speed=self.phys.cube_v0*(self.phys.mini if me.mini else 1.)*me.g
+        fit=fit_arc(self._air,self.phys.cube_g*me.g,speed,
+                    self._air_rest if self._air_from_rest else None,
+                    self._cube_launch_window if self._air_from_rest else None)
+        self._cube_fit_status='validated local arc' if fit is not None else 'raw motion; arc rejected'
+        if fit is None:return None
+        return fit[0]-y,fit[1]
 
     @staticmethod
     def _line_is_platform(ents, line_y: float) -> bool:
@@ -1349,8 +1641,14 @@ class EntityBoxEnv(gym.Wrapper):
         try:
             import winfocus
             fg = winfocus.gd_is_foreground()
+            self._focus_state = fg
             if fg is False:
+                inp = getattr(self.base, 'inp', None)
+                if inp is not None:
+                    inp.release()
                 ok = winfocus.focus_gd()
+                if ok:
+                    self._focus_state = True
                 now = time.time()
                 if now - self._focus_warn_t > 20:
                     self._focus_warn_t = now
@@ -1411,12 +1709,12 @@ class EntityBoxEnv(gym.Wrapper):
         """Did SPACE do anything? After a press from rest, the icon should move
         within ~0.4 s in every mode. If most presses do nothing, the key isn't
         reaching the game (focus, wrong key, game paused...) -- say so loudly."""
-        if y_b is None or not alive:
+        y_before = self._last_yb
+        self._last_yb = y_b
+        if y_b is None or not alive or self._tracking_age < 2:
             self._press_pending = []
             return
         prev = bool(self._hist and self._hist[-1][1] > 0.5)
-        y_before = self._last_yb
-        self._last_yb = y_b
         self._since_press = getattr(self, "_since_press", 99) + 1
         if hold and not prev:
             # only isolated presses from rest: a press soon after another one can catch the

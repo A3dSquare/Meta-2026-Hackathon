@@ -1,0 +1,4 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793395836.7,1,256,224,11.0,32,measured,0,,"spike, forecast became unsafe",20261030_163026_fb6be626
+1793395857.5,2,654,338,14.0,60,measured,1,,"spike, forecast became unsafe",20261030_163026_fb6be626
+1793395876.6,3,992,306,14.0,32,measured,2,,"spike, forecast became unsafe",20261030_163026_fb6be626

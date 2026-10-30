@@ -1,0 +1,18 @@
+{
+  "samples": 1001,
+  "rising_predicted_falling_before": 0,
+  "rising_predicted_falling_after": 0,
+  "examples": [],
+  "limitation": "Recorded state-estimation replay. Not a live collision or level-completion benchmark.",
+  "one_observation_free_flight": {
+    "samples": 636,
+    "before": {
+      "median_blocks": 0.0667345679894225,
+      "p95_blocks": 0.24929175845651197
+    },
+    "after": {
+      "median_blocks": 0.056643584427832475,
+      "p95_blocks": 0.2126859914734559
+    }
+  }
+}

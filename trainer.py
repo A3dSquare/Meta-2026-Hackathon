@@ -30,6 +30,17 @@ import csv
 import math
 import os
 import time
+from training_diagnostics import SessionLog, file_sha256
+from flight_reward import clearance_weight, shaping_reward
+from flight_control import FlightShield, teacher_action
+
+
+def flight_mode_mask(obs):
+    from env_boxes import OFF_MODE
+    from gd_physics import MODE_ID
+    if obs.shape[-1] <= OFF_MODE + max(MODE_ID['ship'],MODE_ID['wave']):
+        return obs[...,0] < -math.inf
+    return (obs[..., OFF_MODE+MODE_ID['ship']] > .5) | (obs[..., OFF_MODE+MODE_ID['wave']] > .5)
 from dataclasses import asdict, dataclass, field
 from typing import Any, Callable
 
@@ -46,10 +57,17 @@ class TrainConfig:
     alive_reward: float = 0.1
     hold_cost: float = 0.02        # tiny price per step SPACE is held: makes "release" win when holding
                                    # doesn't matter (mid-air), so it stops bunny-hopping by default
+    clearance_weight: float = 0.0 # optional bounded ship/wave potential; zero preserves old rewards
+    flight_margin: float = 0.0    # thrust has no cube-jump threshold, including Double-DQN targets
+    flight_buffer: float = .75    # desired trajectory clearance in blocks; zero disables buffered shield
+    flight_teacher_weight: float = .05 # hinge coaching from verified, unambiguous safe flight interventions
     death_penalty: float = -10.0
     complete_bonus: float = 50.0
     net_arch: tuple = (256, 256)
     device: str = "cpu"
+    cpu_threads: int = 1          # small DQN inference benchmark: fewer scheduling outliers
+    route_controller: bool = False
+    controller_eval_min: int = 32
     max_grad_norm: float = 10.0
     update_steps: int = 128        # train once this many new steps are banked (checked at deaths)
     max_rollout: int = 2048        # ...or mid-attempt once this many are pending
@@ -125,6 +143,8 @@ class DQNLearner:
         import torch as th
         self.th, self.cfg = th, cfg
         self.dev = th.device(cfg.device)
+        if self.dev.type == 'cpu' and cfg.cpu_threads > 0:
+            th.set_num_threads(cfg.cpu_threads)
         self.obs_dim, self.n_act = obs_dim, n_act
         self.q = _QNet.build(obs_dim, n_act, cfg.net_arch).to(self.dev)
         with th.no_grad():  # fresh brain waits by default; jumps come from exploration
@@ -145,6 +165,7 @@ class DQNLearner:
         self.b_act = np.zeros(C, np.int64)
         self.b_ret = np.zeros(C, np.float32)
         self.b_disc = np.zeros(C, np.float32)   # gamma^m, 0 if terminal
+        self.b_teacher = np.full(C,-1,np.int64)
         self.ptr = 0
         self.full = False
         self.grad_steps = 0
@@ -169,11 +190,12 @@ class DQNLearner:
             self.steps_seen += 1
             if self.rng.random() < self.epsilon():
                 return int(self.rng.random() < self.cfg.explore_hold), {"q": qv}
-        return self._greedy(qv), {"q": qv}
+        return self._greedy(qv, obs), {"q": qv}
 
-    def _greedy(self, qv) -> int:
+    def _greedy(self, qv, obs=None) -> int:
         if len(qv) == 2:
-            return int(qv[1] - qv[0] > self.cfg.jump_margin)
+            margin = self.cfg.flight_margin if obs is not None and bool(flight_mode_mask(obs)) else self.cfg.jump_margin
+            return int(qv[1] - qv[0] > margin)
         return int(np.argmax(qv))
 
     def hold_prob(self, obs: np.ndarray) -> float:
@@ -185,7 +207,7 @@ class DQNLearner:
         return self.cfg.buffer_size if self.full else self.ptr
 
     def add_segment(self, obs: list, act: list, rew: list, next_obs_last: np.ndarray | None,
-                    terminal: bool, upto: int | None = None) -> int:
+                    terminal: bool, upto: int | None = None, teacher=None) -> int:
         """Push n-step transitions for steps [0, upto) of a segment."""
         c = self.cfg
         T = len(act)
@@ -207,6 +229,7 @@ class DQNLearner:
             i = self.ptr
             self.b_obs[i] = obs[t]; self.b_act[i] = act[t]; self.b_ret[i] = R
             self.b_disc[i] = disc; self.b_nxt[i] = nxt
+            self.b_teacher[i] = int(teacher[t]) if teacher is not None else -1
             self.ptr = (self.ptr + 1) % c.buffer_size
             self.full = self.full or self.ptr == 0
         return upto
@@ -218,7 +241,8 @@ class DQNLearner:
         if n < c.warmup:
             return {}
         k = int(min(c.max_grad_steps, max(1, c.replay_ratio * new_steps)))
-        losses, qs = [], []
+        losses, qs, guide_losses = [], [], []
+        teacher_draws = 0
         self.q.train()
         for j in range(k):
             if tick is not None and j % 50 == 0:
@@ -232,13 +256,26 @@ class DQNLearner:
             with th.no_grad():
                 qn = self.q(nx)
                 if qn.shape[1] == 2:   # same "confident jump" rule as when acting
-                    a_star = ((qn[:, 1] - qn[:, 0]) > c.jump_margin).long()[:, None]
+                    margins = th.where(flight_mode_mask(nx), c.flight_margin, c.jump_margin)
+                    a_star = ((qn[:, 1] - qn[:, 0]) > margins).long()[:, None]
                 else:
                     a_star = qn.argmax(dim=1, keepdim=True)
                 tq = self.qt(nx).gather(1, a_star).squeeze(1)
                 y = R + d * tq
-            q = self.q(o).gather(1, a[:, None]).squeeze(1)
+            values = self.q(o)
+            q = values.gather(1, a[:, None]).squeeze(1)
             loss = th.nn.functional.smooth_l1_loss(q, y)
+            if c.flight_teacher_weight > 0:
+                labels = th.as_tensor(self.b_teacher[idx],device=self.dev)
+                eligible = (labels >= 0) & flight_mode_mask(o)
+                if bool(eligible.any()):
+                    selected = labels[eligible]
+                    logits = values[eligible]
+                    advantage = (logits.gather(1,selected[:,None])-logits.gather(1,(1-selected)[:,None])).squeeze(1)
+                    guide = th.relu(max(.2,c.flight_margin+.05)-advantage).mean()
+                    loss = loss + c.flight_teacher_weight*guide
+                    guide_losses.append(float(guide.detach().cpu()))
+                    teacher_draws += int(eligible.sum())
             self.opt.zero_grad()
             loss.backward()
             th.nn.utils.clip_grad_norm_(self.q.parameters(), c.max_grad_norm)
@@ -250,7 +287,8 @@ class DQNLearner:
             qs.append(float(q.mean().item()))
         self.q.eval()
         self.last_stats = dict(grad_steps=k, loss=float(np.mean(losses)), q=float(np.mean(qs)),
-                               eps=self.epsilon(), buffer=n)
+                               eps=self.epsilon(), buffer=n,teacher_loss=float(np.mean(guide_losses)) if guide_losses else 0.,
+                               teacher_draws=teacher_draws)
         return self.last_stats
 
     def save(self, path: str, extra: dict | None = None) -> None:
@@ -265,6 +303,8 @@ class DQNLearner:
     def load(self, path: str) -> None:
         th = self.th
         ck = th.load(path, map_location=self.dev, weights_only=False)
+        if 'route_controller_version' in ck:
+            raise ValueError('This checkpoint requires --route-controller; it is not a legacy DQN checkpoint.')
         if ck.get("obs_dim") != self.obs_dim:
             raise SystemExit(
                 f"\n{path} is a brain from an older version (it sees {ck.get('obs_dim')} numbers, "
@@ -408,6 +448,13 @@ class _Seg:
     rew: list = field(default_factory=list)
     logp: list = field(default_factory=list)
     val: list = field(default_factory=list)
+    potential: list = field(default_factory=list)
+    next_potential: list = field(default_factory=list)
+    shaping: list = field(default_factory=list)
+    teacher: list = field(default_factory=list)
+    route_records: list = field(default_factory=list)
+    discounts: list = field(default_factory=list)
+    completed: bool = False
 
     def __len__(self) -> int:
         return len(self.act)
@@ -415,14 +462,14 @@ class _Seg:
     def trim(self, n: int) -> None:
         if n <= 0:
             return
-        k = max(1, len(self) - n)
-        for name in ("obs", "act", "rew", "logp", "val"):
+        k = max(0, len(self) - n)
+        for name in ("obs", "act", "rew", "logp", "val", "potential", "next_potential", "shaping", "teacher", "route_records", "discounts"):
             lst = getattr(self, name)
             if lst:
                 setattr(self, name, lst[:k])
 
     def drop_front(self, k: int) -> None:
-        for name in ("obs", "act", "rew", "logp", "val"):
+        for name in ("obs", "act", "rew", "logp", "val", "potential", "next_potential", "shaping", "teacher", "route_records", "discounts"):
             lst = getattr(self, name)
             if lst:
                 setattr(self, name, lst[k:])
@@ -435,7 +482,11 @@ def checkpoint_path(cfg: TrainConfig, best: bool = False) -> str:
 
 def make_learner(env, cfg: TrainConfig, model_path: str | None = None):
     if cfg.algo == "dqn":
-        lr = DQNLearner(int(np.prod(env.observation_space.shape)), int(env.action_space.n), cfg)
+        if cfg.route_controller:
+            from route_learner import RouteLearner
+            lr=RouteLearner(int(np.prod(env.observation_space.shape)),int(env.action_space.n),cfg)
+        else:
+            lr = DQNLearner(int(np.prod(env.observation_space.shape)), int(env.action_space.n), cfg)
         if model_path:
             lr.load(model_path)
             print(f"resumed {model_path}")
@@ -460,7 +511,7 @@ def replay_shield(obs: np.ndarray, a: int) -> int:
         from gd_physics import safety_level
     except Exception:
         return a
-    if obs is None or len(obs) != OBS_DIM or obs[OFF_SEARCH + 3] <= 0.5:
+    if obs is None or len(obs) < OBS_DIM or obs[OFF_SEARCH + 3] <= 0.5:
         return a
     p1, w00, w01 = (float(v) for v in obs[OFF_SEARCH:OFF_SEARCH + 3])
     mine, other = (safety_level(p1), max(safety_level(w00), safety_level(w01))) if int(a) == 1 else \
@@ -483,7 +534,7 @@ def safety_shield(obs: np.ndarray, a: int) -> int:
         from gd_physics import EXTRA_PLANS, N_PLANS, PLANS
     except Exception:
         return a
-    if obs is None or len(obs) != OBS_DIM:
+    if obs is None or len(obs) < OBS_DIM:
         return a
     if obs[OFF_SEARCH + 3] > 0.5:
         # The search (every later decision played well, checked in a slightly worse world
@@ -541,6 +592,19 @@ class Trainer:
                  on_attempt: Callable[..., Any] | None = None) -> None:
         self.env = env
         self.cfg = cfg or TrainConfig()
+        clearance_weight(self.cfg.clearance_weight)
+        if not math.isfinite(self.cfg.flight_buffer) or not 0 <= self.cfg.flight_buffer <= 2:
+            raise ValueError('flight_buffer must be between 0 and 2 blocks')
+        if not math.isfinite(self.cfg.flight_margin):
+            raise ValueError('flight_margin must be finite')
+        if not math.isfinite(self.cfg.flight_teacher_weight) or not 0 <= self.cfg.flight_teacher_weight <= .2:
+            raise ValueError('flight_teacher_weight must be between 0 and .2')
+        if not 0 <= self.cfg.gamma <= 1:
+            raise ValueError('gamma must be between zero and one')
+        self.env.clearance_enabled = self.cfg.clearance_weight > 0 and not self.cfg.play
+        self.env.flight_buffer = self.cfg.flight_buffer
+        self.flight_shield = FlightShield()
+        self.replay_flight_shield = FlightShield()
         self.learner = learner if learner is not None else make_learner(env, self.cfg, model_path)
         self.on_step = on_step
         self.on_attempt = on_attempt
@@ -581,30 +645,80 @@ class Trainer:
         self._att_k = 0                  # decisions since the attempt started (clock fallback)
         self._clock_ok = False           # the first attempt after starting isn't timed from a respawn
         self._att_times: list = []
-        self._csv_path = os.path.join(self.cfg.log_dir, "attempts.csv")
-        new = not os.path.exists(self._csv_path)
-        self._csv = open(self._csv_path, "a", newline="")
-        self._w = csv.writer(self._csv)
-        if new:
-            self._w.writerow(["time", "attempt", "total_steps", "survived_steps", "peak_pct",
-                              "death_lag", "lag_src", "updates", "route", "cause"])
+        self.session = SessionLog(self.cfg.log_dir, self.cfg, model_path)
+        self._csv_path = os.path.join(self.session.directory, 'attempts.csv')
+        self._csv, self._w = self.session.file, self.session
+        if hasattr(self.env, 'death_dir') and self.env.death_dir:
+            self.env.death_dir = os.path.join(self.session.directory, 'deaths')
+        self.session.event('environment', dict(backend=type(getattr(self.env, 'det', None)).__name__,
+                           frame_skip=getattr(self.env, 'frame_skip', None),
+                           fast_steps=getattr(self.env, 'fast_steps', None),
+                           capture_prefetch=getattr(getattr(getattr(getattr(self.env,'base',None),'cap',None),'cfg',None),'prefetch',None),
+                           motion_fix=getattr(self.env, 'use_motion_fix', None)))
+        detector = getattr(getattr(self.env, 'det', None), 'yolo', None)
+        path = getattr(detector, 'loaded_path', None)
+        if path and os.path.isfile(path):
+            try:
+                self.session.event('detector', dict(path=path, sha256=file_sha256(path),
+                                   modified=os.path.getmtime(path), engine=bool(detector.engine)))
+            except Exception as exc:
+                print(f'[session] detector fingerprint unavailable: {type(exc).__name__}: {exc}; continuing')
+        print(f'[session] {self.session.directory}')
 
     # -- helpers ------------------------------------------------------------
+    def _clearance_potential(self) -> float:
+        if self.cfg.clearance_weight <= 0 or self.cfg.play:
+            return 0.
+        sample = getattr(self.env, 'last_clearance', None) or {}
+        if not sample.get('valid') or sample.get('mode') not in ('ship', 'wave'):
+            return 0.
+        score = sample.get('score', 0.)
+        if not isinstance(score, (int, float)) or not math.isfinite(score):
+            return 0.
+        return self.cfg.clearance_weight * min(1., max(0., score))
+
     def act(self, obs, deterministic: bool = False):
+        if self.cfg.route_controller:self.learner.set_context(self.env)
         a, extra = self.learner.act(obs, deterministic)
         self.last_q = extra.get("q")
         a_brain = a
+        label = -1
         if self.cfg.shield and self.cfg.algo == "dqn":
             a2 = safety_shield(obs, a)
+            metadata = (getattr(self.env,'_last_search',None) or {}).get('flight')
+            if self.cfg.flight_buffer > 0 and metadata and len(obs) > 3 and obs[3] > .5 and bool(flight_mode_mask(obs)):
+                # Use the raw brain choice: the flight selector already applies
+                # collision priority before considering clearance or hysteresis.
+                flight_choice = self.flight_shield.choose(a, metadata)
+                if self.flight_shield.last is not None:
+                    a2 = flight_choice
+                    counts = getattr(getattr(self.env,'mode_cal',None),'counts',lambda:{})()
+                    params = ('ship_up','ship_down','ship_vmax') if metadata['mode'] == 'ship' else ('wave_slope',)
+                    verified = (all(counts.get(k,0) >= 3 for k in params)
+                                and bool(getattr(getattr(self.env,'mode_est',None),'lag_locked',False))
+                                and bool(getattr(self.env,'_calibration_valid',False)))
+                    if self.cfg.flight_teacher_weight > 0 and not self.cfg.play:
+                        label = teacher_action(metadata,self.flight_shield.last,verified)
+            else:
+                self.flight_shield.reset()
             if a2 != a:
                 self.shield_n += 1
                 extra = dict(extra, shielded=True)
                 a = a2
         self.shield_steps += 1
+        if self.cfg.route_controller:
+            label=self.learner.planner_label()
+            extra=dict(extra,route_record=dict(self.learner.context))
+            if self.learner.evaluating:self.learner.trial.note_action(int(a)!=int(a_brain))
+        extra = dict(extra,flight_teacher=label)
         try:    # for the death snapshots: what the brain wanted vs what was sent
             q = self.last_q
             self.env._dbg = {"a_brain": int(a_brain), "shielded": int(a) != int(a_brain), "attempt": self.attempts + 1,
-                             "qdiff": float(q[1] - q[0]) if q is not None and len(q) == 2 else None}
+                             "qdiff": float(q[1] - q[0]) if q is not None and len(q) == 2 else None,
+                             "flight_control": self.flight_shield.last}
+            self.env._dbg['flight_teacher'] = label
+            self.env._dbg['controller_role']=extra.get('controller_role','legacy')
+            if self.cfg.route_controller:self.env._dbg['motion_prediction']=extra.get('motion_prediction')
         except Exception:
             pass
         return a, extra
@@ -622,14 +736,23 @@ class Trainer:
         return float(t)
 
     def save(self, best: bool = False) -> None:
+        if best and self.cfg.route_controller and not self.learner.promotion_pending:return
         try:
             self.learner.save(checkpoint_path(self.cfg, best),
-                              {"attempts": self.attempts, "best_pct": self.best_prog * 100})
+                              {"attempts": self.attempts, "best_pct": self.best_prog * 100,
+                               "reward_config": {k: getattr(self.cfg,k) for k in
+                                   ('clearance_weight','hold_cost','gamma','alive_reward','death_penalty','flight_margin','flight_buffer','flight_teacher_weight')}})
+            if best and self.cfg.route_controller:self.learner.promotion_pending=False
         except Exception as e:
             print(f"save failed: {e}")
 
     def _push(self, seg: _Seg, next_obs, terminal: bool, upto: int | None = None) -> int:
         if self.cfg.algo == "dqn":
+            if self.cfg.route_controller:
+                return self.learner.add_segment(seg.obs,seg.act,seg.rew,next_obs,terminal,upto,
+                                               teacher=seg.teacher,route_records=seg.route_records,completed=seg.completed)
+            if seg.teacher and any(t >= 0 for t in seg.teacher):
+                return self.learner.add_segment(seg.obs,seg.act,seg.rew,next_obs,terminal,upto,teacher=seg.teacher)
             return self.learner.add_segment(seg.obs, seg.act, seg.rew, next_obs, terminal, upto)
         self.learner.add_segment(seg.obs, seg.act, seg.rew, next_obs, terminal, seg.logp, seg.val)
         return len(seg)
@@ -641,10 +764,15 @@ class Trainer:
         except Exception as e:
             print(f"PAUSE FAILED: {e}")
         st = self.learner.train(self.new_steps, tick=self.on_train_tick)
+        if self.cfg.route_controller and self.learner.evaluating and why=='long attempt':
+            self.learner.trial_skip_until_reset=True
         self.new_steps = 0
         if st:
             self.updates += 1
         self.save()
+        if self.cfg.route_controller:
+            self.session.event('controller_evaluation',self.learner.last_evaluation)
+            if self.learner.promotion_pending:self.save(best=True)
         try:
             self.env.mark_trained()
             self.env.resume()
@@ -686,6 +814,7 @@ class Trainer:
         # where the time went, per decision (game = capture + waiting for the next frame
         # + reading the %: the part that's NOT our code; ~33 ms total is the target)
         parts = ""
+        components = {}
         try:
             k = 1000.0 / max(1, n)
             et = getattr(self.env, "timing", None) or {}
@@ -705,6 +834,10 @@ class Trainer:
                     if wait is not None else f"game/capture {game:.1f}")
             parts = (f"  = detect {det:.1f} + physics {phy:.1f} + brain {self._tm['brain'] * k:.1f}"
                      f" + gui {self._tm['gui'] * k:.1f} + {gtxt}")
+            components = dict(detect_ms=det, physics_ms=phy, brain_ms=self._tm['brain'] * k,
+                              gui_ms=self._tm['gui'] * k, game_capture_ms=game,
+                              capture_wait_ms=wait,
+                              game_work_ms=max(0., game - wait) if wait is not None else None)
             for key in et:
                 et[key] = 0.0
         except Exception:
@@ -717,6 +850,11 @@ class Trainer:
         fpd = getattr(self.env, "frames_per_dec", None)
         fpd = f"  ({fpd:.1f} game frames/decision, target {getattr(self.env, 'frame_skip', 2)})" if fpd else ""
         print(f"[health] {ms:.1f} ms/decision{fpd}{parts}{mem}{cap}{slow}{warn}")
+        profile = getattr(self.env, 'profile', None)
+        stages = profile.summary() if profile is not None else {}
+        self.session.event('timing', dict(steps=self.steps, decision_mean_ms=ms, stages=stages, components=components))
+        if stages:
+            print('[timing] ' + ', '.join(f"{k} {v['mean_ms']:.1f}/{v['p95_ms']:.1f} ms mean/p95" for k, v in stages.items()))
 
     def _note_cause(self, info: dict) -> None:
         """Tally how it died (death_cause.py); a summary every 25 deaths."""
@@ -737,7 +875,7 @@ class Trainer:
         learned from."""
         self.attempts += 1
         lag = int(info.get("death_lag", 0)) if self.cfg.trim_death else 0
-        survived = int(info.get("attempt_total", len(seg)))
+        survived = max(0, int(info.get("attempt_total", len(seg))))
         self._note_cause(info)
         self._w.writerow([f"{time.time():.1f}", self.attempts, self.steps, survived,
                           f"{peak * 100:.1f}", lag, info.get("death_lag_src", ""), self.updates, tag,
@@ -746,6 +884,8 @@ class Trainer:
         self.best_prog = max(self.best_prog, peak) if tag == "play" else self.best_prog
         if self.cfg.verbose:
             what = {"play": "--play, not learned from",
+                    'controller_eval_incumbent':'controller evaluation: incumbent, not learned from',
+                    'controller_eval_candidate':'controller evaluation: candidate, not learned from',
                     "frontier": "frontier: died in the replay, before the brain's turn"}.get(
                 tag, "route practice, not learned from")
             print(f"[attempt {self.attempts}] ({what}) "
@@ -755,13 +895,41 @@ class Trainer:
         cfg = self.cfg
         lag = int(info.get("death_lag", 0)) if cfg.trim_death else 0
         seg.trim(lag)
-        if info.get("complete"):
+        seg.completed=bool(info.get('complete'))
+        if not info.get('complete') and seg.teacher:
+            # A collision invalidates recommendations inside their own planning
+            # horizon. The 64-step tail keeps these labels out of banked data.
+            dt = getattr(self.env,'_step_dt',lambda **kw: 1/30)(peek=True)
+            tail = min(len(seg.teacher),int(math.ceil(1.5/max(1e-3,dt))))
+            if cfg.route_controller and seg.discounts and 0<cfg.gamma<1:
+                elapsed=0.;tail=0
+                for discount in reversed(seg.discounts):
+                    elapsed+=math.log(max(1e-12,discount))/math.log(cfg.gamma)/30.
+                    tail+=1
+                    if elapsed>=1.5:break
+            seg.teacher[-tail:] = [-1]*tail
+        if info.get("complete") and seg.rew:
             seg.rew[-1] += cfg.complete_bonus
-        else:
+            if seg.next_potential:
+                final_discount=seg.discounts[-1] if seg.discounts else cfg.gamma
+                seg.rew[-1] -= final_discount * seg.next_potential[-1]
+                seg.shaping[-1] = -seg.potential[-1]
+        elif seg.rew:
             seg.rew[-1] = cfg.death_penalty
-        self._push(seg, next_obs, True)
+            if seg.potential:
+                seg.rew[-1] -= seg.potential[-1]
+                seg.shaping[-1] = -seg.potential[-1]
+        if seg.next_potential:
+            seg.next_potential[-1] = 0.
+        if cfg.clearance_weight > 0:
+            self.session.event('clearance', dict(attempt=self.attempts + 1, tag=tag,
+                               tail_steps=len(seg), weight=cfg.clearance_weight,
+                               tail_shaping_sum=sum(seg.shaping), terminal_phi=0.,
+                               tail_potential_mean=sum(seg.potential)/max(1,len(seg.potential))))
+        if len(seg):
+            self._push(seg, next_obs, True)
         self.attempts += 1
-        survived = int(info.get("attempt_total", len(seg)))
+        survived = max(0, int(info.get("attempt_total", len(seg))))
         self._note_cause(info)
         self.recent.append((survived, peak))
         self.recent = self.recent[-50:]
@@ -795,15 +963,17 @@ class Trainer:
     def run(self) -> None:
         cfg = self.cfg
         obs, _ = self.env.reset()
+        potential = self._clearance_potential()
         seg = _Seg()
         peak = 0.0
         flushed = 0          # steps of the current attempt already pushed (long attempts)
-        keep = 64            # tail kept un-pushed so a later death can still be trimmed
+        keep = max(64,int(math.ceil(1.5*60/max(1,getattr(self.env,'frame_skip',2))))+4)
         try:
             while self.steps < cfg.total_steps and not self.stop:
                 _ta = time.perf_counter()
+                evaluation=bool(cfg.route_controller and self.learner.evaluating and not cfg.play)
                 a, extra = self.act(obs, deterministic=cfg.play)     # (--play: no random moves)
-                if self.route is not None:
+                if self.route is not None and not evaluation:
                     if not self._att_times:
                         self.route.start_attempt()
                     t_att = self._attempt_t()
@@ -812,47 +982,86 @@ class Trainer:
                         # replaying the best run: the safety shield still watches -- a replay a
                         # frame off can walk into what the recorded run just missed
                         a_sh = replay_shield(obs, a2)
+                        meta = (getattr(self.env,'_last_search',None) or {}).get('flight')
+                        if self.cfg.flight_buffer > 0 and meta and obs[3] > .5 and bool(flight_mode_mask(obs)):
+                            proposed = self.replay_flight_shield.choose(a2,meta)
+                            if self.replay_flight_shield.last is not None:
+                                a_sh = proposed
+                            self.env._dbg = dict(getattr(self.env,'_dbg',{}) or {},
+                                                 flight_control=self.replay_flight_shield.last)
+                        else:
+                            self.replay_flight_shield.reset()
                         if a_sh != a2:
                             self.shield_n += 1
                             a2 = a_sh
                     if forced:
+                        extra = dict(extra,flight_teacher=-1)
                         try:
-                            self.env._dbg = dict(getattr(self.env, "_dbg", {}) or {}, shielded=a2 != a, route=True)
+                            self.env._dbg = dict(getattr(self.env, "_dbg", {}) or {}, shielded=a2 != a, route=True,
+                                                 flight_teacher=-1)
                         except Exception:
                             pass
                         a = a2
-                    self.route.record(t_att, a)
                     self._att_times.append(t_att)
                 self._att_k += 1
                 _tb = time.perf_counter()
                 nobs, _r, _term, _trunc, info = self.env.step(a)
+                next_potential = self._clearance_potential()
+                time_scale=float(np.clip(self.env._motion_dt(),.005,.1)/(1/30)) if cfg.route_controller else 1.
+                transition_discount=cfg.gamma**time_scale
+                shape = shaping_reward(potential, next_potential, transition_discount)
+                a = int(info.get('action_applied', a))
+                if extra.get('flight_teacher',-1) != a:
+                    extra['flight_teacher'] = -1
+                if self.route is not None and not evaluation:
+                    self.route.record(t_att, a)
                 _tc = time.perf_counter()
                 self._tm["brain"] += _tb - _ta
                 self._tm["env"] += _tc - _tb
+                profile = getattr(self.env, 'profile', None)
+                if profile is not None:
+                    profile.add('brain_route', _tb - _ta)
+                    profile.add('env_total', _tc - _tb)
                 self.steps += 1
                 # menus / loading screens before an attempt: nothing to learn (inside an attempt
                 # every step is kept, so the post-crash trimming still lines up)
                 in_level = info.get("in_level", True) or len(seg) > 0 or info.get("died") or info.get("complete")
                 # --frontier: the replayed part isn't the brain's -- it learns from the hand-over on
-                replaying = (cfg.frontier and self.route is not None and self.route.frontier_attempt
+                replaying = (not evaluation and cfg.frontier and self.route is not None and self.route.frontier_attempt
                              and getattr(self.route, "phase", None) in ("replay", "wait_align"))
                 if in_level and not (replaying and not info.get("died") and not info.get("complete")):
-                    self.new_steps += 1
-                    seg.obs.append(obs); seg.act.append(a); seg.rew.append(cfg.alive_reward - cfg.hold_cost * a)
+                    if not evaluation:self.new_steps += 1
+                    tracking=float(info.get('route_tracking_reward',0.)) if cfg.route_controller else 0.
+                    seg.obs.append(obs); seg.act.append(a); seg.rew.append((cfg.alive_reward - cfg.hold_cost * a)*time_scale+shape+tracking)
+                    seg.teacher.append(int(extra.get('flight_teacher',-1)))
+                    if cfg.route_controller:
+                        seg.route_records.append(extra.get('route_record',{}));seg.discounts.append(transition_discount)
+                    if cfg.clearance_weight > 0 and not cfg.play:
+                        seg.potential.append(potential)
+                        seg.next_potential.append(next_potential)
+                        seg.shaping.append(shape)
                     if "logp" in extra:
                         seg.logp.append(extra["logp"]); seg.val.append(extra["v"])
                 p = info.get("prog")
+                if evaluation and not info.get('died'):
+                    self.learner.trial.observe(getattr(self.env,'last_hires',None),self._attempt_t())
                 if isinstance(p, (int, float)) and not info.get("died"):
                     peak = max(peak, float(p))
                 obs = nobs
+                potential = next_potential
                 if self.on_step is not None:
                     _td = time.perf_counter()
                     _keep = self.on_step(self, obs, a, info)
                     self._tm["gui"] += time.perf_counter() - _td
+                    if profile is not None:
+                        profile.add('gui', time.perf_counter() - _td)
                     if _keep is False:
                         break
                 if info.get("died") or info.get("complete"):
-                    info = dict(info, attempt_total=flushed + len(seg) - (int(info.get("death_lag", 0)) if cfg.trim_death else 0))
+                    # Full attempt length includes replay; the learning segment doesn't.
+                    # A death during replay must never produce negative survival time.
+                    lag_count = int(info.get('death_lag', 0)) if cfg.trim_death else 0
+                    info = dict(info, attempt_total=max(0, int(info.get('attempt_steps', self._att_k)) - lag_count))
                     if self.route is not None and self._att_times:
                         lag = int(info.get("death_lag", 0))
                         tc = self._att_times[max(0, len(self._att_times) - 1 - lag)]
@@ -861,7 +1070,15 @@ class Trainer:
                     # after a death the env's step already ran into the new attempt: count it
                     self._att_k = 1 if info.get("died") else 0
                     self._clock_ok = bool(info.get("died"))   # the next attempt starts at a respawn
-                    if cfg.play:
+                    if evaluation:
+                        arm=self.learner.trial.arm
+                        self._log_route_attempt(seg,info,peak,tag='controller_eval_'+arm)
+                        report=self.learner.finish_evaluation_attempt(peak,info['attempt_total'],bool(info.get('complete')))
+                        self.session.event('controller_live_evaluation',report)
+                        if cfg.verbose:print(f'[controller evaluation] {arm}: progress={peak*100:.1f}% -- {report["reason"]}')
+                        self.save()
+                        if self.learner.promotion_pending:self.save(best=True)
+                    elif cfg.play:
                         self._log_route_attempt(seg, info, peak, tag="play")   # nothing is learned
                     elif cfg.frontier and self.route is not None and self.route.frontier_attempt:
                         if len(seg) >= 2:       # learn from the brain's part (from the hand-over)
@@ -875,22 +1092,36 @@ class Trainer:
                     else:
                         self._finish_attempt(seg, info, peak, nobs)
                     seg, peak, flushed = _Seg(), 0.0, 0
+                    self.flight_shield.reset()
+                    self.replay_flight_shield.reset()
+                    potential = 0. # new attempt boundary; normal GD respawns as a cube
                     if info.get("complete") and cfg.play:
                         print(f"LEVEL COMPLETE on attempt {self.attempts} (--play: the route is saved in "
                               f"{cfg.route_dir}; the brain wasn't changed)")
                         break
-                    if info.get("complete") and cfg.stop_on_complete:
-                        self.learner.train(self.new_steps)
-                        self.save(best=True)
-                        print(f"LEVEL COMPLETE on attempt {self.attempts}! Brain saved to "
-                              f"{checkpoint_path(cfg, best=True)}. Restart the level (or pick a new one) "
-                              f"and resume with --model.")
+                    if info.get('complete') and evaluation and cfg.stop_on_complete:
+                        print('LEVEL COMPLETE during controller evaluation: progress saved; restart the same level and resume the controller to finish comparison.')
+                        break
+                    if info.get("complete") and cfg.stop_on_complete and not evaluation:
+                        stats=self.learner.train(self.new_steps)
+                        if cfg.route_controller:
+                            if stats:self.updates+=1
+                            self.new_steps=0;self.save()
+                            self.session.event('controller_evaluation',self.learner.last_evaluation)
+                            if self.learner.promotion_pending:self.save(best=True)
+                            print(f'LEVEL COMPLETE: experience/candidate saved to {checkpoint_path(cfg)}; controller promotion still requires validation.')
+                        else:
+                            self.save(best=True)
+                            print(f"LEVEL COMPLETE on attempt {self.attempts}! Brain saved to "
+                                  f"{checkpoint_path(cfg, best=True)}. Restart the level (or pick a new one) "
+                                  f"and resume with --model.")
                         break
                     if self.new_steps >= cfg.update_steps and not cfg.play:
                         self._do_update("after death")
                     if info.get("complete"):
                         obs, _ = self.env.reset()
-                elif len(seg) >= cfg.max_rollout and (cfg.play or (self.route is not None and self.route.controlled
+                        potential = self._clearance_potential()
+                elif len(seg) >= cfg.max_rollout and (evaluation or cfg.play or (self.route is not None and self.route.controlled
                                                                    and not self.route.frontier_attempt)):
                     n = len(seg) - keep                      # route practice: keep it out of the brain
                     seg.drop_front(n)
@@ -909,10 +1140,19 @@ class Trainer:
         except KeyboardInterrupt:
             print("interrupted")
         finally:
+            if (cfg.route_controller and not cfg.play and not self.learner.evaluating and len(seg)>keep):
+                # Preserve completed safe prefixes on a clean stop. Keep the
+                # uncertain death tail out, just as for a mid-run bank.
+                count=self._push(seg,None,False,upto=len(seg)-keep)
+                seg.drop_front(count)
             if cfg.play:
                 print("--play: the brain wasn't changed (nothing saved); the route memory is in "
                       f"{cfg.route_dir}")
             else:
                 self.save()
                 print(f"saved {checkpoint_path(cfg)}")
+            self.session.event('summary', dict(attempts=self.attempts, steps=self.steps,
+                               updates=self.updates, best_pct=100*self.best_prog,
+                               stages=getattr(self.env, 'profile', None).summary()
+                               if getattr(self.env, 'profile', None) is not None else {}))
             self._csv.close()

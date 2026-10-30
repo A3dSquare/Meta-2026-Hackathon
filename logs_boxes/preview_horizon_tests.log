@@ -1,0 +1,18 @@
+[controller] imported legacy encoder; new route inputs, mode heads and motion model train separately
+[controller data] measured-velocity migration: kept 1, excluded 2 inconsistent examples; source is backed up before overwrite
+[controller] old one-action evaluation cancelled; collecting balanced action supervision before live comparison
+[session] C:\Users\mysou\AppData\Local\Temp\tmpm4suypez\sessions\20261030_133227_60e1143d
+saved C:\Users\mysou\AppData\Local\Temp\tmpm4suypez\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmp_05dpqq0\sessions\20261030_133227_7b501937
+LEVEL COMPLETE: experience/candidate saved to C:\Users\mysou\AppData\Local\Temp\tmp_05dpqq0\route_controller.pt; controller promotion still requires validation.
+saved C:\Users\mysou\AppData\Local\Temp\tmp_05dpqq0\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmpvs6b87cw\sessions\20261030_133227_3e7417c5
+LEVEL COMPLETE during controller evaluation: progress saved; restart the same level and resume the controller to finish comparison.
+saved C:\Users\mysou\AppData\Local\Temp\tmpvs6b87cw\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmp2q090c_5\sessions\20261030_133227_7b4d9ced
+saved C:\Users\mysou\AppData\Local\Temp\tmp2q090c_5\route_controller.pt
+.......................................
+----------------------------------------------------------------------
+Ran 39 tests in 3.859s
+
+OK

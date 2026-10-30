@@ -1,0 +1,4 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793353292.6,1,34,1,1.0,33,measured,0,,"unknown, blue line wrong",20261030_044131_9651631d
+1793353295.2,2,108,48,1.0,26,measured,0,,"spike, trapped",20261030_044131_9651631d
+1793353299.3,3,218,81,3.0,29,measured,0,,"spike, trapped (shield acted)",20261030_044131_9651631d

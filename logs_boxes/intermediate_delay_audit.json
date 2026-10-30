@@ -1,0 +1,445 @@
+{
+  "tested": 117,
+  "bad": [
+    {
+      "attempt": 12,
+      "index": 31,
+      "lag": 1,
+      "alt": 2,
+      "scores": [
+        0.36,
+        1.0,
+        0.36
+      ]
+    },
+    {
+      "attempt": 12,
+      "index": 32,
+      "lag": 1,
+      "alt": 2,
+      "scores": [
+        1.0,
+        1.0,
+        0.333
+      ]
+    },
+    {
+      "attempt": 12,
+      "index": 35,
+      "lag": 1,
+      "alt": 2,
+      "scores": [
+        1.0,
+        1.0,
+        0.357
+      ]
+    },
+    {
+      "attempt": 12,
+      "index": 37,
+      "lag": 1,
+      "alt": 2,
+      "scores": [
+        0.092,
+        0.733,
+        0.733
+      ]
+    },
+    {
+      "attempt": 12,
+      "index": 39,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.03,
+        0.211,
+        0.03
+      ]
+    },
+    {
+      "attempt": 12,
+      "index": 42,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.54,
+        0.54,
+        1.0
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 1,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.467,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 21,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        1.0,
+        0.644
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 22,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.644,
+        0.644,
+        1.0
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 23,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 24,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        0.556,
+        1.0
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 26,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.644,
+        0.644,
+        0.467
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 27,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        1.0,
+        0.467
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 28,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.6,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 42,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.008,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 43,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.008,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 14,
+      "index": 44,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.007,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 16,
+      "index": 3,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.733,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 16,
+      "index": 4,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        0.556,
+        1.0
+      ]
+    },
+    {
+      "attempt": 16,
+      "index": 5,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.511,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 16,
+      "index": 6,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.467,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 16,
+      "index": 10,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.296,
+        1.0,
+        0.296
+      ]
+    },
+    {
+      "attempt": 26,
+      "index": 36,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.026,
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "attempt": 26,
+      "index": 38,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.373,
+        0.644,
+        0.644
+      ]
+    },
+    {
+      "attempt": 26,
+      "index": 41,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.556,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 26,
+      "index": 42,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        0.511,
+        1.0
+      ]
+    },
+    {
+      "attempt": 26,
+      "index": 43,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.511,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 28,
+      "index": 3,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.511,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "attempt": 28,
+      "index": 4,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        0.467,
+        0.467
+      ]
+    },
+    {
+      "attempt": 28,
+      "index": 14,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.593,
+        0.593,
+        0.593
+      ]
+    },
+    {
+      "attempt": 28,
+      "index": 41,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        1.0,
+        0.132
+      ]
+    },
+    {
+      "attempt": 31,
+      "index": 11,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        0.689,
+        1.0
+      ]
+    },
+    {
+      "attempt": 31,
+      "index": 12,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.644,
+        0.644,
+        1.0
+      ]
+    },
+    {
+      "attempt": 31,
+      "index": 13,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        1.0,
+        0.644
+      ]
+    },
+    {
+      "attempt": 31,
+      "index": 14,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.6,
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "attempt": 31,
+      "index": 16,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        1.0,
+        0.556
+      ]
+    },
+    {
+      "attempt": 31,
+      "index": 17,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        1.0,
+        0.511
+      ]
+    },
+    {
+      "attempt": 31,
+      "index": 18,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        1.0,
+        1.0,
+        0.467
+      ]
+    },
+    {
+      "attempt": 31,
+      "index": 20,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.6,
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "attempt": 31,
+      "index": 44,
+      "lag": 1,
+      "alt": 0,
+      "scores": [
+        0.007,
+        0.014,
+        0.02
+      ]
+    }
+  ]
+}

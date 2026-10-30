@@ -104,7 +104,7 @@ class Phys:
             pts.append((t, y))
 
 
-@dataclass
+@dataclass(slots=True)
 class Body:
     y: float = 0.0
     vy: float = 0.0
@@ -131,6 +131,7 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
     m = b.mode
     floors, ceils = surfaces
     was_grounded = b.grounded
+    vy_before = b.vy
     dv = 0.0   # velocity lost to gravity / thrust this step (for an exact position update)
     if b.dash:
         if hold:                 # dash orb: straight ahead while held, no gravity
@@ -198,6 +199,16 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
             dv = b.g * p.cube_g * dt
             b.vy -= dv
     y_new = b.y + (b.vy + 0.5 * dv) * dt   # exact for constant acceleration
+    if m in ('ship','swing') and dt > 0:
+        # Integrate only until reaching the speed cap, then travel at the
+        # cap. Applying half the full acceleration after clamping velocity
+        # underestimated every sustained climb/fall (even already at vmax).
+        acceleration = -dv/dt
+        if abs(acceleration) > 1e-12:
+            cap = math.copysign(p.ship_vmax*s,acceleration)
+            start_v = max(-p.ship_vmax*s,min(p.ship_vmax*s,vy_before))
+            tc = max(0.,min(dt,(cap-start_v)/acceleration))
+            y_new = b.y + start_v*tc + .5*acceleration*tc*tc + cap*(dt-tc)
     # resting surfaces: falling onto a floor / rising into a ceiling
     up = p.snap if b.g == 1 else 0.06           # landing side: GD's inner-hitbox leniency
     dn = p.snap if b.g == -1 else 0.06
@@ -209,11 +220,13 @@ def advance(b: Body, hold: bool, dt: float, speed: float, p: Phys, surfaces) -> 
     # (only a real hit: moving INTO it, and the block's edge was clear of the head before
     #  this step -- sliding along under a block in a 1-block gap is fine in GD; the
     #  first version flagged that and the whole-level test went from 18 to 28 false crashes)
-    if b.vy < -0.5 and head_kills and b.g == -1 and not was_grounded:
-        if any(y_new <= f < b.y - 0.02 for f in floors):
+    # Takeoff is included: a ground jump into the underside is fatal too.
+    # Merely sliding underneath has no headward velocity and stays valid.
+    if b.vy < -0.5 and head_kills and b.g == -1:
+        if any(y_new <= f <= b.y + 1e-8 for f in floors):
             b.crashed = True
-    if b.vy > 0.5 and head_kills and b.g == 1 and not was_grounded:
-        if any(b.y + 0.02 < c <= y_new for c in ceils):
+    if b.vy > 0.5 and head_kills and b.g == 1:
+        if any(b.y - 1e-8 <= c <= y_new for c in ceils):
             b.crashed = True
     if b.vy <= 0:
         land = [f for f in floors if y_new <= f <= max(b.y, y_new) + up]
@@ -284,6 +297,39 @@ def surfaces_at(x: float, solid, floor, ceil, half: float = 0.4):
     return floors, ceils
 
 
+def block_side_contacts(x_prev, x, solid, half):
+    """Times within this step when the inner hitbox enters a block's side."""
+    if x <= x_prev:
+        return []
+    edge = half - .05
+    return [((s0 - edge - x_prev) / (x - x_prev), sb, st)
+            for s0, s1, sb, st in solid
+            if x_prev + edge <= s0 < x + edge]
+
+
+def block_side_hit(body, hold, dt, speed, p, contacts, half):
+    """Check first horizontal contact BEFORE a landing snap can erase a crash.
+
+    The normal landing tolerance still applies to the inner hitbox. A cube
+    that is already too low at the leading edge cannot be lifted onto the
+    platform merely because its top is under the icon at the step's end.
+    Returns (fraction, centre_y) for the earliest hit, or None.
+    """
+    if body.grounded or body.mode not in ('cube', 'robot'):
+        return None
+    first = None
+    for fraction, bottom, top in contacts:
+        if first is not None and fraction >= first[0]:
+            continue
+        contact = Body(body.y, body.vy, body.g, False, body.mode, body.mini,
+                       body.boost, body.prev_hold, body.used, body.dash, body.crashed)
+        advance(contact, hold, dt * fraction, speed, p, ([], []))
+        upper_margin, lower_margin = (.12, p.snap) if body.g == 1 else (p.snap, .12)
+        if bottom < contact.y + half - upper_margin - 1e-9 and top > contact.y - half + lower_margin + 1e-9:
+            first = (fraction, contact.y)
+    return first
+
+
 def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                    frame_skip: int = 2, horizon: float = 1.5, half: float = 0.4,
                    dec_dt: float | None = None, lag: int = 0, pending=(), motion=None,
@@ -319,10 +365,7 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
     corr_key: dict = {}
     # 1/30 s steps for the first 0.5 s (where every plan does its pressing), then 1/15 s:
     # the physics is exact for any step, it only makes far-away timing a bit coarser
-    fine = min(steps, int(round(0.5 / dt)))
-    times = [k * dt for k in range(1, fine + 1)]
-    while times[-1] + 1e-9 < horizon:
-        times.append(min(horizon, times[-1] + 2 * dt))
+    times = _fine_times(len(pending) * dec_dt, dec_dt, len(pending), dt, horizon)
     t_prev = 0.0
     for i, t in enumerate(times, start=1):
         if not live:
@@ -335,6 +378,7 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         else:
             holds = [bool(ALL_PLANS[pi][1](jd - len(pending))) for pi in live]
         floors, ceils = surfaces_at(x, solid, floor, ceil, half)
+        side_contacts = block_side_contacts(x_prev, x, solid, half)
         corr = None
         if use_m:
             # smooth motion: reuse the correction for 3 steps; but anything event-like
@@ -351,6 +395,12 @@ def simulate_plans(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         for k, pi in enumerate(live):
             b = B[pi]
             was = b.grounded
+            side_hit = block_side_hit(b, holds[k], dt_i, speed, p, side_contacts, half)
+            if side_hit is not None:
+                fraction, contact_y = side_hit
+                hit_t[pi] = t_prev + fraction * dt_i
+                pts[pi].append((x_prev + fraction * (x - x_prev), contact_y))
+                continue
             advance(b, holds[k], dt_i, speed, p, (floors, ceils))
             if corr is not None and not b.grounded:
                 s_ = dt_i / dt                            # learned leftover error (it was learned
@@ -432,7 +482,9 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                 dec_dt: float, lag: int = 0, pending=(), horizon: float = 1.5,
                 half: float = 0.5, beam: int = 10, want_path: bool = False,
                 late_every: float = 0.0, portals=None, specials=None, prefer=None,
-                delay: float | None = None) -> dict:
+                delay: float | None = None, root_action: int | None = None,
+                flight_target: float = 0., flight_view=None, ground_clearance=False,
+                action_schedule=None,work_cache=None) -> dict:
     """Longest survival (fraction of `horizon`, 1.0 = survives it all) for each first
     action ("1" = press now, "00" = release now and at the next decision, "01" =
     release now, press at the next decision), with every later decision chosen well.
@@ -455,34 +507,47 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
         pending = list(pending)[-need:] if need > 0 else []
         pending = [0.0] * (need - len(pending)) + pending
     n_pend = len(pending)
-    if delay is None:
-        # whole-step delay: the time grid and decision timing exactly as before fix49 (the
-        # live runs after that change did worse; the exact grid is used with --ms-delay)
-        fine = int(round(0.5 / dt))
-        times = [k * dt for k in range(1, fine + 1)]
-        while times[-1] + 1e-9 < horizon:
-            times.append(min(horizon, times[-1] + 2 * dt))
-    else:
-        times = _fine_times(D, dec_dt, n_pend, dt, horizon)
-    root_node = (0.0, body.y, None, 0.0)          # path node: (x, y, parent, effort so far)
+    # Step-based delay still means n_pend decisions, not a rounded 30 Hz
+    # interval. Split on action boundaries in BOTH delay modes. Otherwise a
+    # 41 ms decision can actuate at 100 ms instead of 82 ms, inventing a
+    # different jump and changing the shield's safe first action.
+    time_key=('times',D,dec_dt,n_pend,dt,horizon)
+    times=work_cache.get(time_key) if work_cache is not None else None
+    if times is None:
+        times=_fine_times(D,dec_dt,n_pend,dt,horizon)
+        if work_cache is not None:work_cache[time_key]=times
+    root_node = (0.0, body.y, None, 0.0, 0., flight_target)
+    trajectory_meta = {id(root_node):(0.,body.vy,None,-1,0.)} if want_path else None
+    def node_key(node):
+        return (node[4],node[3]) if flight_target > 0 else (node[3],)
+    if flight_target > 0:
+        from flight_control import flight_segment_hit, path_clearance
+        margin_floor,margin_ceil = floor,ceil
+        if flight_view is not None:
+            margin_floor = max(floor,flight_view[0]) if floor is not None else flight_view[0]
+            margin_ceil = min(ceil,flight_view[1]) if ceil is not None else flight_view[1]
     pref_x = pref_y = None
     if want_path and prefer and len(prefer) >= 3:
         pp = sorted(prefer)
         pref_x = np.array([q[0] for q in pp], float)
         pref_y = np.array([q[1] for q in pp], float)
     ALL, B1, B00, B01 = 7, 1, 2, 4
+    fixed_last=action_schedule[max(action_schedule)] if action_schedule else False
     # a state: [Body, root mask, hold this step, path node]
     states = [(Body(body.y, body.vy, body.g, body.grounded, body.mode, body.mini, body.boost, body.prev_hold),
-               ALL, False, root_node)]
+               ALL if root_action is None else (1 << root_action), False, root_node)]
     best = [0.0, 0.0, 0.0]
     best_node = [root_node, root_node, root_node]
+    best_unknown = [False, False, False]
 
-    def credit(mask: int, t_frac: float, node) -> None:
+    def credit(mask: int, t_frac: float, node, unknown=False) -> None:
         for i in range(3):
-            if mask >> i & 1 and (t_frac > best[i] or (want_path and t_frac == best[i]
-                                                         and node[3] < best_node[i][3])):
+            if mask >> i & 1 and (t_frac > best[i] or ((want_path or flight_target > 0) and t_frac == best[i]
+                                                         and node_key(node) < node_key(best_node[i]))
+                                  or (unknown and t_frac==0. and best_node[i] is root_node)):
                 best[i] = t_frac
                 best_node[i] = node
+                best_unknown[i] = unknown
 
     every = max(1, int(round(late_every / dec_dt))) if late_every > 0 else 1
     t_prev, x_prev, last_jd = 0.0, 0.0, -1
@@ -506,7 +571,8 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
             k = k_                                  # which free decision this is (0 = now)
             new = []
             for b, m, _h, nd in states:
-                for h in (True, False):
+                choices=(bool(action_schedule.get(k,fixed_last)),) if action_schedule else (True,False)
+                for h in choices:
                     if k == 0:
                         m2 = m & (B1 if h else (B00 | B01))
                     elif k == 1:
@@ -514,19 +580,30 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                     else:
                         m2 = m
                     if m2:
-                        new.append((Body(b.y, b.vy, b.g, b.grounded, b.mode, b.mini, b.boost, b.prev_hold, b.used, b.dash,
-                                         b.crashed),
-                                    m2, h, nd))
+                        # A fixed input sequence has one successor. No sibling
+                        # can mutate this body, so cloning at every decision is
+                        # unnecessary. Branching searches still own each child.
+                        child=b if action_schedule else Body(b.y,b.vy,b.g,b.grounded,b.mode,b.mini,b.boost,b.prev_hold,b.used,b.dash,b.crashed)
+                        new.append((child,m2,h,nd))
             states = new
         last_jd = jd
         dt_i = t - t_prev
-        floors, ceils = surfaces_at(x, solid, floor, ceil, half)
         lo, hi = x_prev - half, x + half                 # swept horizontally (no tunnelling)
-        hz = [(h_[2], h_[3]) for h_ in haz if h_[0] < hi and h_[1] > lo]
-        so = [(s_[2], s_[3]) for s_ in solid if s_[0] < hi - 0.05 and s_[1] > lo + 0.05]
+        geometry_key=('geometry',x_prev,x,half)
+        geometry=work_cache.get(geometry_key) if work_cache is not None else None
+        if geometry is None:
+            floors,ceils=surfaces_at(x,solid,floor,ceil,half)
+            side_contacts=block_side_contacts(x_prev,x,solid,half)
+            hz_boxes=[h_ for h_ in haz if h_[0]<hi and h_[1]>lo]
+            so_boxes=[s_ for s_ in solid if s_[0]<hi-.05 and s_[1]>lo+.05]
+            hz=[(h_[2],h_[3]) for h_ in hz_boxes];so=[(s_[2],s_[3]) for s_ in so_boxes]
+            pt_here=[q for q in (portals or ()) if q[0]<hi and q[1]>lo]
+            sp_here=[q for q in (specials or ()) if q[0]<hi and q[1]>lo]
+            geometry=(floors,ceils,side_contacts,hz_boxes,so_boxes,hz,so,pt_here,sp_here)
+            if work_cache is not None:work_cache[geometry_key]=geometry
+        floors,ceils,side_contacts,hz_boxes,so_boxes,hz,so,pt_here,sp_here=geometry
         # portals: a path that flies through one continues in that mode / gravity
         # (whole-level test: every jump into the ship portal "crashed" as a cube)
-        pt_here = [q for q in (portals or ()) if q[0] < hi and q[1] > lo]
         if pt_here:
             for _x0, _x1, pb, ptop, kind, val in pt_here:
                 if kind == "speed":                  # speed portals: the whole level speeds up
@@ -548,9 +625,37 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                             b.mini = bool(val)
         alive: list = []
         index: dict = {}
-        sp_here = [q for q in (specials or ()) if q[0] < hi and q[1] > lo]
+        if flight_target > 0:
+            near_key=('near',t_prev,t,x,spd_now,half)
+            near=work_cache.get(near_key) if work_cache is not None else None
+            if near is None:
+                weight=math.exp(-t_prev/.5)-math.exp(-t/.5)
+                reach=max(1.,spd_now*.3)
+                near_haz=[q for q in haz if q[1]>=x-half and q[0]<=x+half+reach]
+                near_solid=[q for q in solid if q[1]>=x-half and q[0]<=x+half+reach]
+                near=(weight,near_haz,near_solid)
+                if work_cache is not None:work_cache[near_key]=near
+            weight,near_haz,near_solid=near
         for b, m, h, nd in states:
             pressed = h and not b.prev_hold
+            # An orb/pad in this interval may change motion before contact;
+            # retain its existing collision handling rather than assuming a
+            # free ballistic arc through that event.
+            side_hit = block_side_hit(b, h, dt_i, spd_now, p, side_contacts, half) if not sp_here else None
+            if side_hit is not None:
+                fraction, contact_y = side_hit
+                hit_time = t_prev + fraction * dt_i
+                side_node = (x_prev + fraction * (x - x_prev), contact_y, nd,
+                             nd[3] + (1.0 if pressed else 0.0) + (.05 if h else 0.0),
+                             nd[4],nd[5]) if flight_target > 0 else (
+                             (x_prev + fraction * (x-x_prev),contact_y,nd,nd[3]) if want_path else nd)
+                if want_path:
+                    contact_body=Body(b.y,b.vy,b.g,b.grounded,b.mode,b.mini,b.boost,b.prev_hold,b.used,b.dash,b.crashed)
+                    advance(contact_body,h,fraction*dt_i,spd_now,p,(floors,ceils))
+                    trajectory_meta[id(side_node)]=(hit_time,contact_body.vy,bool(h),k_,t_prev)
+                credit(m, hit_time / horizon, side_node)
+                continue
+            before_y, before_mode = b.y, b.mode
             advance(b, h, dt_i, spd_now, p, (floors, ceils))
             if sp_here:
                 special_effect(b, sp_here, pressed, half, p, (floors, ceils))
@@ -558,17 +663,52 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
             # the drawn line = the surviving path with the LEAST effort (presses, holding):
             # with nothing dangerous ahead every path survives, and an arbitrary one was
             # drawn -- full of pointless jumps
-            if want_path:
+            if want_path or flight_target > 0:
                 eff = nd[3] + (1.0 if pressed else 0.0) + (0.05 if h else 0.0)
                 if pref_x is not None and x <= pref_x[-1]:
                     # stay on LAST step's line unless it stopped working: among equally safe
                     # routes the least-effort one flipped from step to step ("the line is on
                     # the right track, then blips to another one")
                     eff += PREFER_W * min(1.0, abs(y - float(np.interp(x, pref_x, pref_y))))
-                node = (x, y, nd, eff)
+                if flight_target > 0:
+                    cache_key=('clearance',spd_now,x,y,b.mode,b.g,b.mini,half,flight_target)
+                    reusable=ground_clearance and b.mode not in ('ship','wave','swing') and work_cache is not None
+                    clearance=work_cache.get(cache_key) if reusable else None
+                    if clearance is None:
+                        clearance=path_clearance(x,y,b.vy,b.mode,b.g,b.mini,near_haz,near_solid,margin_floor,margin_ceil,
+                                                 spd_now,p,half,flight_target,dec_dt,ground_route=ground_clearance)
+                        if reusable:work_cache[cache_key]=clearance
+                    score,gap=clearance
+                    # Near-term recovery matters more than distant empty space;
+                    # otherwise one late rescue diluted across 1.5 s looks fine.
+                    node = (x,y,nd if want_path else None,eff,nd[4]+(1.-score)*weight,min(nd[5],gap))
+                else:
+                    node = (x, y, nd, eff)
             else:
                 node = nd
+            if want_path:
+                trajectory_meta[id(node)] = (t,b.vy,bool(h),k_,t_prev)
+            # A route above/below the captured area has unobserved obstacles
+            # and boundaries. Do not call it collision-safe merely because
+            # the detector cannot supply geometry outside the image. End its
+            # VERIFIED horizon here, without reporting a physical collision.
+            # This matters near hanging blocks: "fly over it, off screen"
+            # used to defeat every otherwise safer route underneath it.
+            if ((flight_target > 0 or action_schedule is not None) and flight_view is not None
+                    and (y-half < flight_view[0] or y+half > flight_view[1])):
+                edge = flight_view[0]+half if y-half < flight_view[0] else flight_view[1]-half
+                fraction = max(0.,min(1.,(edge-before_y)/(y-before_y))) if y != before_y else 0.
+                edge_node = (x_prev+(x-x_prev)*fraction,edge,node[2],node[3],node[4],node[5]) if flight_target>0 else node
+                if want_path:
+                    trajectory_meta[id(edge_node)] = (t_prev+dt_i*fraction,b.vy,bool(h),k_,t_prev)
+                credit(m,(t_prev+dt_i*fraction)/horizon,edge_node,unknown=True)
+                continue
             dead = y < -12 or y > 14 or b.crashed
+            if not dead and flight_target > 0 and before_mode in ('ship','wave','swing') and not sp_here:
+                # Wave motion is linear. Ship acceleration bows away from the
+                # chord by at most a*dt^2/8; include that small uncertainty.
+                pad = max(p.ship_up,p.ship_down)*dt_i*dt_i/8 if before_mode in ('ship','swing') else 0.
+                dead = flight_segment_hit(x_prev,before_y,x,y,hz_boxes,so_boxes,half,b.g,pad,p.snap)
             if not dead:
                 yt, yb_ = y + half, y - half
                 for hb, ht in hz:
@@ -584,11 +724,14 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
             if dead:
                 credit(m, t / horizon, node)
                 continue
+            if action_schedule:
+                alive.append((b,m,h,node))
+                continue
             key = (h, b.prev_hold, round(y * 20.0), round(b.vy * 1.6667), b.grounded, b.g, round(b.boost, 2), b.mode, b.used)
             j = index.get(key)
             if j is not None:                       # same state reached by other first actions
                 s0 = alive[j]
-                keep_node = node if (want_path and node[3] < s0[3][3]) else s0[3]
+                keep_node = node if ((want_path or flight_target > 0) and node_key(node) < node_key(s0[3])) else s0[3]
                 if m & ~s0[1] or keep_node is not s0[3]:
                     alive[j] = (s0[0], s0[1] | m, s0[2], keep_node)
                 continue
@@ -604,14 +747,14 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
                     lst.sort(key=lambda j: (alive[j][0].y, alive[j][0].vy))
                     n_ = len(lst) - 1
                     pick = [lst[int(round(q * n_ / (beam - 1)))] for q in range(beam)]
-                    if want_path:
+                    if want_path or flight_target > 0:
                         # among states at the same height and speed keep the one with the least
                         # effort (else a "pad launched it, no presses" line could be dropped for
                         # a copy that holds / presses, and the drawn line showed a needless jump)
                         grp: dict = {}
                         for j in lst:
                             k_ = (round(alive[j][0].y * 20.0), round(alive[j][0].vy * 1.6667))
-                            if k_ not in grp or alive[j][3][3] < alive[grp[k_]][3][3]:
+                            if k_ not in grp or node_key(alive[j][3]) < node_key(alive[grp[k_]][3]):
                                 grp[k_] = j
                         pick = [grp[(round(alive[j][0].y * 20.0), round(alive[j][0].vy * 1.6667))] for j in pick]
                     lst = pick
@@ -622,26 +765,64 @@ def search_best(body: Body, haz, solid, floor, ceil, speed: float, p: Phys,
     for b, m, h, nd in states:
         credit(m, 1.0, nd)
     out = {k: float(best[i]) for i, k in enumerate(SEARCH_KEYS)}
+    if flight_target > 0:
+        out['clearance'] = {k:max(0.,1.-best_node[i][4]/(1.-math.exp(-horizon/.5))) for i,k in enumerate(SEARCH_KEYS)}
+        out['minimum_clearance'] = {k:best_node[i][5] for i,k in enumerate(SEARCH_KEYS)}
+        out['visibility_limited'] = {k:best_unknown[i] for i,k in enumerate(SEARCH_KEYS)}
     if want_path:
         # ties -> prefer waiting: the line then shows the LATEST safe moment to press
-        i_best = max((1, 2, 0), key=lambda i: best[i])
+        i_best = root_action if root_action is not None else max((1, 2, 0), key=lambda i: best[i])
         node = best_node[i_best]
         pts = []
+        trajectory = []
         while node is not None:
             pts.append((node[0], node[1]))
+            tm,velocity,held,decision,start = trajectory_meta.get(id(node),(0.,0.,None,-1,0.))
+            trajectory.append(dict(t=float(tm),x=float(node[0]),y=float(node[1]),vy=float(velocity),
+                                   hold=held,decision=int(decision),start=float(start)))
             node = node[2]
         out["path"] = pts[::-1]
-        out["path_hit"] = best[i_best] < 1.0
+        out["path_unknown"] = best_unknown[i_best]
+        out["path_hit"] = best[i_best] < 1.0 and not best_unknown[i_best]
+        controls = {}
+        for point in reversed(trajectory):
+            if point['decision'] >= 0:
+                controls.setdefault(point['decision'],dict(decision=point['decision'],
+                    applies_at=point['start'],hold=bool(point['hold'])))
+        out['plan'] = dict(root=SEARCH_KEYS[i_best],first_action=int(i_best==0),
+                           trajectory=trajectory[::-1],controls=list(controls.values()),
+                           verified=best[i_best]>=1.-1e-6 and not best_unknown[i_best])
     return out
 
 
 PREFER_W = 0.15   # path effort per step for being 1 block off last step's line (a press = 1.0)
 
 
+def flight_search_best(body,haz,solid,floor,ceil,speed,p,dec_dt,lag,pending,
+                       horizon,half,want_path,portals,specials,prefer,delay,target,view,work_cache=None):
+    # Keep histories separate per first action. Merging first-action masks
+    # would otherwise assign one root the other root's clearance history.
+    results = [search_best(body,haz,solid,floor,ceil,speed,p,dec_dt,lag,pending,horizon,half,
+                           beam=6,want_path=want_path,portals=portals,specials=specials,prefer=prefer,
+                           delay=delay,root_action=i,flight_target=target,flight_view=view,work_cache=work_cache) for i in range(3)]
+    result = {k:results[i][k] for i,k in enumerate(SEARCH_KEYS)}
+    result['clearance'] = {k:results[i]['clearance'][k] for i,k in enumerate(SEARCH_KEYS)}
+    result['minimum_clearance'] = {k:results[i]['minimum_clearance'][k] for i,k in enumerate(SEARCH_KEYS)}
+    result['visibility_limited'] = {k:results[i]['visibility_limited'][k] for i,k in enumerate(SEARCH_KEYS)}
+    winner = max(SEARCH_KEYS,key=lambda k:(result[k],result['clearance'][k]))
+    if want_path:
+        selected = results[SEARCH_KEYS.index(winner)]
+        result.update(path=selected['path'],path_hit=selected['path_hit'],path_unknown=selected['path_unknown'],plan=selected['plan'])
+        result['_root_paths'] = {k:(results[i]['path'],results[i]['path_hit'],results[i]['path_unknown']) for i,k in enumerate(SEARCH_KEYS)}
+        result['_root_plans'] = {k:results[i]['plan'] for i,k in enumerate(SEARCH_KEYS)}
+    return result
+
+
 def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, dec_dt: float,
                   lag: int, pending, pending_long=None, horizon: float = 1.5, half: float = 0.5,
                   want_path: bool = False, lag_alt: int | None = None, portals=None, specials=None,
-                  prefer=None, delay: float | None = None, delay_alt: float | None = None) -> dict:
+                  prefer=None, delay: float | None = None, delay_alt: float | None = None,
+                  flight_buffer: float = 0., flight_view=None, explicit_plan=False) -> dict:
     """search_best in the measured world AND a slightly different one: the press arrives
     one step EARLIER or LATER (lag_alt: whichever the measured delays say is likely --
     live they split between 1 and 2 steps, so with "2" a jump often started a step early
@@ -653,30 +834,153 @@ def robust_search(body: Body, haz, solid, floor, ceil, speed: float, p: Phys, de
       0.90..0.99   survives as measured, crashes in the worse world (later = higher)
       0..0.85      crashes even as measured (0.85 x the fraction of the horizon survived)
     The raw values are kept under "nominal" / "worse"."""
-    if not haz and not solid:          # nothing ahead to hit: every choice is safe (fast path)
+    flight = body.mode in ('ship','wave') and flight_buffer > 0
+    # Valid only for this observed geometry; never carry it across frames.
+    work_cache={}
+    if not explicit_plan and not haz and not solid and (not flight or (floor is None and ceil is None and flight_view is None)):
         a = {k: 1.0 for k in SEARCH_KEYS}
         a.update(nominal=dict(a), worse=dict(a), path=[], path_hit=False)
+        if flight:
+            a['flight'] = dict(mode=body.mode,survival={k:1. for k in SEARCH_KEYS},
+                               clearance={k:1. for k in SEARCH_KEYS},buffer=flight_buffer)
         return a
-    a = search_best(body, haz, solid, floor, ceil, speed, p, dec_dt, lag, pending, horizon, half,
-                    want_path=want_path, portals=portals, specials=specials, prefer=prefer, delay=delay)
+    def run(world_speed,world_lag,queue,world_delay,draw=False):
+        if flight:
+            return flight_search_best(body,haz,solid,floor,ceil,world_speed,p,dec_dt,world_lag,queue,
+                                      horizon,half,draw,portals,specials,prefer,world_delay,flight_buffer,flight_view,work_cache)
+        if explicit_plan:
+            roots=[search_best(body,haz,solid,floor,ceil,world_speed,p,dec_dt,world_lag,queue,horizon,half,
+                    beam=8,want_path=draw,portals=portals,specials=specials,prefer=prefer,
+                    delay=world_delay,root_action=i,flight_target=.5,flight_view=flight_view,
+                    ground_clearance=True,work_cache=work_cache) for i in range(3)]
+            result={k:roots[i][k] for i,k in enumerate(SEARCH_KEYS)}
+            result['clearance']={k:roots[i]['clearance'][k] for i,k in enumerate(SEARCH_KEYS)}
+            if draw:
+                result['_root_results']={k:roots[i] for i,k in enumerate(SEARCH_KEYS)}
+                result['_root_plans']={k:roots[i]['plan'] for i,k in enumerate(SEARCH_KEYS)}
+                result['_root_paths']={k:(roots[i]['path'],roots[i]['path_hit'],roots[i]['path_unknown']) for i,k in enumerate(SEARCH_KEYS)}
+            return result
+        return search_best(body,haz,solid,floor,ceil,world_speed,p,dec_dt,world_lag,queue,horizon,half,
+                           want_path=draw,portals=portals,specials=specials,prefer=prefer,delay=world_delay)
+    a = run(speed,lag,pending,delay,want_path)
+    alt = lag + 1 if lag_alt is None else max(0,int(lag_alt))
+    da = None if delay is None else (delay+dec_dt if delay_alt is None else max(0.,float(delay_alt)))
+    pl = (list(pending_long) if pending_long is not None else
+          ([False]*max(0,alt-len(pending))+list(pending) if delay is None else list(pending)))
+    worst_lag=alt if delay is None else lag
+    worst_queue=pl[-alt:] if delay is None and alt else ([] if delay is None else pl)
+    draw_ground=bool(explicit_plan and want_path and not flight)
+    if draw_ground and delay is None:
+        # An earlier alternative must not remove the LATER delay bound.
+        worst_lag=max(lag+1,alt)
+        worst_queue=([body.prev_hold]*max(0,worst_lag-len(pl))+pl)[-worst_lag:]
     if all(a[k] < 1.0 for k in SEARCH_KEYS):
         b = {k: 0.0 for k in SEARCH_KEYS}   # crashes as measured -> the worse world can't help
     elif delay is not None:
         # delay measured in ms: the worse world's press arrives `delay_alt` s after (the far
         # end of the measured spread, at least a step off)
-        da = delay + dec_dt if delay_alt is None else max(0.0, float(delay_alt))
-        b = search_best(body, haz, solid, floor, ceil, speed * 1.04, p, dec_dt, lag,
-                        list(pending_long) if pending_long is not None else list(pending),
-                        horizon, half, portals=portals, specials=specials, delay=da)
+        b = run(speed*1.04,worst_lag,worst_queue,da,draw_ground)
     else:
-        alt = lag + 1 if lag_alt is None else max(0, int(lag_alt))
-        pl = list(pending_long) if pending_long is not None else [False] * max(0, alt - len(pending)) + list(pending)
-        b = search_best(body, haz, solid, floor, ceil, speed * 1.04, p, dec_dt, alt, pl[len(pl) - alt:] if alt else [],
-                        horizon, half, portals=portals, specials=specials)
+        b = run(speed*1.04,worst_lag,worst_queue,None,draw_ground)
+    # Two searches can survive using DIFFERENT future commands. Their maxima
+    # do not certify the one sequence drawn on screen. Replay the actual
+    # commands in both worlds, also trying the slower world's route when the
+    # nominal route misses a landing/jump deadline there.
+    sequence_checks={}
+    if draw_ground and '_root_plans' in a:
+        for i,k in enumerate(SEARCH_KEYS):
+            candidates=[a['_root_plans'][k]]
+            if '_root_plans' in b:candidates.append(b['_root_plans'][k])
+            best_score=-1.;selected=None
+            seen_schedules=set()
+            for plan in candidates:
+                schedule={c['decision']:bool(c['hold']) for c in plan['controls']}
+                if not schedule:continue
+                identity=tuple(sorted(schedule.items()))
+                if identity in seen_schedules:continue
+                seen_schedules.add(identity)
+                def replay(world_speed,world_lag,queue,world_delay,draw):
+                    return search_best(body,haz,solid,floor,ceil,world_speed,p,dec_dt,world_lag,queue,horizon,half,
+                        beam=1,want_path=draw,portals=portals,specials=specials,delay=world_delay,root_action=i,
+                        flight_target=.5,flight_view=flight_view,ground_clearance=True,action_schedule=schedule,work_cache=work_cache)
+                # The search already simulated its own selected sequence.
+                # Reuse that result; only cross-world sequences need replay.
+                nominal=(dict(a['_root_results'][k]) if plan is a['_root_plans'][k]
+                         else replay(speed,lag,pending,delay,True))
+                worse=(dict(b['_root_results'][k]) if plan is b.get('_root_plans',{}).get(k)
+                       else replay(speed*1.04,worst_lag,worst_queue,da,False))
+                # Brief holds around a landing are not monotone in delay:
+                # both endpoints can survive while a middle timing fails.
+                upper=worst_lag*dec_dt if delay is None else max(delay+dec_dt,da)
+                lower=min(lag,alt)*dec_dt if delay is None else max(0.,min(delay-dec_dt,da))
+                checked=[]
+                if nominal[k]>=1.-1e-6 and worse[k]>=1.-1e-6:
+                    for phase in range(9):
+                        seconds=lower+(upper-lower)*phase/8.
+                        need=int(math.ceil(seconds/dec_dt-1e-6))
+                        history=([body.prev_hold]*max(0,need-len(pl))+pl)[-need:] if need else []
+                        result=search_best(body,haz,solid,floor,ceil,speed,p,dec_dt,lag,history,horizon,half,
+                            beam=1,want_path=False,portals=portals,specials=specials,delay=seconds,root_action=i,
+                            flight_view=flight_view,action_schedule=schedule,work_cache=work_cache)
+                        checked.append(dict(delay=seconds,survival=result[k]))
+                        worse[k]=min(worse[k],result[k])
+                        if result[k]<1.-1e-6:break
+                score=safety_score(nominal[k],worse[k])
+                quality=min(nominal['clearance'][k],worse['clearance'][k])
+                if selected is None or (score,quality)>(best_score,selected[2]):
+                    best_score=score;selected=(nominal,worse,quality,checked)
+            if selected is not None:
+                nominal,worse,quality,checked=selected
+                a[k]=nominal[k];b[k]=worse[k]
+                a['clearance'][k]=quality
+                b.setdefault('clearance',{})[k]=quality
+                a['_root_plans'][k]=nominal['plan']
+                a['_root_paths'][k]=(nominal['path'],nominal['path_hit'],nominal['path_unknown'])
+                sequence_checks[k]=dict(nominal=nominal[k],worse=worse[k])
+                a['_root_plans'][k]['delay_checks']=checked
+        a['sequence_checks']=sequence_checks
+    a.pop('_root_results',None)
     a["nominal"] = {k: a[k] for k in SEARCH_KEYS}
     a["worse"] = {k: b[k] for k in SEARCH_KEYS}
     for k in SEARCH_KEYS:
         a[k] = safety_score(a["nominal"][k], b[k])
+    if flight:
+        from flight_control import recovery_hint
+        quality = {k:min(a['clearance'][k],b.get('clearance',a['clearance'])[k]) for k in SEARCH_KEYS}
+        a['flight'] = dict(mode=body.mode,survival={k:a[k] for k in SEARCH_KEYS},clearance=quality,
+                           minimum_clearance={k:min(a['minimum_clearance'][k],b.get('minimum_clearance',a['minimum_clearance'])[k]) for k in SEARCH_KEYS},
+                           buffer=flight_buffer,
+                           nominal={k:a['nominal'][k] for k in SEARCH_KEYS},worse={k:b[k] for k in SEARCH_KEYS})
+        need = lag if delay is None else int(math.ceil(delay/dec_dt-1e-6))
+        queue = list(pending)[-need:] if need > 0 else []
+        queue = [False]*max(0,need-len(queue))+queue
+        margin_floor,margin_ceil = floor,ceil
+        if flight_view is not None:
+            margin_floor = max(floor,flight_view[0]) if floor is not None else flight_view[0]
+            margin_ceil = min(ceil,flight_view[1]) if ceil is not None else flight_view[1]
+        a['flight']['visibility_bounds'] = flight_view
+        a['flight']['visibility_limited'] = a.get('visibility_limited',{})
+        a['flight']['recovery'] = recovery_hint(body,haz,solid,margin_floor,margin_ceil,speed,p,half,flight_buffer,dec_dt,
+                                               queue,delay)
+        if want_path:
+            winner = max(SEARCH_KEYS,key=lambda k:(safety_level(a[k]),
+                         a[k] if safety_level(a[k]) == 0 else 0.,quality[k],a[k]))
+            a['path'],a['path_hit'],a['path_unknown'] = a.pop('_root_paths')[winner]
+            a['plan'] = a.pop('_root_plans')[winner]
+            a['plan']['verified'] = safety_level(a[winner])==2 and not a['path_unknown'] and not a['path_hit']
+            a['flight']['preferred_root'] = winner
+    elif want_path and explicit_plan and '_root_plans' in a:
+        quality={k:min(a['clearance'][k],b.get('clearance',a['clearance'])[k]) for k in SEARCH_KEYS}
+        winner=max(('00','01','1'),key=lambda k:(safety_level(a[k]),
+            a[k] if safety_level(a[k])==0 else 0.,quality[k],a[k]))
+        a['route_clearance']=quality
+        a['path'],a['path_hit'],a['path_unknown']=a.pop('_root_paths')[winner]
+        a['plan']=a.pop('_root_plans')[winner]
+        a['plan']['sequence_safety']=a.get('sequence_checks',{}).get(winner)
+        a['plan']['verified']=safety_level(a[winner])==2 and not a['path_hit'] and not a['path_unknown']
+    elif want_path and a.get('plan'):
+        root=a['plan']['root']
+        a['plan']['verified'] = safety_level(a[root])==2 and not a.get('path_unknown',False) and not a.get('path_hit',False)
     return a
 
 
@@ -1347,6 +1651,7 @@ class ModeEstimator:
 
     def __init__(self, window: int = 20) -> None:
         self.hist: deque = deque(maxlen=window)   # (y_blocks, hold)
+        self._actions: deque = deque(maxlen=window)
         self.mode, self.g, self.mini = "cube", 1, False
         self.conf = 0.0
         self._cand_streak = (None, 0)
@@ -1362,15 +1667,16 @@ class ModeEstimator:
 
     def eff_hold(self, back: int = 0) -> bool:
         """The action that actually drove the motion `back` steps ago (after input delay)."""
-        i = len(self.hist) - 1 - back - self.lag
-        return bool(self.hist[i][1]) if 0 <= i < len(self.hist) else False
+        actions = list(self._actions) if self._actions else [h[1] for h in self.hist]
+        i = len(actions) - 1 - back - self.lag
+        return bool(actions[i]) if 0 <= i < len(actions) else False
 
     def pending(self, n: int | None = None) -> list:
         """Actions already sent that haven't reached the icon yet (oldest first).
         n: how many (default: the measured input delay)."""
         n = self.lag if n is None else int(n)
-        h = list(self.hist)
-        out = [x[1] for x in h[max(0, len(h) - n):]] if n > 0 else []
+        h = list(self._actions) if self._actions else [q[1] for q in self.hist]
+        out = h[max(0, len(h) - n):] if n > 0 else []
         return [0.0] * (n - len(out)) + out
 
     def resting_before(self) -> bool:
@@ -1378,6 +1684,7 @@ class ModeEstimator:
 
     def reset(self) -> None:
         self.hist.clear()
+        self._actions.clear()
         self.mode, self.g, self.mini = "cube", 1, False   # GD attempts start as a normal cube
         self.conf = 0.0
         self._cand_streak = (None, 0)
@@ -1530,7 +1837,15 @@ class ModeEstimator:
             self._lag_votes = (None, 0)
             self._lag_ok += 1
 
+    def missing(self, hold: bool) -> None:
+        """Commands still advance when the icon is not measured. Motion cannot."""
+        self._actions.append(bool(hold))
+        self.hist.clear()
+        self._rest = []
+        self._cand_streak = (None, 0)
+
     def update(self, y: float, hold: bool, dt: float, speed: float, p: Phys) -> None:
+        self._actions.append(bool(hold))
         if self.hist and abs(y - self.hist[-1][0]) > 3.0 and self.mode != "spider" and self._hint != "spider":
             self.hist.clear()          # respawn / camera jump: not motion, start the window fresh
         self.hist.append((y, bool(hold), float(dt)))

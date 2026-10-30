@@ -1,0 +1,3111 @@
+{
+  "snapshot": "logs_boxes/sessions/20261030_003729_222730cd/deaths/death_00002.json",
+  "rows": [
+    {
+      "index": 0,
+      "y": 0.6095406413078308,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 0.9989809269470351
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 9.048699866980314
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 13.909299857914448
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 21.922699874266982
+        }
+      }
+    },
+    {
+      "index": 1,
+      "y": 0.6123360395431519,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9942512691676535,
+            "00": 0.9888428882851917,
+            "01": 1.0
+          },
+          "root": "01",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.688400033861399
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 13.111400185152888
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 20.237900083884597
+        }
+      }
+    },
+    {
+      "index": 2,
+      "y": 0.5940130352973938,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.8851019891332563,
+            "00": 1.0,
+            "01": 0.7822993166515478
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.12199991196394
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.8851019891332563,
+            "00": 1.0,
+            "01": 0.7822993166515478
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 11.731700040400028
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.8851019891332563,
+            "00": 1.0,
+            "01": 0.7822993166515478
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 18.766800174489617
+        }
+      }
+    },
+    {
+      "index": 3,
+      "y": 0.5609339475631714,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7491092505870549,
+            "00": 1.0,
+            "01": 0.9470745032775099
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.427999913692474
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7130968223758856,
+            "00": 1.0,
+            "01": 0.9470745032775099
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 12.246200116351247
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7130968223758856,
+            "00": 1.0,
+            "01": 0.9470745032775099
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 19.367899978533387
+        }
+      }
+    },
+    {
+      "index": 4,
+      "y": 0.5159326791763306,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 0.9507098843861292,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.605500053614378
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 11.951399967074394
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 19.87709989771247
+        }
+      }
+    },
+    {
+      "index": 5,
+      "y": 0.4672815799713135,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9429116437656506,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.952000014483929
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9429116437656506,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 12.344100046902895
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9429116437656506,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 19.559399923309684
+        }
+      }
+    },
+    {
+      "index": 6,
+      "y": 0.43448054790496826,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9969263900390026,
+            "00": 0.9935362878029794,
+            "01": 1.0
+          },
+          "root": "01",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.395999971777201
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9969263900390026,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 11.430199956521392
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9969263900390026,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 18.358099972829223
+        }
+      }
+    },
+    {
+      "index": 7,
+      "y": 0.3993547260761261,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.4886858764890212,
+            "00": 0.9418215911893465,
+            "01": 0.7983258796065675
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 6.619600113481283
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.4886858764890212,
+            "00": 0.9418215911893465,
+            "01": 0.7983258796065675
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 10.499899974092841
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.4886858764890212,
+            "00": 0.9418215911893465,
+            "01": 0.7983258796065675
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 15.169800026342273
+        }
+      }
+    },
+    {
+      "index": 8,
+      "y": 0.3722951412200928,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 0.9949549134316721,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.051599910482764
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 11.508299969136715
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 18.195000011473894
+        }
+      }
+    },
+    {
+      "index": 9,
+      "y": 0.34880346059799194,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.5417426247607332,
+            "00": 1.0,
+            "01": 0.8210293736887692
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 6.135999923571944
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.5442832638772477,
+            "00": 1.0,
+            "01": 0.8242695518814731
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 9.524499997496605
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.5442832638772477,
+            "00": 1.0,
+            "01": 0.8242695518814731
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 15.46070002950728
+        }
+      }
+    },
+    {
+      "index": 10,
+      "y": 0.32737189531326294,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 6.705799838528037
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 10.997100034728646
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 18.230099929496646
+        }
+      }
+    },
+    {
+      "index": 11,
+      "y": 0.3054395318031311,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.2437565818856765,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.6818646847570535,
+            "00": 1.0,
+            "01": 0.7017950551931367
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 5.175200058147311
+        },
+        "12": {
+          "survival": {
+            "1": 0.2437565818856765,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.6818646847570535,
+            "00": 1.0,
+            "01": 0.7057704312320303
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.063799934461713
+        },
+        "24": {
+          "survival": {
+            "1": 0.2437565818856765,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.6818646847570535,
+            "00": 1.0,
+            "01": 0.7057704312320303
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 13.353800168260932
+        }
+      }
+    },
+    {
+      "index": 12,
+      "y": 0.28150415420532227,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 0.9820772371145693
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.1986999828368425
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 11.758900014683604
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 20.004899939522147
+        }
+      }
+    },
+    {
+      "index": 13,
+      "y": 0.2610991299152374,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.20736057628836366,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7061777034793957,
+            "00": 1.0,
+            "01": 0.6322414778595563
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 5.84500003606081
+        },
+        "12": {
+          "survival": {
+            "1": 0.20736057628836366,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7061777034793957,
+            "00": 1.0,
+            "01": 0.6322414778595563
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 10.046199895441532
+        },
+        "24": {
+          "survival": {
+            "1": 0.20736057628836366,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7061777034793957,
+            "00": 1.0,
+            "01": 0.6322414778595563
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 15.212900005280972
+        }
+      }
+    },
+    {
+      "index": 14,
+      "y": 0.23912349343299866,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9070798742361301,
+            "00": 0.9839876041583268,
+            "01": 1.0
+          },
+          "root": "01",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.79619999229908
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9110240136071246,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 13.06180004030466
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9110240136071246,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 22.780200000852346
+        }
+      }
+    },
+    {
+      "index": 15,
+      "y": 0.2082340121269226,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.14217249603922508,
+            "00": 1.0,
+            "01": 0.1664270944145444
+          },
+          "clearance": {
+            "1": 0.7383883301763822,
+            "00": 0.579759546631075,
+            "01": 0.7084388109475057
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": true
+          },
+          "path_unknown": false,
+          "ms": 3.1775999814271927
+        },
+        "12": {
+          "survival": {
+            "1": 0.14217249603922508,
+            "00": 1.0,
+            "01": 0.1664270944145444
+          },
+          "clearance": {
+            "1": 0.7383883301763822,
+            "00": 0.6081714585349294,
+            "01": 0.7084388109475057
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": true
+          },
+          "path_unknown": false,
+          "ms": 4.427500069141388
+        },
+        "24": {
+          "survival": {
+            "1": 0.14217249603922508,
+            "00": 1.0,
+            "01": 0.1664270944145444
+          },
+          "clearance": {
+            "1": 0.7383883301763822,
+            "00": 0.6081714585349294,
+            "01": 0.7084388109475057
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": true
+          },
+          "path_unknown": false,
+          "ms": 7.269800174981356
+        }
+      }
+    },
+    {
+      "index": 16,
+      "y": 0.1860509216785431,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.6022584490426373,
+            "00": 0.9899885630719413,
+            "01": 0.8247880020294543
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.233500178903341
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.6022584490426373,
+            "00": 0.9899885630719413,
+            "01": 0.8475950745779666
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 13.877399964258075
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.6022584490426373,
+            "00": 0.9899885630719413,
+            "01": 0.8475950745779666
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 21.59900008700788
+        }
+      }
+    },
+    {
+      "index": 17,
+      "y": 0.15721435844898224,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.5713361310762093,
+            "00": 0.8875327021994086,
+            "01": 0.7570171560357104
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.336300030350685
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.56103425088883,
+            "00": 0.8875327021994086,
+            "01": 0.7814765647832886
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 13.522099936380982
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.5713361310762093,
+            "00": 0.8875327021994086,
+            "01": 0.7814765647832886
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 22.293899906799197
+        }
+      }
+    },
+    {
+      "index": 18,
+      "y": 0.13456010818481445,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9922132096216693,
+            "00": 0.9413242963236534,
+            "01": 1.0
+          },
+          "root": "01",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.617199957370758
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 14.322200091555715
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 23.304800037294626
+        }
+      }
+    },
+    {
+      "index": 19,
+      "y": 0.12981508672237396,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9969613496456827,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 9.271299932152033
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9969613496456827,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 14.00099997408688
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9969613496456827,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 23.536600172519684
+        }
+      }
+    },
+    {
+      "index": 20,
+      "y": 0.13234956562519073,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9989743306673544,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.443099912256002
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9989743306673544,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 13.924800092354417
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9989743306673544,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 22.842200007289648
+        }
+      }
+    },
+    {
+      "index": 21,
+      "y": 0.1253836750984192,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.1502848692877042,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7626298171518576,
+            "00": 0.769709720109993,
+            "01": 0.5929275449537916
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 6.412300048395991
+        },
+        "12": {
+          "survival": {
+            "1": 0.1502848692877042,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7626298171518576,
+            "00": 0.8490806285336907,
+            "01": 0.6031969493965681
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 9.85109992325306
+        },
+        "24": {
+          "survival": {
+            "1": 0.1502848692877042,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7626298171518576,
+            "00": 0.8490806285336907,
+            "01": 0.6031969493965681
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 16.074199927970767
+        }
+      }
+    },
+    {
+      "index": 22,
+      "y": 0.1199069544672966,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.6706736989794242,
+            "00": 0.9370173130081906,
+            "01": 0.9173128388100558
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.173299953341484
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7306482702468564,
+            "00": 0.9370173130081906,
+            "01": 0.9173128388100558
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 12.23629992455244
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7586227861156184,
+            "00": 0.9370173130081906,
+            "01": 0.9173128388100558
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 19.561899825930595
+        }
+      }
+    },
+    {
+      "index": 23,
+      "y": 0.10832841694355011,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.8398376852798042,
+            "00": 0.9047064252149903,
+            "01": 0.9047064252149903
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.858699886128306
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.8398376852798042,
+            "00": 0.9047064252149903,
+            "01": 0.9047064252149903
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 12.848800048232079
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.8398376852798042,
+            "00": 0.9047064252149903,
+            "01": 0.9047064252149903
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 20.003499928861856
+        }
+      }
+    },
+    {
+      "index": 24,
+      "y": 0.1082003265619278,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9963237407811069,
+            "00": 0.9963237407811069,
+            "01": 0.9631094655359268
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.264500018209219
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9963237407811069,
+            "00": 0.9963237407811069,
+            "01": 0.9963237407811069
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 12.35250011086464
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9963237407811069,
+            "00": 0.9963237407811069,
+            "01": 0.9963237407811069
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 20.52169991657138
+        }
+      }
+    },
+    {
+      "index": 25,
+      "y": 0.11613515019416809,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.449599914252758
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 11.857399949803948
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 20.66819998435676
+        }
+      }
+    },
+    {
+      "index": 26,
+      "y": 0.12941229343414307,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.648499915376306
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 11.51970005594194
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 19.524799892678857
+        }
+      }
+    },
+    {
+      "index": 27,
+      "y": 0.12992705404758453,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7047103188606484,
+            "00": 0.9984486641094695,
+            "01": 0.9305573040570679
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 6.800200091674924
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7047103188606484,
+            "00": 0.9984486641094695,
+            "01": 0.9305573040570679
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 10.550800012424588
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7047103188606484,
+            "00": 0.9984486641094695,
+            "01": 0.9305573040570679
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 18.460800172761083
+        }
+      }
+    },
+    {
+      "index": 28,
+      "y": 0.13703054189682007,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 0.9565712115936191,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 6.8623998668044806
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 11.55940000899136
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 19.512899918481708
+        }
+      }
+    },
+    {
+      "index": 29,
+      "y": 0.13528001308441162,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.20919281697714795,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7053240341803464,
+            "00": 0.9479466902849447,
+            "01": 0.7799337402565913
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 6.286300020292401
+        },
+        "12": {
+          "survival": {
+            "1": 0.20919281697714795,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7053240341803464,
+            "00": 0.943176385128975,
+            "01": 0.7593377733937201
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 10.296100052073598
+        },
+        "24": {
+          "survival": {
+            "1": 0.20919281697714795,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7053240341803464,
+            "00": 0.9723303584372357,
+            "01": 0.7889413731398581
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 17.131000058725476
+        }
+      }
+    },
+    {
+      "index": 30,
+      "y": 0.13392473757266998,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.86939256730127,
+            "00": 0.9677072242989355,
+            "01": 0.9293592294278031
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.260699920356274
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.8684179215919646,
+            "00": 0.9888725043314492,
+            "01": 0.9330519136996277
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 13.172100065276027
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.9415352121405286,
+            "00": 0.9942187531638889,
+            "01": 0.9746982814720886
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 23.0016999412328
+        }
+      }
+    },
+    {
+      "index": 31,
+      "y": 0.12363357096910477,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.141736494033653,
+            "00": 1.0,
+            "01": 0.19552103580847832
+          },
+          "clearance": {
+            "1": 0.6174950267142539,
+            "00": 0.7007141676484451,
+            "01": 0.7242911094843529
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": true
+          },
+          "path_unknown": false,
+          "ms": 5.787299945950508
+        },
+        "12": {
+          "survival": {
+            "1": 0.141736494033653,
+            "00": 1.0,
+            "01": 0.19552103580847832
+          },
+          "clearance": {
+            "1": 0.6115063254883304,
+            "00": 0.7505538394882519,
+            "01": 0.7242911094843529
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": true
+          },
+          "path_unknown": false,
+          "ms": 8.553700055927038
+        },
+        "24": {
+          "survival": {
+            "1": 0.141736494033653,
+            "00": 1.0,
+            "01": 0.19552103580847832
+          },
+          "clearance": {
+            "1": 0.6174950267142539,
+            "00": 0.7479543725070469,
+            "01": 0.7242911094843529
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": false,
+            "01": true
+          },
+          "path_unknown": false,
+          "ms": 12.204500148072839
+        }
+      }
+    },
+    {
+      "index": 32,
+      "y": 0.12069515883922577,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7094581719297357,
+            "00": 0.8781471363460389,
+            "01": 0.8527146150776774
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.14330019056797
+        },
+        "12": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7094581719297357,
+            "00": 0.9351328552503969,
+            "01": 0.8527146150776774
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 13.086799997836351
+        },
+        "24": {
+          "survival": {
+            "1": 1.0,
+            "00": 1.0,
+            "01": 1.0
+          },
+          "clearance": {
+            "1": 0.7103198556642121,
+            "00": 0.8859076212927725,
+            "01": 0.8565539891355468
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 20.505900029093027
+        }
+      }
+    },
+    {
+      "index": 33,
+      "y": 0.10729048401117325,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.3966666666666666,
+            "00": 1.0,
+            "01": 0.3966666666666666
+          },
+          "clearance": {
+            "1": 0.5955316297862951,
+            "00": 0.706511335237663,
+            "01": 0.708854610192919
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 4.6768998727202415
+        },
+        "12": {
+          "survival": {
+            "1": 0.3966666666666666,
+            "00": 1.0,
+            "01": 0.3966666666666666
+          },
+          "clearance": {
+            "1": 0.5955316297862951,
+            "00": 0.7811936096921598,
+            "01": 0.708854610192919
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 6.8981999065726995
+        },
+        "24": {
+          "survival": {
+            "1": 0.3966666666666666,
+            "00": 1.0,
+            "01": 0.3966666666666666
+          },
+          "clearance": {
+            "1": 0.5955316297862951,
+            "00": 0.7811936096921598,
+            "01": 0.708854610192919
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 9.412099840119481
+        }
+      }
+    },
+    {
+      "index": 34,
+      "y": 0.10276039689779282,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.35888888888888887,
+            "00": 1.0,
+            "01": 0.35888888888888887
+          },
+          "clearance": {
+            "1": 0.7621930955557762,
+            "00": 0.799588183031021,
+            "01": 0.798813423913472
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 4.327399889007211
+        },
+        "12": {
+          "survival": {
+            "1": 0.35888888888888887,
+            "00": 1.0,
+            "01": 0.35888888888888887
+          },
+          "clearance": {
+            "1": 0.7621930955557762,
+            "00": 0.799588183031021,
+            "01": 0.798813423913472
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 5.770700052380562
+        },
+        "24": {
+          "survival": {
+            "1": 0.35888888888888887,
+            "00": 1.0,
+            "01": 0.35888888888888887
+          },
+          "clearance": {
+            "1": 0.7621930955557762,
+            "00": 0.8678688939177026,
+            "01": 0.798813423913472
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 7.975599961355329
+        }
+      }
+    },
+    {
+      "index": 35,
+      "y": 0.10426152497529984,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.32111111111111107,
+            "00": 1.0,
+            "01": 0.32111111111111107
+          },
+          "clearance": {
+            "1": 0.6735822216082764,
+            "00": 0.7832684486905827,
+            "01": 0.7250642940369341
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 4.233100218698382
+        },
+        "12": {
+          "survival": {
+            "1": 0.32111111111111107,
+            "00": 1.0,
+            "01": 0.32111111111111107
+          },
+          "clearance": {
+            "1": 0.6735822216082764,
+            "00": 0.7646948985936926,
+            "01": 0.7250642940369341
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 5.548699991777539
+        },
+        "24": {
+          "survival": {
+            "1": 0.32111111111111107,
+            "00": 1.0,
+            "01": 0.32111111111111107
+          },
+          "clearance": {
+            "1": 0.6735822216082764,
+            "00": 0.7832684486905827,
+            "01": 0.7250642940369341
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 8.414199808612466
+        }
+      }
+    },
+    {
+      "index": 36,
+      "y": 0.08906657248735428,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.26562688449050825,
+            "00": 0.26562688449050825,
+            "01": 0.26562688449050825
+          },
+          "clearance": {
+            "1": 0.4592516207295323,
+            "00": 0.5466993291278905,
+            "01": 0.5437353054194727
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.6826999597251415
+        },
+        "12": {
+          "survival": {
+            "1": 0.26562688449050825,
+            "00": 0.26562688449050825,
+            "01": 0.26562688449050825
+          },
+          "clearance": {
+            "1": 0.4592516207295323,
+            "00": 0.5466993291278905,
+            "01": 0.5437353054194727
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.6712998729199171
+        },
+        "24": {
+          "survival": {
+            "1": 0.26562688449050825,
+            "00": 0.26562688449050825,
+            "01": 0.26562688449050825
+          },
+          "clearance": {
+            "1": 0.4592516207295323,
+            "00": 0.5466993291278905,
+            "01": 0.5437353054194727
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.6559998728334904
+        }
+      }
+    },
+    {
+      "index": 37,
+      "y": 0.08967327326536179,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.22239525922025072,
+            "00": 0.22239525922025072,
+            "01": 0.22239525922025072
+          },
+          "clearance": {
+            "1": 0.7444459605821081,
+            "00": 0.7444607099130398,
+            "01": 0.7444459605821081
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.5469999741762877
+        },
+        "12": {
+          "survival": {
+            "1": 0.22239525922025072,
+            "00": 0.22239525922025072,
+            "01": 0.22239525922025072
+          },
+          "clearance": {
+            "1": 0.7444459605821081,
+            "00": 0.7444607099130398,
+            "01": 0.7444459605821081
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.5291998386383057
+        },
+        "24": {
+          "survival": {
+            "1": 0.22239525922025072,
+            "00": 0.22239525922025072,
+            "01": 0.22239525922025072
+          },
+          "clearance": {
+            "1": 0.7444459605821081,
+            "00": 0.7444607099130398,
+            "01": 0.7444459605821081
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.5254000425338745
+        }
+      }
+    },
+    {
+      "index": 38,
+      "y": 0.10170838981866837,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.19730421252057156,
+            "00": 0.19730421252057156,
+            "01": 0.19730421252057156
+          },
+          "clearance": {
+            "1": 0.7130991255173731,
+            "00": 0.7470968753287164,
+            "01": 0.7470968753287164
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.4206998273730278
+        },
+        "12": {
+          "survival": {
+            "1": 0.19730421252057156,
+            "00": 0.19730421252057156,
+            "01": 0.19730421252057156
+          },
+          "clearance": {
+            "1": 0.7130991255173731,
+            "00": 0.7470968753287164,
+            "01": 0.7470968753287164
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.42440020479261875
+        },
+        "24": {
+          "survival": {
+            "1": 0.19730421252057156,
+            "00": 0.19730421252057156,
+            "01": 0.19730421252057156
+          },
+          "clearance": {
+            "1": 0.7130991255173731,
+            "00": 0.7470968753287164,
+            "01": 0.7470968753287164
+          },
+          "root": "00",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.4176998045295477
+        }
+      }
+    },
+    {
+      "index": 39,
+      "y": 0.1070486307144165,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.09845300281179327,
+            "00": 0.10640594961970519,
+            "01": 0.10640594961970519
+          },
+          "clearance": {
+            "1": 0.7378774970714749,
+            "00": 0.7378774970714749,
+            "01": 0.7378774970714749
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.24940003640949726
+        },
+        "12": {
+          "survival": {
+            "1": 0.09845300281179327,
+            "00": 0.10640594961970519,
+            "01": 0.10640594961970519
+          },
+          "clearance": {
+            "1": 0.7378774970714749,
+            "00": 0.7378774970714749,
+            "01": 0.7378774970714749
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.24850014597177505
+        },
+        "24": {
+          "survival": {
+            "1": 0.09845300281179327,
+            "00": 0.10640594961970519,
+            "01": 0.10640594961970519
+          },
+          "clearance": {
+            "1": 0.7378774970714749,
+            "00": 0.7378774970714749,
+            "01": 0.7378774970714749
+          },
+          "root": "00",
+          "action_if_brain_press": 0,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.26919995434582233
+        }
+      }
+    },
+    {
+      "index": 40,
+      "y": 0.09646046906709671,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.054160237325718306,
+            "00": 0.054160237325718306,
+            "01": 0.054160237325718306
+          },
+          "clearance": {
+            "1": 0.808474056888443,
+            "00": 0.808474056888443,
+            "01": 0.808474056888443
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.341199804097414
+        },
+        "12": {
+          "survival": {
+            "1": 0.054160237325718306,
+            "00": 0.054160237325718306,
+            "01": 0.054160237325718306
+          },
+          "clearance": {
+            "1": 0.808474056888443,
+            "00": 0.808474056888443,
+            "01": 0.808474056888443
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.21289987489581108
+        },
+        "24": {
+          "survival": {
+            "1": 0.054160237325718306,
+            "00": 0.054160237325718306,
+            "01": 0.054160237325718306
+          },
+          "clearance": {
+            "1": 0.808474056888443,
+            "00": 0.808474056888443,
+            "01": 0.808474056888443
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.17010001465678215
+        }
+      }
+    },
+    {
+      "index": 41,
+      "y": 0.08722381293773651,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.054712725155217835,
+            "00": 0.054712725155217835,
+            "01": 0.054712725155217835
+          },
+          "clearance": {
+            "1": 0.8130812547077033,
+            "00": 0.8130812547077033,
+            "01": 0.8130812547077033
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.1775999553501606
+        },
+        "12": {
+          "survival": {
+            "1": 0.054712725155217835,
+            "00": 0.054712725155217835,
+            "01": 0.054712725155217835
+          },
+          "clearance": {
+            "1": 0.8130812547077033,
+            "00": 0.8130812547077033,
+            "01": 0.8130812547077033
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.16819988377392292
+        },
+        "24": {
+          "survival": {
+            "1": 0.054712725155217835,
+            "00": 0.054712725155217835,
+            "01": 0.054712725155217835
+          },
+          "clearance": {
+            "1": 0.8130812547077033,
+            "00": 0.8130812547077033,
+            "01": 0.8130812547077033
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.16700010746717453
+        }
+      }
+    },
+    {
+      "index": 42,
+      "y": 0.08723517507314682,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.06569057534144328,
+            "00": 0.06569057534144328,
+            "01": 0.06569057534144328
+          },
+          "clearance": {
+            "1": 0.7664449781190058,
+            "00": 0.7664449781190058,
+            "01": 0.7664449781190058
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.20749983377754688
+        },
+        "12": {
+          "survival": {
+            "1": 0.06569057534144328,
+            "00": 0.06569057534144328,
+            "01": 0.06569057534144328
+          },
+          "clearance": {
+            "1": 0.7664449781190058,
+            "00": 0.7664449781190058,
+            "01": 0.7664449781190058
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.20100013352930546
+        },
+        "24": {
+          "survival": {
+            "1": 0.06569057534144328,
+            "00": 0.06569057534144328,
+            "01": 0.06569057534144328
+          },
+          "clearance": {
+            "1": 0.7664449781190058,
+            "00": 0.7664449781190058,
+            "01": 0.7664449781190058
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": true,
+            "00": true,
+            "01": true
+          },
+          "path_unknown": true,
+          "ms": 0.2758000046014786
+        }
+      }
+    },
+    {
+      "index": 43,
+      "y": 0.08714171499013901,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.03628796622765704,
+            "00": 0.03628796622765704,
+            "01": 0.03628796622765704
+          },
+          "clearance": {
+            "1": 0.8761565397013651,
+            "00": 0.8761565397013651,
+            "01": 0.8761565397013651
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.1737999264150858
+        },
+        "12": {
+          "survival": {
+            "1": 0.03628796622765704,
+            "00": 0.03628796622765704,
+            "01": 0.03628796622765704
+          },
+          "clearance": {
+            "1": 0.8761565397013651,
+            "00": 0.8761565397013651,
+            "01": 0.8761565397013651
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.16440008766949177
+        },
+        "24": {
+          "survival": {
+            "1": 0.03628796622765704,
+            "00": 0.03628796622765704,
+            "01": 0.03628796622765704
+          },
+          "clearance": {
+            "1": 0.8761565397013651,
+            "00": 0.8761565397013651,
+            "01": 0.8761565397013651
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.156699912622571
+        }
+      }
+    },
+    {
+      "index": 44,
+      "y": 0.09440672397613525,
+      "results": {
+        "6": {
+          "survival": {
+            "1": 0.03519388660963753,
+            "00": 0.03519388660963753,
+            "01": 0.03519388660963753
+          },
+          "clearance": {
+            "1": 0.8770707819908916,
+            "00": 0.8770707819908916,
+            "01": 0.8770707819908916
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.16240007244050503
+        },
+        "12": {
+          "survival": {
+            "1": 0.03519388660963753,
+            "00": 0.03519388660963753,
+            "01": 0.03519388660963753
+          },
+          "clearance": {
+            "1": 0.8770707819908916,
+            "00": 0.8770707819908916,
+            "01": 0.8770707819908916
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.2620001323521137
+        },
+        "24": {
+          "survival": {
+            "1": 0.03519388660963753,
+            "00": 0.03519388660963753,
+            "01": 0.03519388660963753
+          },
+          "clearance": {
+            "1": 0.8770707819908916,
+            "00": 0.8770707819908916,
+            "01": 0.8770707819908916
+          },
+          "root": "1",
+          "action_if_brain_press": 1,
+          "visibility_limited": {
+            "1": false,
+            "00": false,
+            "01": false
+          },
+          "path_unknown": false,
+          "ms": 0.15580002218484879
+        }
+      }
+    }
+  ],
+  "limitation": "Observation replay, not a game rollout. Old snapshots omit alternate pending inputs and portal types; those use planner defaults."
+}

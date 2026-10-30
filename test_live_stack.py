@@ -132,7 +132,7 @@ def main() -> int:
                                 route=False))   # (route memory is tested on its own)
     tr.run()
     import csv
-    rows = list(csv.DictReader(open(os.path.join(d, "attempts.csv"))))
+    rows = list(csv.DictReader(open(tr._csv_path)))
     meas = sum(1 for r in rows if r["lag_src"] == "measured")
     peaks = [float(r["peak_pct"]) for r in rows]
     n_esc = sum(1 for k, v in KEYS.events if k == "down" and v == "esc")

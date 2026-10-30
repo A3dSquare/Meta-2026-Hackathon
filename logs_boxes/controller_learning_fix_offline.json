@@ -1,0 +1,55 @@
+{
+  "promoted": false,
+  "modes": {
+    "cube": {
+      "incumbent": {
+        "n": 500,
+        "labels": 95,
+        "accuracy": 1.0,
+        "position_rmse": 0.8835574388504028,
+        "velocity_rmse": 7.36403226852417,
+        "position_p95": 1.88522469997406,
+        "velocity_p95": 15.347773551940918,
+        "interval_velocity_rmse": 9.06326675415039,
+        "action_label_counts": [
+          95,
+          0
+        ],
+        "action_recall": [
+          1.0,
+          null
+        ],
+        "unsafe_rate": 0.0020000000949949026,
+        "td_error": 0.9369141459465027,
+        "motion_samples": 1687
+      },
+      "candidate": {
+        "n": 500,
+        "labels": 95,
+        "accuracy": 1.0,
+        "position_rmse": 0.25053682923316956,
+        "velocity_rmse": 2.4653892517089844,
+        "position_p95": 0.5354254245758057,
+        "velocity_p95": 4.810207843780518,
+        "interval_velocity_rmse": 3.962170124053955,
+        "action_label_counts": [
+          95,
+          0
+        ],
+        "action_recall": [
+          1.0,
+          null
+        ],
+        "unsafe_rate": 0.0020000000949949026,
+        "td_error": 1.146118402481079,
+        "motion_samples": 1687
+      },
+      "passed": false,
+      "motion_verified": true,
+      "balanced_action_supervision": false
+    }
+  },
+  "reason": "candidate did not pass all incumbent protection checks",
+  "trusted_modes": [],
+  "limitation": "Offline held-out metrics only; deployment also requires the frozen live comparison. No weights were saved."
+}

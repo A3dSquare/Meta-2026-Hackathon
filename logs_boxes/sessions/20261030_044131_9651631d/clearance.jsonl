@@ -1,0 +1,3 @@
+{"time": 1793353292.5582848, "session_id": "20261030_044131_9651631d", "attempt": 1, "tag": "", "tail_steps": 1, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}
+{"time": 1793353295.2139492, "session_id": "20261030_044131_9651631d", "attempt": 2, "tag": "", "tail_steps": 48, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}
+{"time": 1793353299.339942, "session_id": "20261030_044131_9651631d", "attempt": 3, "tag": "", "tail_steps": 81, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}

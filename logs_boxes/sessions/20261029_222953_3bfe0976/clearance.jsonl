@@ -1,0 +1,5 @@
+{"time": 1793330994.8968828, "session_id": "20261029_222953_3bfe0976", "attempt": 1, "tag": "", "tail_steps": 4, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}
+{"time": 1793331000.7078805, "session_id": "20261029_222953_3bfe0976", "attempt": 2, "tag": "", "tail_steps": 106, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}
+{"time": 1793331010.4335158, "session_id": "20261029_222953_3bfe0976", "attempt": 3, "tag": "", "tail_steps": 179, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}
+{"time": 1793331053.3737621, "session_id": "20261029_222953_3bfe0976", "attempt": 4, "tag": "", "tail_steps": 712, "weight": 0.05, "tail_shaping_sum": -0.031000000000000028, "terminal_phi": 0.0, "tail_potential_mean": 0.0021769662921348326}
+{"time": 1793331063.6229637, "session_id": "20261029_222953_3bfe0976", "attempt": 5, "tag": "", "tail_steps": 38, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}

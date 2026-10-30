@@ -1,0 +1,30 @@
+...............................................................................
+[input] in a level: inputs on
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmps7ekjgsv\sessions\20261030_032016_0aff2c39
+----------------------------------------------------------------------
+[session] detector fingerprint unavailable: OSError: test read failure; continuing
+Ran 79 tests in 2.708s
+
+OK
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmps7ekjgsv\sessions\20261030_032016_85c09cbc
+[input] Geometry Dash was NOT the active window -- SPACE was going to another window. Brought GD back to the front.
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpexpyjx49\sessions\20261030_032016_ea643502
+[yolo] TensorRT engine on the GPU (NVIDIA GeForce RTX 5070 Ti)
+[yolo] model.pt on the CPU -- slow!
+[yolo] D:\Coding Projects\Meta 2026 Hackathon\tmpben23qrk\model.engine is older than D:\Coding Projects\Meta 2026 Hackathon\tmpben23qrk\model.pt (retrained since): using the .pt -- re-run --export
+[yolo] model.pt on the GPU (NVIDIA GeForce RTX 5070 Ti)
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpjrbwq605\sessions\20261030_032017_0edb84bc
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp01ojk1t1\sessions\20261030_032017_3a9b0539
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp_13s00q1\sessions\20261030_032017_52d65739
+saved D:\Coding Projects\Meta 2026 Hackathon\tmp_13s00q1\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpethkwtnr\sessions\20261030_032017_7259e186
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp91eck2wa\sessions\20261030_032017_27f4810c
+saved D:\Coding Projects\Meta 2026 Hackathon\tmp91eck2wa\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp71r5iv6s\sessions\20261030_032017_c144422a
+saved D:\Coding Projects\Meta 2026 Hackathon\tmp71r5iv6s\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpgnga23k2\sessions\20261030_032017_f978cd9f
+saved D:\Coding Projects\Meta 2026 Hackathon\tmpgnga23k2\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpcm5tobek\sessions\20261030_032017_55b9eb49
+--play: the brain wasn't changed (nothing saved); the route memory is in ./routes
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpe0z1jsbl\sessions\20261030_032019_2f8bb39c
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpno4dc6xb\sessions\20261030_032019_4aa6e01c

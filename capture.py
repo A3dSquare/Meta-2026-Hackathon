@@ -64,6 +64,9 @@ class CaptureConfig:
     region: Optional[Region] = None
     output_idx: int = 0  # primary monitor
     max_buffer_len: int = 8
+    prefetch: bool = False  # experimental: Python-heavy search can starve the extra reader
+    prefetch_wait_s: float = 0.  # polling never invokes coarse Windows condition timeouts
+    max_frame_age_s: float = .1  # an old buffered frame is a drop, not a fresh observation
     # INTER_AREA is best for downscale quality; INTER_LINEAR is ~2x faster.
     # At 320x180 both are <<1ms, so keep quality by default.
     interpolation: int = cv2.INTER_AREA
@@ -88,6 +91,10 @@ class GDCapture:
         self._period_s: float = 1.0 / float(self.cfg.target_fps)
         self._period_ns: int = int(round(1e9 / float(self.cfg.target_fps)))
         self._camera = None
+        self._mailbox = None
+        self._clock = None
+        self._prefetch_aligned = False
+        self.profile = None
         self.last_frame_ts: float | None = None   # when the newest frame was shown (seconds)
         self._ts_mode: str | None = None          # "dxcam" (exact) / "none" (arrival times)
         self._bgr_direct: bool = True  # True once we confirm native BGR path
@@ -128,6 +135,7 @@ class GDCapture:
         return np.uint8
 
     def _create_and_start(self) -> None:
+        self._prefetch_aligned = False
         create_kwargs: dict = dict(
             output_idx=self.cfg.output_idx,
             output_color="BGR",  # native DXGI order; swap to RGB in place
@@ -151,6 +159,25 @@ class GDCapture:
                 self._camera.start(**start_kwargs)
         else:
             self._camera.start(**start_kwargs)
+        if self.cfg.prefetch:
+            from frame_mailbox import FrameMailbox
+            camera = self._camera
+            # get_latest_frame returns an owned copy by default. Preserve
+            # that ownership and its paired timestamp across this handoff.
+            self._mailbox = FrameMailbox(lambda: self._latest_with_time(camera)).start()
+
+    def _stop_camera(self):
+        """Stop the producer before replacing its camera; never reuse its queue."""
+        mailbox, self._mailbox = self._mailbox, None
+        if mailbox is not None:
+            mailbox.request_stop()
+        try:
+            if self._camera is not None:
+                self._camera.stop()  # unblocks get_latest_frame in the reader
+        finally:
+            self._camera = None
+            if mailbox is not None:
+                mailbox.join()
 
     def start(self) -> "GDCapture":
         """Create the DXGI duplicator and begin background capture."""
@@ -185,10 +212,9 @@ class GDCapture:
         try:
             if self._camera is not None:
                 try:
-                    self._camera.stop()
+                    self._stop_camera()
                 except Exception:  # noqa: BLE001 - best effort teardown
                     pass
-                self._camera = None
             time.sleep(self.cfg.restart_backoff_s)
             self._create_and_start()
             self._consec_none = 0
@@ -206,12 +232,13 @@ class GDCapture:
 
     def stop(self) -> None:
         with self._lock:
-            if self._camera is not None:
-                try:
-                    self._camera.stop()
-                finally:
-                    self._camera = None
-            self._running = False
+            try:
+                self._stop_camera()
+            finally:
+                self._running = False
+                if self._clock is not None:
+                    self._clock.close()
+                    self._clock = None
 
     @property
     def tick(self) -> int:
@@ -278,6 +305,9 @@ class GDCapture:
             "lat_max_ms": float(lat.max()),
             "stale_s": (time.perf_counter() - self._last_good_ts) if self._last_good_ts else 0.0,
             "bgr_direct": self._bgr_direct,
+            "prefetch": self.cfg.prefetch,
+            "reader_alive": self._mailbox.alive if self._mailbox is not None else False,
+            "high_resolution_pacing": self._clock.high_resolution if self._clock is not None else False,
             "gray_direct": self._bgr_direct,  # back-compat alias for old tests
             "obs_shape": self.obs_shape,
         }
@@ -312,9 +342,14 @@ class GDCapture:
         remaining_ns = target_ns - now
         missed = 0
         if remaining_ns > 0:
-            # Coarse sleep for most of it, spin for the last ~1.5ms.
-            if remaining_ns > 1_500_000:
-                time.sleep((remaining_ns - 1_000_000) / 1e9)
+            if self._clock is None:
+                from capture_clock import CaptureClock
+                self._clock = CaptureClock()
+            # Python 3.10's coarse Windows sleep can overshoot an entire
+            # frame. Use a private high-resolution timer where available.
+            margin = 250_000 if self._clock.high_resolution else 1_000_000
+            if remaining_ns > margin+250_000:
+                self._clock.sleep((remaining_ns-margin)/1e9)
             while time.perf_counter_ns() < target_ns:
                 pass
         else:
@@ -410,7 +445,7 @@ class GDCapture:
                 out[N - self._filled + i] = f
             return out
         idx = [(self._ptr + i) % N for i in range(N)]  # oldest first
-        return self._stack[idx].copy()  # fancy index already copies; .copy() makes it contiguous
+        return self._stack[idx]  # advanced indexing already returns an owned contiguous copy
 
     # ------------------------------------------------------------------ #
     def read(self) -> np.ndarray:
@@ -433,9 +468,30 @@ class GDCapture:
             raise RuntimeError("GDCapture.read() called before start()")
         t_in = time.perf_counter()
         missed = self._throttle_to_fps_cap()
-        self.wait_s = getattr(self, "wait_s", 0.0) + (time.perf_counter() - t_in)   # idle: waiting for the frame
+        t_fetch = time.perf_counter()
+        self.wait_s = getattr(self, "wait_s", 0.0) + (t_fetch - t_in)
+        if self.profile is not None:
+            self.profile.add('capture_pacing',t_fetch-t_in)
         try:
-            frame, ts = self._latest_with_time()
+            frame, ts = (self._mailbox.take(self.cfg.prefetch_wait_s) if self._mailbox is not None
+                         else self._latest_with_time())
+            if self.profile is not None:
+                self.profile.add('capture_fetch',time.perf_counter()-t_fetch)
+            # Timestamp domains differ on old backends; only use age when
+            # the timestamp demonstrably belongs to perf_counter's clock.
+            age = time.perf_counter()-ts if ts is not None else None
+            if age is not None and 0 <= age < 10.:
+                if self.profile is not None:
+                    self.profile.add('capture_frame_age',age)
+                if age > self.cfg.max_frame_age_s:
+                    frame = None
+            if frame is not None and self._mailbox is not None and not self._prefetch_aligned:
+                # Phase the consumer just after frame publication, instead
+                # of sampling just BEFORE each fresh frame for the whole run.
+                arrival = self._mailbox.last_arrival
+                if arrival is not None:
+                    self._next_tick_ns = int((arrival+self._period_s+.001)*1e9)
+                    self._prefetch_aligned = True
         except Exception:  # noqa: BLE001 - DXGI lost device etc.
             with self._lock:
                 self._restart_locked("get_latest_frame raised")
@@ -460,8 +516,11 @@ class GDCapture:
             self._lat_ms.append((time.perf_counter() - t_in) * 1000.0)
             return self._stacked_obs()
         try:
+            t_resize = time.perf_counter()
             self._hires_next = None
             small = self._to_rgb_small(frame)
+            if self.profile is not None:
+                self.profile.add('capture_resize',time.perf_counter()-t_resize)
         except Exception:  # noqa: BLE001 - corrupt frame; keep last obs
             log.warning("dropping corrupt frame shape=%s", getattr(frame, "shape", "?"))
             self._note_tick(missed, fresh=False)
@@ -478,14 +537,15 @@ class GDCapture:
         self._lat_ms.append((time.perf_counter() - t_in) * 1000.0)
         return obs
 
-    def _latest_with_time(self):
+    def _latest_with_time(self, camera=None):
         """(frame, seconds) -- when the game put that frame on screen if dxcam can tell
         (0.3+: get_latest_frame(with_timestamp=True)), else when we received it. Motion is
         measured over the real time between two frames: the newest frame is up to a frame
         older or newer than our decision tick, which made measured speeds wobble ~20%."""
+        camera = self._camera if camera is None else camera
         if getattr(self, "_ts_mode", None) != "none":
             try:
-                got = self._camera.get_latest_frame(with_timestamp=True)
+                got = camera.get_latest_frame(with_timestamp=True)
                 if isinstance(got, tuple) and len(got) == 2:
                     frame, ts = got
                     if ts is not None and float(ts) > 0:
@@ -498,7 +558,7 @@ class GDCapture:
             except TypeError:
                 self._ts_mode = "none"       # older dxcam: no timestamps
                 log.info("frame times: dxcam has none, using arrival times")
-        return self._camera.get_latest_frame(), time.perf_counter()
+        return camera.get_latest_frame(), time.perf_counter()
 
     def _note_tick(self, missed: int, *, fresh: bool) -> None:
         """Exact accounting, one read() = exactly one tick.

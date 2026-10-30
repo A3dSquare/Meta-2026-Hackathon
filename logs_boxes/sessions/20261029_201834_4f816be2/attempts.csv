@@ -1,0 +1,11 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793323117.0,1,30,9,3.0,21,measured,0,,"unknown, blue line wrong",20261029_201834_4f816be2
+1793323122.8,2,182,126,5.0,26,measured,0,,"spike, trapped",20261029_201834_4f816be2
+1793323137.3,3,502,286,14.0,34,measured,0,,"unknown, trapped (shield acted)",20261029_201834_4f816be2
+1793323163.5,4,962,432,22.0,28,measured,1,,"spike, chose wrong",20261029_201834_4f816be2
+1793323202.3,5,1662,674,36.0,26,median,2,,"unknown, blue line wrong",20261029_201834_4f816be2
+1793323224.6,6,2012,323,16.0,27,median,3,,"block side, trapped",20261029_201834_4f816be2
+1793323246.0,7,2368,328,16.0,28,median,4,,"unknown, chose wrong",20261029_201834_4f816be2
+1793323284.3,8,3088,693,34.0,27,median,5,,"spike, chose wrong",20261029_201834_4f816be2
+1793323302.1,9,3328,212,10.0,28,median,6,,"spike, chose wrong",20261029_201834_4f816be2
+1793323321.4,10,3650,293,14.0,29,median,7,,"head hit, trapped",20261029_201834_4f816be2

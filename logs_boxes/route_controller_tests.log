@@ -1,0 +1,15 @@
+======================================================================
+FAIL: test_teacher_requires_matching_observed_motion_after_delay (test_route_controller.ReplayTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Coding Projects\Meta 2026 Hackathon\test_route_controller.py", line 83, in test_teacher_requires_matching_observed_motion_after_delay
+    self.assertEqual(first['teacher'],-1)
+AssertionError: 1 != -1
+
+----------------------------------------------------------------------
+Ran 21 tests in 2.014s
+
+FAILED (failures=1)
+[controller] imported legacy encoder; new route inputs, mode heads and motion model train separately
+[session] C:\Users\mysou\AppData\Local\Temp\tmp9t1th1uo\sessions\20261030_041021_fede1570
+saved C:\Users\mysou\AppData\Local\Temp\tmp9t1th1uo\route_controller.pt

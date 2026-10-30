@@ -127,7 +127,7 @@ class GDInput:
     behavior (plus SPACE hold/release change-only).
     """
 
-    def __init__(self, key: str = DEFAULT_KEY, backend: Any | None = None) -> None:
+    def __init__(self, key: str = DEFAULT_KEY, backend: Any | None = None, state_reader=None) -> None:
         self.key: str = key
         self._backend: Any = backend if backend is not None else pydirectinput
         self._held: bool = False
@@ -136,6 +136,24 @@ class GDInput:
         self._changes: int = 0  # transitions (downs + ups)
         self._steps: int = 0  # set()/step() calls
         self._closed: bool = False
+        self._resends = 0
+        self._state_reader = state_reader
+        # Fake backends must supply their own state reader.
+        if state_reader is None and backend is None and key == 'space' and getattr(pydirectinput, '__file__', None):
+            try:
+                import ctypes
+                query = ctypes.windll.user32.GetAsyncKeyState
+                self._state_reader = lambda: bool(query(0x20) & 0x8000)
+            except (AttributeError, OSError):
+                pass
+
+    def key_state(self):
+        """OS keyboard state, not an acknowledgement from the game."""
+        try:
+            state = self._state_reader() if self._state_reader is not None else None
+            return None if state is None else bool(state)
+        except Exception:
+            return None
 
     # ------------------------------------------------------------------ #
     @property
@@ -154,6 +172,7 @@ class GDInput:
             "ups": self._ups,
             "changes": self._changes,
             "closed": self._closed,
+            "resends": self._resends, "os_key_down": self.key_state(),
         }
 
     def set(self, hold: bool) -> bool:
@@ -164,7 +183,14 @@ class GDInput:
         """
         want = bool(hold)
         self._steps += 1
-        if want == self._held or self._closed:
+        if self._closed:
+            return False
+        if want == self._held:
+            if want and self._steps % 6 == 0 and self.key_state() is False:
+                self._backend.keyDown(self.key)
+                self._downs += 1
+                self._resends += 1
+                return True
             return False
         if want:
             self._backend.keyDown(self.key)
@@ -507,17 +533,19 @@ class ProgressReward:
         img = np.asarray(obs_rgb)
         if img.ndim == 4:
             img = img[-1]
+        h, w = img.shape[:2]
+        y0, y1 = int(h * self.cfg.banner_y0), int(h * self.cfg.banner_y1)
+        x0, x1 = int(w * self.cfg.banner_x0), int(w * self.cfg.banner_x1)
+        # Only this band is used. Reducing all 320x180 pixels first was
+        # needless work twice per decision; cropping first is identical.
+        img = img[y0:y1,x0:x1]
         if img.ndim == 3:
             mx = img.max(axis=2).astype(np.float32)
             mn = img.min(axis=2).astype(np.float32)
         else:
             mx = img.astype(np.float32)
             mn = mx
-        h, w = mx.shape[:2]
-        y0, y1 = int(h * self.cfg.banner_y0), int(h * self.cfg.banner_y1)
-        x0, x1 = int(w * self.cfg.banner_x0), int(w * self.cfg.banner_x1)
-        crop_max = mx[y0:y1, x0:x1]
-        crop_min = mn[y0:y1, x0:x1]
+        crop_max, crop_min = mx, mn
         if crop_max.size == 0:
             return False, 0.0
         white = (crop_max >= 200) & ((crop_max - crop_min) <= 40)

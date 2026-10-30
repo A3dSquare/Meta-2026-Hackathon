@@ -18,7 +18,7 @@ gets ESC; click back into GD within 2 s after unpausing).
 
 Console per attempt:   [attempt N] died after 3.4s peak=12% best=18% (cut 31 post-crash steps, measured)
 Console per update:    [update N] after death: grad_steps=.. loss=.. q=.. eps=..
-Learning curve: logs_boxes/attempts.csv (one row per attempt).
+Learning curve: logs_boxes/sessions/<session>/attempts.csv (one row per attempt).
 """
 from __future__ import annotations
 
@@ -41,6 +41,10 @@ class _Env:
         self.last_frame = env.last_frame
         self.last_ents = env.last_ents
         self.last_arcs = list(getattr(env, "last_arcs", []) or [])
+        search=getattr(env,'_last_search',None) or {}
+        self._last_search=dict(path_unknown=bool(search.get('path_unknown')),path_hit=bool(search.get('path_hit')),
+                               plan=dict(search.get('plan') or {}))
+        self._dbg=dict(getattr(env,'_dbg',None) or {})
         self._lines = getattr(env, "_lines", None)
         me = getattr(env, "mode_est", None)
         self.mode_est = None if me is None else type("ME", (), {"mode": me.mode, "mini": me.mini, "g": me.g,
@@ -56,10 +60,18 @@ class _Env:
 class _Tr:
     def __init__(self, tr) -> None:
         try:
-            self._ph = float(tr.hold_prob(tr._last_obs))
+            # Display the Q values that produced the action shown in this
+            # snapshot. Re-running the network on the next frame here adds
+            # CPU work to the decision loop just to draw an urge bar.
+            q=getattr(tr,'last_q',None)
+            if q is not None and len(q)==2 and np.isfinite(q).all():
+                self._ph=float(1./(1.+np.exp(float(np.clip(q[0]-q[1],-60.,60.)))))
+            else:self._ph = float(tr.hold_prob(tr._last_obs))
         except Exception:
             self._ph = 0.0
         self.attempts, self.best_prog, self.updates = tr.attempts, tr.best_prog, tr.updates
+        self.route_controller=bool(getattr(tr.cfg,'route_controller',False))
+        self._last_obs=None  # hold_prob uses the scalar captured above
         try:
             self._eps = float(tr.learner.epsilon())
         except Exception:
@@ -104,7 +116,10 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
     try:
         from env_boxes import BLOCK_W, BLOCK_H
         ppx, ppy = ents.player_pos()
-        for name, hit, pts in getattr(env, "last_arcs", []):
+        # A missing player has no measured origin for these relative paths.
+        # Drawing at Entities.player_pos()'s default invents a tall falling arc.
+        arcs=getattr(env,'last_arcs',[]) if ents.player() is not None else []
+        for name, hit, pts in arcs:
             # (green "tap now" / yellow "tap in 4" are no longer drawn: the shield goes by the
             # cyan search line; the brain still gets those plans as inputs)
             if name not in ("release", "hold", "best") or len(pts) < 2:
@@ -160,9 +175,32 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
            f"{'MOVING' if info.get('moving') else 'FROZEN'}  upd {tr.updates}")
     cv2.rectangle(img, (0, 0), (W, 22), (0, 0, 0), -1)
     cv2.putText(img, txt, (6, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+    if getattr(tr,'route_controller',False):
+        search=getattr(env,'_last_search',None) or {}
+        plan=search.get('plan') or {}
+        role=(getattr(env,'_dbg',None) or {}).get('controller_role','planner bootstrap')
+        status=prediction_status(search,pl is not None)
+        cv2.putText(img,f'Cyan: predicted plan ({status}); control: {role}',(20,H-8),
+                    cv2.FONT_HERSHEY_SIMPLEX,.38,(255,255,0),1)
+    elif me is not None and me.mode in ('ship','wave'):
+        search=getattr(env,'_last_search',None) or {}
+        status='view limit: continuation unverified' if search.get('path_unknown') else 'best planned route; future inputs may change'
+        cv2.putText(img,'Cyan: '+status,(20,H-8),cv2.FONT_HERSHEY_SIMPLEX,.4,(255,255,0),1)
     if scale != 1.0:
         img = cv2.resize(img, (int(W * scale), int(H * scale)), interpolation=cv2.INTER_NEAREST)
     return img
+
+
+def prediction_status(search,player_seen):
+    """Describe the drawn horizon without extending an unsafe trajectory."""
+    if not player_seen:return 'player unavailable; preview hidden'
+    plan=search.get('plan') or {};points=plan.get('trajectory') or []
+    duration=max(0.,float(points[-1]['t'])) if points else 0.
+    if search.get('path_unknown'):return f'view limit at {duration:.2f}s'
+    if search.get('path_hit'):return f'collision predicted in {duration:.2f}s'
+    sequence=plan.get('sequence_safety') or {}
+    if sequence and min(sequence.values())<1.:return 'timing-sensitive; not verified'
+    return 'verified planned inputs' if plan.get('verified') else 'unverified continuation'
 
 
 def main() -> int:

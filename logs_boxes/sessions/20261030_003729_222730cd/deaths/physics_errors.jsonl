@@ -1,0 +1,2 @@
+{"attempt": 1, "peak_pct": 1.0, "errors": [{"index": 0, "horizon": 1, "seconds": 0.03364490019157529, "predicted": 4.136189559172062, "observed": 2.7407407407407405, "error": -1.3954488184313218}]}
+{"attempt": 2, "peak_pct": 39.0, "errors": []}

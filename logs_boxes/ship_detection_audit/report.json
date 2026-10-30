@@ -1,0 +1,5885 @@
+{
+  "summaries": [
+    {
+      "images": 51,
+      "ship_labels": 17,
+      "ship_matches": 16,
+      "ship_misses": 1,
+      "wrong_mode_matches": 0,
+      "false_ship_boxes": 0,
+      "matched_ship_boxes": 16,
+      "recall": 0.9411764705882353,
+      "precision": 1.0,
+      "mean_inference_ms": 3.3087897760679525,
+      "model": "yolo_gd.engine",
+      "threshold": 0.35
+    },
+    {
+      "images": 51,
+      "ship_labels": 17,
+      "ship_matches": 16,
+      "ship_misses": 1,
+      "wrong_mode_matches": 1,
+      "false_ship_boxes": 1,
+      "matched_ship_boxes": 16,
+      "recall": 0.9411764705882353,
+      "precision": 0.9411764705882353,
+      "mean_inference_ms": 3.1800305860459197,
+      "model": "yolo_gd.engine",
+      "threshold": 0.15
+    },
+    {
+      "images": 51,
+      "ship_labels": 17,
+      "ship_matches": 16,
+      "ship_misses": 1,
+      "wrong_mode_matches": 0,
+      "false_ship_boxes": 0,
+      "matched_ship_boxes": 16,
+      "recall": 0.9411764705882353,
+      "precision": 1.0,
+      "mean_inference_ms": 8.761955125789557,
+      "model": "yolo_gd.pt",
+      "threshold": 0.35
+    },
+    {
+      "images": 51,
+      "ship_labels": 17,
+      "ship_matches": 16,
+      "ship_misses": 1,
+      "wrong_mode_matches": 1,
+      "false_ship_boxes": 1,
+      "matched_ship_boxes": 16,
+      "recall": 0.9411764705882353,
+      "precision": 0.9411764705882353,
+      "mean_inference_ms": 8.902785729388802,
+      "model": "yolo_gd.pt",
+      "threshold": 0.15
+    }
+  ],
+  "pipeline": {
+    "ship_labels": 17,
+    "player_found": 16,
+    "correct_ship_mode": 16,
+    "usable_by_shield": 16
+  },
+  "replay": {
+    "video": "recs\\ship.mp4",
+    "frames": 166,
+    "labelled_ship_frames": 53,
+    "labelled_ship_matches": 53,
+    "labelled_ship_misses": [],
+    "rows": [
+      {
+        "frame": 0,
+        "labelled_ship": false,
+        "ship_found": false,
+        "matched": null,
+        "confidence": 0.8301231861114502
+      },
+      {
+        "frame": 1,
+        "labelled_ship": false,
+        "ship_found": false,
+        "matched": null,
+        "confidence": 0.58348149061203
+      },
+      {
+        "frame": 2,
+        "labelled_ship": false,
+        "ship_found": false,
+        "matched": null,
+        "confidence": 0.7446193695068359
+      },
+      {
+        "frame": 3,
+        "labelled_ship": false,
+        "ship_found": false,
+        "matched": null,
+        "confidence": 0.7516402006149292
+      },
+      {
+        "frame": 4,
+        "labelled_ship": false,
+        "ship_found": false,
+        "matched": null,
+        "confidence": 0.7094368934631348
+      },
+      {
+        "frame": 5,
+        "labelled_ship": false,
+        "ship_found": false,
+        "matched": null,
+        "confidence": 0.745032787322998
+      },
+      {
+        "frame": 6,
+        "labelled_ship": false,
+        "ship_found": false,
+        "matched": null,
+        "confidence": 0.8261814713478088
+      },
+      {
+        "frame": 7,
+        "labelled_ship": false,
+        "ship_found": false,
+        "matched": null,
+        "confidence": 0.9
+      },
+      {
+        "frame": 8,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.367500364780426
+      },
+      {
+        "frame": 9,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.7399439215660095
+      },
+      {
+        "frame": 10,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9493104219436646
+      },
+      {
+        "frame": 11,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8225070834159851
+      },
+      {
+        "frame": 12,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8914698362350464
+      },
+      {
+        "frame": 13,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8909421563148499
+      },
+      {
+        "frame": 14,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9514374732971191
+      },
+      {
+        "frame": 15,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.914467990398407
+      },
+      {
+        "frame": 16,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.912141740322113
+      },
+      {
+        "frame": 17,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8571275472640991
+      },
+      {
+        "frame": 18,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8490639925003052
+      },
+      {
+        "frame": 19,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9405810832977295
+      },
+      {
+        "frame": 20,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9433445930480957
+      },
+      {
+        "frame": 21,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9284491539001465
+      },
+      {
+        "frame": 22,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9319348335266113
+      },
+      {
+        "frame": 23,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9570685029029846
+      },
+      {
+        "frame": 24,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9075053334236145
+      },
+      {
+        "frame": 25,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8060770630836487
+      },
+      {
+        "frame": 26,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.893744945526123
+      },
+      {
+        "frame": 27,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8893021941184998
+      },
+      {
+        "frame": 28,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9231204390525818
+      },
+      {
+        "frame": 29,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9209255576133728
+      },
+      {
+        "frame": 30,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9349502921104431
+      },
+      {
+        "frame": 31,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9328262805938721
+      },
+      {
+        "frame": 32,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9533066153526306
+      },
+      {
+        "frame": 33,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8981381058692932
+      },
+      {
+        "frame": 34,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8320478796958923
+      },
+      {
+        "frame": 35,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9234853982925415
+      },
+      {
+        "frame": 36,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9237882494926453
+      },
+      {
+        "frame": 37,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8854307532310486
+      },
+      {
+        "frame": 38,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9231979846954346
+      },
+      {
+        "frame": 39,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9327682852745056
+      },
+      {
+        "frame": 40,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9387146830558777
+      },
+      {
+        "frame": 41,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9392344355583191
+      },
+      {
+        "frame": 42,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.911044716835022
+      },
+      {
+        "frame": 43,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8931989073753357
+      },
+      {
+        "frame": 44,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9399133324623108
+      },
+      {
+        "frame": 45,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8934342861175537
+      },
+      {
+        "frame": 46,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8446981906890869
+      },
+      {
+        "frame": 47,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9269403219223022
+      },
+      {
+        "frame": 48,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9467813968658447
+      },
+      {
+        "frame": 49,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9528542757034302
+      },
+      {
+        "frame": 50,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9569373726844788
+      },
+      {
+        "frame": 51,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9661350846290588
+      },
+      {
+        "frame": 52,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9549259543418884
+      },
+      {
+        "frame": 53,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9648756980895996
+      },
+      {
+        "frame": 54,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9509202837944031
+      },
+      {
+        "frame": 55,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9657203555107117
+      },
+      {
+        "frame": 56,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9527624249458313
+      },
+      {
+        "frame": 57,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9346979260444641
+      },
+      {
+        "frame": 58,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9404123425483704
+      },
+      {
+        "frame": 59,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8300380110740662
+      },
+      {
+        "frame": 60,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9143260717391968
+      },
+      {
+        "frame": 61,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9317229986190796
+      },
+      {
+        "frame": 62,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9194599390029907
+      },
+      {
+        "frame": 63,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8974484801292419
+      },
+      {
+        "frame": 64,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8921058773994446
+      },
+      {
+        "frame": 65,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9342880249023438
+      },
+      {
+        "frame": 66,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8821638226509094
+      },
+      {
+        "frame": 67,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9263538122177124
+      },
+      {
+        "frame": 68,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9098138213157654
+      },
+      {
+        "frame": 69,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9236197471618652
+      },
+      {
+        "frame": 70,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9610589742660522
+      },
+      {
+        "frame": 71,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8747900128364563
+      },
+      {
+        "frame": 72,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8892788290977478
+      },
+      {
+        "frame": 73,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8851021528244019
+      },
+      {
+        "frame": 74,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9044637084007263
+      },
+      {
+        "frame": 75,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9311398267745972
+      },
+      {
+        "frame": 76,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8641470670700073
+      },
+      {
+        "frame": 77,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.873431921005249
+      },
+      {
+        "frame": 78,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8952379822731018
+      },
+      {
+        "frame": 79,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9096152186393738
+      },
+      {
+        "frame": 80,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9234182834625244
+      },
+      {
+        "frame": 81,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.895755410194397
+      },
+      {
+        "frame": 82,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.7870930433273315
+      },
+      {
+        "frame": 83,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.961145281791687
+      },
+      {
+        "frame": 84,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9349048733711243
+      },
+      {
+        "frame": 85,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8937340378761292
+      },
+      {
+        "frame": 86,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9417992830276489
+      },
+      {
+        "frame": 87,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8822859525680542
+      },
+      {
+        "frame": 88,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8051231503486633
+      },
+      {
+        "frame": 89,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9260450601577759
+      },
+      {
+        "frame": 90,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8969866037368774
+      },
+      {
+        "frame": 91,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8827324509620667
+      },
+      {
+        "frame": 92,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9476367831230164
+      },
+      {
+        "frame": 93,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9234346747398376
+      },
+      {
+        "frame": 94,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9262977242469788
+      },
+      {
+        "frame": 95,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9063465595245361
+      },
+      {
+        "frame": 96,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9209915995597839
+      },
+      {
+        "frame": 97,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9134620428085327
+      },
+      {
+        "frame": 98,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9426494240760803
+      },
+      {
+        "frame": 99,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9506129622459412
+      },
+      {
+        "frame": 100,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.96513432264328
+      },
+      {
+        "frame": 101,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9463339447975159
+      },
+      {
+        "frame": 102,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9635769724845886
+      },
+      {
+        "frame": 103,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9553684592247009
+      },
+      {
+        "frame": 104,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.968498945236206
+      },
+      {
+        "frame": 105,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9667356610298157
+      },
+      {
+        "frame": 106,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9472717046737671
+      },
+      {
+        "frame": 107,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9431324005126953
+      },
+      {
+        "frame": 108,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8830376863479614
+      },
+      {
+        "frame": 109,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9232131242752075
+      },
+      {
+        "frame": 110,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8881920576095581
+      },
+      {
+        "frame": 111,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9434593319892883
+      },
+      {
+        "frame": 112,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.7252689599990845
+      },
+      {
+        "frame": 113,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9296272993087769
+      },
+      {
+        "frame": 114,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8986189365386963
+      },
+      {
+        "frame": 115,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8534944653511047
+      },
+      {
+        "frame": 116,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9759621024131775
+      },
+      {
+        "frame": 117,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9363524317741394
+      },
+      {
+        "frame": 118,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8910028338432312
+      },
+      {
+        "frame": 119,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9103419184684753
+      },
+      {
+        "frame": 120,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9169105887413025
+      },
+      {
+        "frame": 121,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9128398299217224
+      },
+      {
+        "frame": 122,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.7449619174003601
+      },
+      {
+        "frame": 123,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.774364173412323
+      },
+      {
+        "frame": 124,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8795379400253296
+      },
+      {
+        "frame": 125,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9189684987068176
+      },
+      {
+        "frame": 126,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9043808579444885
+      },
+      {
+        "frame": 127,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9608772993087769
+      },
+      {
+        "frame": 128,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8902445435523987
+      },
+      {
+        "frame": 129,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9058884978294373
+      },
+      {
+        "frame": 130,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.7864463329315186
+      },
+      {
+        "frame": 131,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8197913765907288
+      },
+      {
+        "frame": 132,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9219727516174316
+      },
+      {
+        "frame": 133,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9554606080055237
+      },
+      {
+        "frame": 134,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8852719068527222
+      },
+      {
+        "frame": 135,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9414041042327881
+      },
+      {
+        "frame": 136,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9557849168777466
+      },
+      {
+        "frame": 137,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.912301242351532
+      },
+      {
+        "frame": 138,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8938900232315063
+      },
+      {
+        "frame": 139,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8737324476242065
+      },
+      {
+        "frame": 140,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9397979974746704
+      },
+      {
+        "frame": 141,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9135993719100952
+      },
+      {
+        "frame": 142,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9670740365982056
+      },
+      {
+        "frame": 143,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9415053129196167
+      },
+      {
+        "frame": 144,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9616764783859253
+      },
+      {
+        "frame": 145,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8768826723098755
+      },
+      {
+        "frame": 146,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9611520171165466
+      },
+      {
+        "frame": 147,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9032909274101257
+      },
+      {
+        "frame": 148,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8929036855697632
+      },
+      {
+        "frame": 149,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8923877477645874
+      },
+      {
+        "frame": 150,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8856710195541382
+      },
+      {
+        "frame": 151,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9203601479530334
+      },
+      {
+        "frame": 152,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8912307620048523
+      },
+      {
+        "frame": 153,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.8660186529159546
+      },
+      {
+        "frame": 154,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9065198302268982
+      },
+      {
+        "frame": 155,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9193657040596008
+      },
+      {
+        "frame": 156,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9060584306716919
+      },
+      {
+        "frame": 157,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9166633486747742
+      },
+      {
+        "frame": 158,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.905186116695404
+      },
+      {
+        "frame": 159,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9134150147438049
+      },
+      {
+        "frame": 160,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.9290242791175842
+      },
+      {
+        "frame": 161,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.893523633480072
+      },
+      {
+        "frame": 162,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9393435120582581
+      },
+      {
+        "frame": 163,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8889567255973816
+      },
+      {
+        "frame": 164,
+        "labelled_ship": false,
+        "ship_found": true,
+        "matched": null,
+        "confidence": 0.8866749405860901
+      },
+      {
+        "frame": 165,
+        "labelled_ship": true,
+        "ship_found": true,
+        "matched": true,
+        "confidence": 0.9652332663536072
+      }
+    ],
+    "limitation": "Training-source video at 5 fps; not independent validation or a live 60 fps tracking test."
+  },
+  "rows": [
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00021.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3295304775238037,
+            0.37910207112630206,
+            0.40239806175231935,
+            0.4892481486002604
+          ],
+          0.8788949847221375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 1184.5441998448223
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00036.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3342094421386719,
+            0.6102530585394965,
+            0.3990969181060791,
+            0.7246139526367188
+          ],
+          0.8771422505378723
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 4.746600054204464
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00051.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 2.8554999735206366
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00059.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 2.907099900767207
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00068.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 3.4443000331521034
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00075.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3501478910446167,
+            0.5324244181315104,
+            0.39837119579315183,
+            0.6184805976019965
+          ],
+          0.48557421565055847
+        ],
+        [
+          7,
+          [
+            0.3525225162506104,
+            0.4846552530924479,
+            0.3939645767211914,
+            0.5672266642252605
+          ],
+          0.3879060745239258
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.969499910250306
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00083.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 3.335400018841028
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00090.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [],
+      "matches": [
+        {
+          "matched": false,
+          "iou": 0.0,
+          "confidence": null
+        }
+      ],
+      "inference_ms": 2.977399853989482
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00098.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          10,
+          [
+            0.33241701126098633,
+            0.5045620388454861,
+            0.4010894775390625,
+            0.6162794325086806
+          ],
+          0.4888095259666443
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.8894000463187695
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00108.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 2.7797999791800976
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00116.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 3.0897001270204782
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00123.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          12,
+          [
+            0.3216770887374878,
+            0.25725347730848525,
+            0.39870665073394773,
+            0.38729604085286456
+          ],
+          0.44095489382743835
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.473500022664666
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00131.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 3.141599940136075
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00138.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 3.206999972462654
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00147.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 3.0135998968034983
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00173.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 2.8522000648081303
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00021.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3456050634384155,
+            0.6440114339192708,
+            0.39860336780548095,
+            0.7175852457682291
+          ],
+          0.804577648639679
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.366099903360009
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00036.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34437241554260256,
+            0.6409125434027778,
+            0.39795241355895994,
+            0.7164147271050347
+          ],
+          0.7570079565048218
+        ],
+        [
+          7,
+          [
+            0.3379652500152588,
+            0.6230077955457899,
+            0.39853816032409667,
+            0.7137847052680122
+          ],
+          0.7094063758850098
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.3465998712927103
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00051.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3376400709152222,
+            0.6228640238444011,
+            0.3994844675064087,
+            0.7130643208821614
+          ],
+          0.6801226139068604
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 4.366700071841478
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00015.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34147868156433103,
+            0.6322254604763455,
+            0.3973884105682373,
+            0.7292772928873698
+          ],
+          0.5040706992149353
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.335600020363927
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00027.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33228421211242676,
+            0.09646030002170139,
+            0.3949023723602295,
+            0.20074293348524305
+          ],
+          0.8512498736381531
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.987000159919262
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00039.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33610925674438474,
+            0.5262786865234375,
+            0.40611839294433594,
+            0.6464328342013889
+          ],
+          0.7184711694717407
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.6755998842418194
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00051.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.45912923812866213,
+            0.6323109944661458,
+            0.5194598197937011,
+            0.7233181423611111
+          ],
+          0.6880787014961243
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.4568000119179487
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00012.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3249173164367676,
+            0.5782952202690972,
+            0.4149182796478271,
+            0.6962900797526042
+          ],
+          0.8924281001091003
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9166950375630856,
+          "confidence": 0.8924281001091003
+        }
+      ],
+      "inference_ms": 3.2110000029206276
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00027.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3298912048339844,
+            0.6416982862684462,
+            0.414824390411377,
+            0.7766894022623698
+          ],
+          0.8922522664070129
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9179526397140216,
+          "confidence": 0.8922522664070129
+        }
+      ],
+      "inference_ms": 3.105499781668186
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00042.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32076292037963866,
+            0.8040126376681858,
+            0.4151423931121826,
+            0.9244497511121962
+          ],
+          0.9098064303398132
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8973660882694896,
+          "confidence": 0.9098064303398132
+        }
+      ],
+      "inference_ms": 3.147900104522705
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00057.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32598485946655276,
+            0.1614191691080729,
+            0.4152120590209961,
+            0.28345362345377606
+          ],
+          0.9408035278320312
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9781571921680534,
+          "confidence": 0.9408035278320312
+        }
+      ],
+      "inference_ms": 3.432299941778183
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00072.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3288720607757568,
+            0.8725740220811632,
+            0.40611791610717773,
+            0.9646991305881076
+          ],
+          0.8946378827095032
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9016973536567043,
+          "confidence": 0.8946378827095032
+        }
+      ],
+      "inference_ms": 3.3662000205367804
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00087.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32727618217468263,
+            0.814591810438368,
+            0.41420493125915525,
+            0.93170166015625
+          ],
+          0.8808699250221252
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9657999430118012,
+          "confidence": 0.8808699250221252
+        }
+      ],
+      "inference_ms": 3.3756999764591455
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00102.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32539167404174807,
+            0.8277023315429688,
+            0.4119563579559326,
+            0.9332561916775174
+          ],
+          0.9618192911148071
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8975238791018361,
+          "confidence": 0.9618192911148071
+        }
+      ],
+      "inference_ms": 2.7600000612437725
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00117.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3310726165771484,
+            0.6652141994900174,
+            0.4133946895599365,
+            0.7899812486436631
+          ],
+          0.9374971985816956
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8825320121223664,
+          "confidence": 0.9374971985816956
+        }
+      ],
+      "inference_ms": 4.176100017502904
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00132.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.33310751914978026,
+            0.6508005777994792,
+            0.41365704536437986,
+            0.7736128065321181
+          ],
+          0.9217522144317627
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8554046673018221,
+          "confidence": 0.9217522144317627
+        }
+      ],
+      "inference_ms": 3.116699866950512
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00147.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32675561904907224,
+            0.8770609537760417,
+            0.40656089782714844,
+            0.9619671291775174
+          ],
+          0.9024144411087036
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8447588100430754,
+          "confidence": 0.9024144411087036
+        }
+      ],
+      "inference_ms": 3.744599875062704
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00162.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32813096046447754,
+            0.8755589803059896,
+            0.408417797088623,
+            0.9622790866427952
+          ],
+          0.9377968907356262
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9250264266208919,
+          "confidence": 0.9377968907356262
+        }
+      ],
+      "inference_ms": 4.41970000974834
+    },
+    {
+      "image": "yolo_ds\\images\\val\\speed_00012.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34683363437652587,
+            0.6432264539930556,
+            0.3994980096817017,
+            0.7172865125868055
+          ],
+          0.8615012168884277
+        ],
+        [
+          7,
+          [
+            0.3405570983886719,
+            0.6259114583333333,
+            0.39869394302368166,
+            0.7151373969184027
+          ],
+          0.36777281761169434
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.0340999364852905
+    },
+    {
+      "image": "yolo_ds\\images\\val\\speed_00027.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.6120856761932373,
+            0.6579939100477431,
+            0.6527215480804444,
+            0.7162865532769097
+          ],
+          0.8212617635726929
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.1971000134944916
+    },
+    {
+      "image": "yolo_ds\\images\\val\\spikes_00018.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34176130294799806,
+            0.6282740275065104,
+            0.397708797454834,
+            0.716017829047309
+          ],
+          0.6386757493019104
+        ],
+        [
+          7,
+          [
+            0.34851536750793455,
+            0.6480973985460069,
+            0.3979203701019287,
+            0.7161092122395833
+          ],
+          0.5322632193565369
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.073600120842457
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00015.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33843991756439207,
+            0.6254896375868055,
+            0.3811516046524048,
+            0.6972549438476563
+          ],
+          0.8131609559059143
+        ],
+        [
+          7,
+          [
+            0.33840441703796387,
+            0.6282123141818576,
+            0.38825554847717286,
+            0.7127948337131076
+          ],
+          0.596774697303772
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.9478000942617655
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00030.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3343344211578369,
+            0.37185278998480903,
+            0.39889039993286135,
+            0.4958362155490451
+          ],
+          0.6445131301879883
+        ],
+        [
+          7,
+          [
+            0.33707656860351565,
+            0.37322040134006074,
+            0.3924827575683594,
+            0.4628120422363281
+          ],
+          0.42984625697135925
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.1188998837023973
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00045.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3527616024017334,
+            0.6468187120225695,
+            0.3986185550689697,
+            0.7144395616319444
+          ],
+          0.7920770645141602
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.254299983382225
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00060.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33790836334228513,
+            0.4305224100748698,
+            0.397201681137085,
+            0.5293313768174913
+          ],
+          0.7850567102432251
+        ],
+        [
+          7,
+          [
+            0.34821486473083496,
+            0.4501920912000868,
+            0.39738640785217283,
+            0.5294323391384549
+          ],
+          0.5045081377029419
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.4379998687654734
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00075.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33451204299926757,
+            0.1773631625705295,
+            0.3984539985656738,
+            0.28443544175889757
+          ],
+          0.8405139446258545
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.2695999834686518
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00093.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33594913482666017,
+            0.47558729383680554,
+            0.398347806930542,
+            0.5765058729383681
+          ],
+          0.8757369518280029
+        ],
+        [
+          7,
+          [
+            0.3475318670272827,
+            0.49458075629340276,
+            0.39789021015167236,
+            0.5749192979600695
+          ],
+          0.39263951778411865
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.4759999252855778
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00108.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33708415031433103,
+            0.5877848307291667,
+            0.3975266456604004,
+            0.6867584228515625
+          ],
+          0.7870572209358215
+        ],
+        [
+          7,
+          [
+            0.3480309009552002,
+            0.6079952663845486,
+            0.3981475353240967,
+            0.6894646538628473
+          ],
+          0.5980973839759827
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.2490999437868595
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00123.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3372114419937134,
+            0.5756601121690538,
+            0.3941589117050171,
+            0.6692817687988282
+          ],
+          0.9148249626159668
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.5673999916762114
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00138.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.31745233535766604,
+            0.4681063334147135,
+            0.4093623161315918,
+            0.585811275906033
+          ],
+          0.8765010833740234
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8516007476221562,
+          "confidence": 0.8765010833740234
+        }
+      ],
+      "inference_ms": 2.9975001234561205
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00153.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3174877166748047,
+            0.6417388916015625,
+            0.40775442123413086,
+            0.7691118028428819
+          ],
+          0.8979079723358154
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8047174083945436,
+          "confidence": 0.8979079723358154
+        }
+      ],
+      "inference_ms": 2.9482999816536903
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00168.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3195023059844971,
+            0.4885793050130208,
+            0.4123671054840088,
+            0.6041280110677083
+          ],
+          0.897682785987854
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8574638005118537,
+          "confidence": 0.897682785987854
+        }
+      ],
+      "inference_ms": 3.3477998804301023
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00183.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3222954750061035,
+            0.44615749782986114,
+            0.41282925605773924,
+            0.5569373236762153
+          ],
+          0.8242752552032471
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9136773040403016,
+          "confidence": 0.8242752552032471
+        }
+      ],
+      "inference_ms": 6.431200075894594
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00198.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3174764156341553,
+            0.4957309299045139,
+            0.41619291305541994,
+            0.6195370144314236
+          ],
+          0.9246659874916077
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8564986804172801,
+          "confidence": 0.9246659874916077
+        }
+      ],
+      "inference_ms": 3.0751999001950026
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00213.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3391021728515625,
+            0.5686102973090278,
+            0.3955503463745117,
+            0.669598388671875
+          ],
+          0.8451841473579407
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.3786999993026257
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00021.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3295304775238037,
+            0.37910207112630206,
+            0.40239806175231935,
+            0.4892481486002604
+          ],
+          0.8788949847221375
+        ],
+        [
+          7,
+          [
+            0.332538366317749,
+            0.38956807454427084,
+            0.3936777591705322,
+            0.4756776597764757
+          ],
+          0.2667592465877533
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.95259989798069
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00036.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3342094421386719,
+            0.6102530585394965,
+            0.3990969181060791,
+            0.7246139526367188
+          ],
+          0.8771422505378723
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.4746001474559307
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00051.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 3.123199800029397
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00059.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34709868431091306,
+            0.4262491861979167,
+            0.4013782024383545,
+            0.5505015055338541
+          ],
+          0.16309340298175812
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.662800019606948
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00068.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34437007904052735,
+            0.2863763597276476,
+            0.3989742279052734,
+            0.3891882154676649
+          ],
+          0.1773984283208847
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.447100054472685
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00075.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3501478910446167,
+            0.5324244181315104,
+            0.39837119579315183,
+            0.6184805976019965
+          ],
+          0.48557421565055847
+        ],
+        [
+          7,
+          [
+            0.3525225162506104,
+            0.4846552530924479,
+            0.3939645767211914,
+            0.5672266642252605
+          ],
+          0.3879060745239258
+        ],
+        [
+          7,
+          [
+            0.3351151466369629,
+            0.4819402058919271,
+            0.40654764175415037,
+            0.622294447157118
+          ],
+          0.3243584930896759
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.8250000216066837
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00083.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 3.092499915510416
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00090.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33586530685424804,
+            0.8234712388780382,
+            0.40920581817626955,
+            0.9124153984917535
+          ],
+          0.2861589193344116
+        ]
+      ],
+      "matches": [
+        {
+          "matched": false,
+          "iou": 0.0,
+          "confidence": null
+        }
+      ],
+      "inference_ms": 3.079199930652976
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00098.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          10,
+          [
+            0.33241701126098633,
+            0.5045620388454861,
+            0.4010894775390625,
+            0.6162794325086806
+          ],
+          0.4888095259666443
+        ],
+        [
+          12,
+          [
+            0.3315100193023682,
+            0.5047168307834201,
+            0.3999015331268311,
+            0.6158106486002605
+          ],
+          0.2107420265674591
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.3404999412596226
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00108.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 2.9313000850379467
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00116.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          11,
+          [
+            0.3444694519042969,
+            0.5325249565972222,
+            0.3874937057495117,
+            0.5959642198350694
+          ],
+          0.26657798886299133
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.881099935621023
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00123.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          12,
+          [
+            0.3216770887374878,
+            0.25725347730848525,
+            0.39870665073394773,
+            0.38729604085286456
+          ],
+          0.44095489382743835
+        ],
+        [
+          7,
+          [
+            0.32274608612060546,
+            0.25637342664930557,
+            0.3993243217468262,
+            0.3861048380533854
+          ],
+          0.2330167293548584
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.8216999489814043
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00131.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33870978355407716,
+            0.25236358642578127,
+            0.4004209041595459,
+            0.3547139485677083
+          ],
+          0.3062986135482788
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.5871999096125364
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00138.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 3.0751999001950026
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00147.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 3.025899874046445
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00173.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 2.854699967429042
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00021.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3456050634384155,
+            0.6440114339192708,
+            0.39860336780548095,
+            0.7175852457682291
+          ],
+          0.804577648639679
+        ],
+        [
+          7,
+          [
+            0.3392134666442871,
+            0.6209632025824653,
+            0.39888916015625,
+            0.7182776557074653
+          ],
+          0.20214232802391052
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 4.275500075891614
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00036.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34437241554260256,
+            0.6409125434027778,
+            0.39795241355895994,
+            0.7164147271050347
+          ],
+          0.7570079565048218
+        ],
+        [
+          7,
+          [
+            0.3379652500152588,
+            0.6230077955457899,
+            0.39853816032409667,
+            0.7137847052680122
+          ],
+          0.7094063758850098
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.9217000119388103
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00051.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3376400709152222,
+            0.6228640238444011,
+            0.3994844675064087,
+            0.7130643208821614
+          ],
+          0.6801226139068604
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.5464999489486217
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00015.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34147868156433103,
+            0.6322254604763455,
+            0.3973884105682373,
+            0.7292772928873698
+          ],
+          0.5040706992149353
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.725200029090047
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00027.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33228421211242676,
+            0.09646030002170139,
+            0.3949023723602295,
+            0.20074293348524305
+          ],
+          0.8512498736381531
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 4.577399929985404
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00039.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33610925674438474,
+            0.5262786865234375,
+            0.40611839294433594,
+            0.6464328342013889
+          ],
+          0.7184711694717407
+        ],
+        [
+          7,
+          [
+            0.34665660858154296,
+            0.5482053968641493,
+            0.4055464744567871,
+            0.6500862969292535
+          ],
+          0.1623251736164093
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.6983001735061407
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00051.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.45912923812866213,
+            0.6323109944661458,
+            0.5194598197937011,
+            0.7233181423611111
+          ],
+          0.6880787014961243
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.9436000622808933
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00012.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3249173164367676,
+            0.5782952202690972,
+            0.4149182796478271,
+            0.6962900797526042
+          ],
+          0.8924281001091003
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9166950375630856,
+          "confidence": 0.8924281001091003
+        }
+      ],
+      "inference_ms": 3.5740998573601246
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00027.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3298912048339844,
+            0.6416982862684462,
+            0.414824390411377,
+            0.7766894022623698
+          ],
+          0.8922522664070129
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9179526397140216,
+          "confidence": 0.8922522664070129
+        }
+      ],
+      "inference_ms": 3.985299961641431
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00042.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32076292037963866,
+            0.8040126376681858,
+            0.4151423931121826,
+            0.9244497511121962
+          ],
+          0.9098064303398132
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8973660882694896,
+          "confidence": 0.9098064303398132
+        }
+      ],
+      "inference_ms": 2.7701000217348337
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00057.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32598485946655276,
+            0.1614191691080729,
+            0.4152120590209961,
+            0.28345362345377606
+          ],
+          0.9408035278320312
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9781571921680534,
+          "confidence": 0.9408035278320312
+        }
+      ],
+      "inference_ms": 2.8375000692903996
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00072.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3288720607757568,
+            0.8725740220811632,
+            0.40611791610717773,
+            0.9646991305881076
+          ],
+          0.8946378827095032
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9016973536567043,
+          "confidence": 0.8946378827095032
+        }
+      ],
+      "inference_ms": 3.6742999218404293
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00087.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32727618217468263,
+            0.814591810438368,
+            0.41420493125915525,
+            0.93170166015625
+          ],
+          0.8808699250221252
+        ],
+        [
+          8,
+          [
+            0.33168253898620603,
+            0.8304455227322048,
+            0.39438538551330565,
+            0.9009940253363715
+          ],
+          0.256003737449646
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9657999430118012,
+          "confidence": 0.8808699250221252
+        }
+      ],
+      "inference_ms": 3.0484001617878675
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00102.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32539167404174807,
+            0.8277023315429688,
+            0.4119563579559326,
+            0.9332561916775174
+          ],
+          0.9618192911148071
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8975238791018361,
+          "confidence": 0.9618192911148071
+        }
+      ],
+      "inference_ms": 4.188299877569079
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00117.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3310726165771484,
+            0.6652141994900174,
+            0.4133946895599365,
+            0.7899812486436631
+          ],
+          0.9374971985816956
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8825320121223664,
+          "confidence": 0.9374971985816956
+        }
+      ],
+      "inference_ms": 3.659500041976571
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00132.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.33310751914978026,
+            0.6508005777994792,
+            0.41365704536437986,
+            0.7736128065321181
+          ],
+          0.9217522144317627
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8554046673018221,
+          "confidence": 0.9217522144317627
+        }
+      ],
+      "inference_ms": 2.870700089260936
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00147.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32675561904907224,
+            0.8770609537760417,
+            0.40656089782714844,
+            0.9619671291775174
+          ],
+          0.9024144411087036
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8447588100430754,
+          "confidence": 0.9024144411087036
+        }
+      ],
+      "inference_ms": 2.556100022047758
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00162.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.32813096046447754,
+            0.8755589803059896,
+            0.408417797088623,
+            0.9622790866427952
+          ],
+          0.9377968907356262
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9250264266208919,
+          "confidence": 0.9377968907356262
+        }
+      ],
+      "inference_ms": 3.068899968639016
+    },
+    {
+      "image": "yolo_ds\\images\\val\\speed_00012.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34683363437652587,
+            0.6432264539930556,
+            0.3994980096817017,
+            0.7172865125868055
+          ],
+          0.8615012168884277
+        ],
+        [
+          7,
+          [
+            0.3405570983886719,
+            0.6259114583333333,
+            0.39869394302368166,
+            0.7151373969184027
+          ],
+          0.36777281761169434
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.980999881401658
+    },
+    {
+      "image": "yolo_ds\\images\\val\\speed_00027.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.6120856761932373,
+            0.6579939100477431,
+            0.6527215480804444,
+            0.7162865532769097
+          ],
+          0.8212617635726929
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.0777999199926853
+    },
+    {
+      "image": "yolo_ds\\images\\val\\spikes_00018.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34176130294799806,
+            0.6282740275065104,
+            0.397708797454834,
+            0.716017829047309
+          ],
+          0.6386757493019104
+        ],
+        [
+          7,
+          [
+            0.34851536750793455,
+            0.6480973985460069,
+            0.3979203701019287,
+            0.7161092122395833
+          ],
+          0.5322632193565369
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.3301999792456627
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00015.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33843991756439207,
+            0.6254896375868055,
+            0.3811516046524048,
+            0.6972549438476563
+          ],
+          0.8131609559059143
+        ],
+        [
+          7,
+          [
+            0.33840441703796387,
+            0.6282123141818576,
+            0.38825554847717286,
+            0.7127948337131076
+          ],
+          0.596774697303772
+        ],
+        [
+          7,
+          [
+            0.3384805202484131,
+            0.6208808051215278,
+            0.377640962600708,
+            0.6833340115017361
+          ],
+          0.2924387753009796
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.802800154313445
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00030.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3343344211578369,
+            0.37185278998480903,
+            0.39889039993286135,
+            0.4958362155490451
+          ],
+          0.6445131301879883
+        ],
+        [
+          7,
+          [
+            0.33707656860351565,
+            0.37322040134006074,
+            0.3924827575683594,
+            0.4628120422363281
+          ],
+          0.42984625697135925
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.329999977722764
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00045.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3527616024017334,
+            0.6468187120225695,
+            0.3986185550689697,
+            0.7144395616319444
+          ],
+          0.7920770645141602
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.9435998294502497
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00060.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33790836334228513,
+            0.4305224100748698,
+            0.397201681137085,
+            0.5293313768174913
+          ],
+          0.7850567102432251
+        ],
+        [
+          7,
+          [
+            0.34821486473083496,
+            0.4501920912000868,
+            0.39738640785217283,
+            0.5294323391384549
+          ],
+          0.5045081377029419
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 2.8296001255512238
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00075.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33451204299926757,
+            0.1773631625705295,
+            0.3984539985656738,
+            0.28443544175889757
+          ],
+          0.8405139446258545
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.2198000699281693
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00093.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33594913482666017,
+            0.47558729383680554,
+            0.398347806930542,
+            0.5765058729383681
+          ],
+          0.8757369518280029
+        ],
+        [
+          7,
+          [
+            0.3475318670272827,
+            0.49458075629340276,
+            0.39789021015167236,
+            0.5749192979600695
+          ],
+          0.39263951778411865
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.0698999762535095
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00108.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33708415031433103,
+            0.5877848307291667,
+            0.3975266456604004,
+            0.6867584228515625
+          ],
+          0.7870572209358215
+        ],
+        [
+          7,
+          [
+            0.3480309009552002,
+            0.6079952663845486,
+            0.3981475353240967,
+            0.6894646538628473
+          ],
+          0.5980973839759827
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.250699955970049
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00123.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3372114419937134,
+            0.5756601121690538,
+            0.3941589117050171,
+            0.6692817687988282
+          ],
+          0.9148249626159668
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.295200178399682
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00138.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.31745233535766604,
+            0.4681063334147135,
+            0.4093623161315918,
+            0.585811275906033
+          ],
+          0.8765010833740234
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8516007476221562,
+          "confidence": 0.8765010833740234
+        }
+      ],
+      "inference_ms": 3.066999837756157
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00153.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3174877166748047,
+            0.6417388916015625,
+            0.40775442123413086,
+            0.7691118028428819
+          ],
+          0.8979079723358154
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8047174083945436,
+          "confidence": 0.8979079723358154
+        }
+      ],
+      "inference_ms": 3.260999917984009
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00168.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3195023059844971,
+            0.4885793050130208,
+            0.4123671054840088,
+            0.6041280110677083
+          ],
+          0.897682785987854
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8574638005118537,
+          "confidence": 0.897682785987854
+        }
+      ],
+      "inference_ms": 3.7713998463004827
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00183.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3222954750061035,
+            0.44615749782986114,
+            0.41282925605773924,
+            0.5569373236762153
+          ],
+          0.8242752552032471
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9136773040403016,
+          "confidence": 0.8242752552032471
+        }
+      ],
+      "inference_ms": 3.141899826005101
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00198.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3174764156341553,
+            0.4957309299045139,
+            0.41619291305541994,
+            0.6195370144314236
+          ],
+          0.9246659874916077
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8564986804172801,
+          "confidence": 0.9246659874916077
+        }
+      ],
+      "inference_ms": 3.047599922865629
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00213.jpg",
+      "model": "yolo_gd.engine",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3391021728515625,
+            0.5686102973090278,
+            0.3955503463745117,
+            0.669598388671875
+          ],
+          0.8451841473579407
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 3.7331997882574797
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00021.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.329296875,
+            0.3784722222222222,
+            0.402734375,
+            0.4895833333333333
+          ],
+          0.8740234375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 385.40089991874993
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00036.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.334375,
+            0.6097222222222223,
+            0.39921875,
+            0.725
+          ],
+          0.8642578125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.397000074386597
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00051.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 8.069999981671572
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00059.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 8.262800052762032
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00068.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 9.68720018863678
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00075.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.35,
+            0.5315972222222223,
+            0.3984375,
+            0.6184027777777777
+          ],
+          0.48046875
+        ],
+        [
+          7,
+          [
+            0.35234375,
+            0.48368055555555556,
+            0.39453125,
+            0.5677083333333334
+          ],
+          0.36669921875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 7.045400096103549
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00083.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 9.016499854624271
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00090.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [],
+      "matches": [
+        {
+          "matched": false,
+          "iou": 0.0,
+          "confidence": null
+        }
+      ],
+      "inference_ms": 9.026600047945976
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00098.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          10,
+          [
+            0.332421875,
+            0.5041666666666667,
+            0.401171875,
+            0.6166666666666667
+          ],
+          0.484375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.317300049588084
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00108.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 8.6967998649925
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00116.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 8.341000182554126
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00123.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          12,
+          [
+            0.3212890625,
+            0.25763888888888886,
+            0.3986328125,
+            0.3875
+          ],
+          0.486328125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.501400006935
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00131.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 8.915599901229143
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00138.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 9.002200094982982
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00147.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 7.759700063616037
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00173.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 8.303300011903048
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00021.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3455078125,
+            0.6430555555555556,
+            0.3986328125,
+            0.7180555555555556
+          ],
+          0.7958984375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.924500016495585
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00036.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3455078125,
+            0.6416666666666667,
+            0.3978515625,
+            0.7166666666666667
+          ],
+          0.72314453125
+        ],
+        [
+          7,
+          [
+            0.33828125,
+            0.6229166666666667,
+            0.3984375,
+            0.7138888888888889
+          ],
+          0.7216796875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.938400005921721
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00051.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.337890625,
+            0.6229166666666667,
+            0.399609375,
+            0.7131944444444445
+          ],
+          0.67578125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 7.0888998452574015
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00015.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.341796875,
+            0.6319444444444444,
+            0.397265625,
+            0.7291666666666666
+          ],
+          0.4609375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.840000024065375
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00027.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3314453125,
+            0.096875,
+            0.3958984375,
+            0.2013888888888889
+          ],
+          0.79296875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 11.073700152337551
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00039.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3359375,
+            0.5256944444444445,
+            0.40625,
+            0.6465277777777778
+          ],
+          0.73095703125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.564900141209364
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00051.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.45859375,
+            0.6319444444444444,
+            0.51953125,
+            0.7229166666666667
+          ],
+          0.6318359375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.135499898344278
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00012.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.324609375,
+            0.5784722222222223,
+            0.415234375,
+            0.6972222222222222
+          ],
+          0.88427734375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9316861252583784,
+          "confidence": 0.88427734375
+        }
+      ],
+      "inference_ms": 9.220900014042854
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00027.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3296875,
+            0.6416666666666667,
+            0.41484375,
+            0.7763888888888889
+          ],
+          0.8974609375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9218926600253363,
+          "confidence": 0.8974609375
+        }
+      ],
+      "inference_ms": 8.011600002646446
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00042.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.31953125,
+            0.8034722222222223,
+            0.415625,
+            0.9284722222222223
+          ],
+          0.90869140625
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8729459792548332,
+          "confidence": 0.90869140625
+        }
+      ],
+      "inference_ms": 8.280799956992269
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00057.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.325390625,
+            0.1607638888888889,
+            0.415234375,
+            0.28368055555555555
+          ],
+          0.93359375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9735500781134855,
+          "confidence": 0.93359375
+        }
+      ],
+      "inference_ms": 9.239800041541457
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00072.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.328515625,
+            0.8729166666666667,
+            0.40625,
+            0.9645833333333333
+          ],
+          0.927734375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9087988326171994,
+          "confidence": 0.927734375
+        }
+      ],
+      "inference_ms": 8.945700014010072
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00087.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.326953125,
+            0.8145833333333333,
+            0.414453125,
+            0.93125
+          ],
+          0.85888671875
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9631217539823638,
+          "confidence": 0.85888671875
+        }
+      ],
+      "inference_ms": 7.879900047555566
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00102.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.325390625,
+            0.8277777777777777,
+            0.412109375,
+            0.9333333333333333
+          ],
+          0.9599609375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8960088963587465,
+          "confidence": 0.9599609375
+        }
+      ],
+      "inference_ms": 11.146200122311711
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00117.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.33046875,
+            0.6645833333333333,
+            0.413671875,
+            0.7895833333333333
+          ],
+          0.9248046875
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8789718882077543,
+          "confidence": 0.9248046875
+        }
+      ],
+      "inference_ms": 8.243400137871504
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00132.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3328125,
+            0.6503472222222222,
+            0.4140625,
+            0.775
+          ],
+          0.93212890625
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.861323582430571,
+          "confidence": 0.93212890625
+        }
+      ],
+      "inference_ms": 9.493200108408928
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00147.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.326953125,
+            0.8763888888888889,
+            0.40625,
+            0.9625
+          ],
+          0.822265625
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8609555223335603,
+          "confidence": 0.822265625
+        }
+      ],
+      "inference_ms": 9.430899983271956
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00162.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.327734375,
+            0.875,
+            0.408203125,
+            0.9638888888888889
+          ],
+          0.91259765625
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9437267941050892,
+          "confidence": 0.91259765625
+        }
+      ],
+      "inference_ms": 7.860800018534064
+    },
+    {
+      "image": "yolo_ds\\images\\val\\speed_00012.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.346484375,
+            0.6409722222222223,
+            0.399609375,
+            0.7173611111111111
+          ],
+          0.85107421875
+        ],
+        [
+          7,
+          [
+            0.3390625,
+            0.6208333333333333,
+            0.39921875,
+            0.7166666666666667
+          ],
+          0.375732421875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.958999998867512
+    },
+    {
+      "image": "yolo_ds\\images\\val\\speed_00027.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.61171875,
+            0.6583333333333333,
+            0.65234375,
+            0.7166666666666667
+          ],
+          0.83740234375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.420099901035428
+    },
+    {
+      "image": "yolo_ds\\images\\val\\spikes_00018.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34140625,
+            0.6270833333333333,
+            0.39765625,
+            0.7159722222222222
+          ],
+          0.67236328125
+        ],
+        [
+          7,
+          [
+            0.348046875,
+            0.6475694444444444,
+            0.398046875,
+            0.7166666666666667
+          ],
+          0.48828125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.120800135657191
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00015.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33828125,
+            0.625,
+            0.38203125,
+            0.7013888888888888
+          ],
+          0.81298828125
+        ],
+        [
+          7,
+          [
+            0.3390625,
+            0.6256944444444444,
+            0.3953125,
+            0.7145833333333333
+          ],
+          0.474609375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.250600192695856
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00030.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.334375,
+            0.37222222222222223,
+            0.39921875,
+            0.49583333333333335
+          ],
+          0.65673828125
+        ],
+        [
+          7,
+          [
+            0.337109375,
+            0.3732638888888889,
+            0.392578125,
+            0.46284722222222224
+          ],
+          0.42626953125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.260799968615174
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00045.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.352734375,
+            0.6465277777777778,
+            0.398828125,
+            0.7145833333333333
+          ],
+          0.7919921875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 7.971900049597025
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00060.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.337890625,
+            0.4305555555555556,
+            0.397265625,
+            0.5291666666666667
+          ],
+          0.78515625
+        ],
+        [
+          7,
+          [
+            0.34765625,
+            0.4496527777777778,
+            0.39765625,
+            0.5295138888888888
+          ],
+          0.494140625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 7.290800102055073
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00075.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.334375,
+            0.17743055555555556,
+            0.3984375,
+            0.284375
+          ],
+          0.8447265625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.13590013422072
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00093.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3359375,
+            0.4756944444444444,
+            0.3984375,
+            0.5763888888888888
+          ],
+          0.880859375
+        ],
+        [
+          7,
+          [
+            0.347265625,
+            0.49444444444444446,
+            0.398046875,
+            0.575
+          ],
+          0.4072265625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.196100126951933
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00108.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.337109375,
+            0.5875,
+            0.397265625,
+            0.6868055555555556
+          ],
+          0.77734375
+        ],
+        [
+          7,
+          [
+            0.348046875,
+            0.6083333333333333,
+            0.398046875,
+            0.6895833333333333
+          ],
+          0.56591796875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.475399808958173
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00123.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.337109375,
+            0.5756944444444444,
+            0.394140625,
+            0.6694444444444444
+          ],
+          0.9072265625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.948500035330653
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00138.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3171875,
+            0.46805555555555556,
+            0.409375,
+            0.5861111111111111
+          ],
+          0.875
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8565008296821421,
+          "confidence": 0.875
+        }
+      ],
+      "inference_ms": 8.774199988692999
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00153.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3171875,
+            0.6413194444444444,
+            0.4078125,
+            0.7694444444444445
+          ],
+          0.8896484375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8021760697172278,
+          "confidence": 0.8896484375
+        }
+      ],
+      "inference_ms": 8.850699989125133
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00168.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.31953125,
+            0.48854166666666665,
+            0.4125,
+            0.6045138888888889
+          ],
+          0.8857421875
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.861539721558976,
+          "confidence": 0.8857421875
+        }
+      ],
+      "inference_ms": 8.306999923661351
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00183.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.322265625,
+            0.44583333333333336,
+            0.412890625,
+            0.5569444444444445
+          ],
+          0.8115234375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9166151440035968,
+          "confidence": 0.8115234375
+        }
+      ],
+      "inference_ms": 9.02699981816113
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00198.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.317578125,
+            0.49583333333333335,
+            0.416015625,
+            0.6194444444444445
+          ],
+          0.921875
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8543809021043993,
+          "confidence": 0.921875
+        }
+      ],
+      "inference_ms": 9.385900106281042
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00213.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.35,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3390625,
+            0.56875,
+            0.395703125,
+            0.6694444444444444
+          ],
+          0.84814453125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 10.696199955418706
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00021.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.329296875,
+            0.3784722222222222,
+            0.402734375,
+            0.4895833333333333
+          ],
+          0.8740234375
+        ],
+        [
+          7,
+          [
+            0.332421875,
+            0.38958333333333334,
+            0.39453125,
+            0.4777777777777778
+          ],
+          0.267333984375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 7.447100011631846
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00036.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.334375,
+            0.6097222222222223,
+            0.39921875,
+            0.725
+          ],
+          0.8642578125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.361099917441607
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00051.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 10.11650008149445
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00059.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34609375,
+            0.42604166666666665,
+            0.4015625,
+            0.5510416666666667
+          ],
+          0.167724609375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.518300019204617
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00068.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34375,
+            0.28680555555555554,
+            0.39921875,
+            0.38958333333333334
+          ],
+          0.2509765625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 7.9372001346200705
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00075.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.35,
+            0.5315972222222223,
+            0.3984375,
+            0.6184027777777777
+          ],
+          0.48046875
+        ],
+        [
+          7,
+          [
+            0.35234375,
+            0.48368055555555556,
+            0.39453125,
+            0.5677083333333334
+          ],
+          0.36669921875
+        ],
+        [
+          7,
+          [
+            0.334765625,
+            0.4809027777777778,
+            0.406640625,
+            0.6225694444444444
+          ],
+          0.3310546875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.297600015997887
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00083.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 8.431199938058853
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00090.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3359375,
+            0.8236111111111111,
+            0.409375,
+            0.9125
+          ],
+          0.315673828125
+        ]
+      ],
+      "matches": [
+        {
+          "matched": false,
+          "iou": 0.0,
+          "confidence": null
+        }
+      ],
+      "inference_ms": 8.429600158706307
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00098.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          10,
+          [
+            0.332421875,
+            0.5041666666666667,
+            0.401171875,
+            0.6166666666666667
+          ],
+          0.484375
+        ],
+        [
+          12,
+          [
+            0.33125,
+            0.5048611111111111,
+            0.400390625,
+            0.6159722222222223
+          ],
+          0.1981201171875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.938400005921721
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00108.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 8.636399870738387
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00116.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          11,
+          [
+            0.34453125,
+            0.5326388888888889,
+            0.3875,
+            0.5965277777777778
+          ],
+          0.226806640625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 7.268200162798166
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00123.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          12,
+          [
+            0.3212890625,
+            0.25763888888888886,
+            0.3986328125,
+            0.3875
+          ],
+          0.486328125
+        ],
+        [
+          7,
+          [
+            0.322265625,
+            0.2569444444444444,
+            0.399609375,
+            0.3861111111111111
+          ],
+          0.299072265625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.81959986872971
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00131.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.337890625,
+            0.25243055555555555,
+            0.40078125,
+            0.3548611111111111
+          ],
+          0.273681640625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.469199994578958
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00138.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 8.70910007506609
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00147.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 8.895499864593148
+    },
+    {
+      "image": "yolo_ds\\images\\val\\custom_2_00173.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [],
+      "matches": [],
+      "inference_ms": 7.942100055515766
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00021.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3455078125,
+            0.6430555555555556,
+            0.3986328125,
+            0.7180555555555556
+          ],
+          0.7958984375
+        ],
+        [
+          7,
+          [
+            0.3390625,
+            0.6208333333333333,
+            0.398828125,
+            0.71875
+          ],
+          0.2069091796875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.426300017163157
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00036.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3455078125,
+            0.6416666666666667,
+            0.3978515625,
+            0.7166666666666667
+          ],
+          0.72314453125
+        ],
+        [
+          7,
+          [
+            0.33828125,
+            0.6229166666666667,
+            0.3984375,
+            0.7138888888888889
+          ],
+          0.7216796875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 11.395200155675411
+    },
+    {
+      "image": "yolo_ds\\images\\val\\orbs_00051.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.337890625,
+            0.6229166666666667,
+            0.399609375,
+            0.7131944444444445
+          ],
+          0.67578125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.801700012758374
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00015.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.341796875,
+            0.6319444444444444,
+            0.397265625,
+            0.7291666666666666
+          ],
+          0.4609375
+        ],
+        [
+          7,
+          [
+            0.31953125,
+            0.6295138888888889,
+            0.3984375,
+            0.7291666666666666
+          ],
+          0.30908203125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.12639987654984
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00027.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3314453125,
+            0.096875,
+            0.3958984375,
+            0.2013888888888889
+          ],
+          0.79296875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.385600056499243
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00039.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3359375,
+            0.5256944444444445,
+            0.40625,
+            0.6465277777777778
+          ],
+          0.73095703125
+        ],
+        [
+          7,
+          [
+            0.346875,
+            0.5486111111111112,
+            0.40546875,
+            0.65
+          ],
+          0.1519775390625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.58750008046627
+    },
+    {
+      "image": "yolo_ds\\images\\val\\pads_00051.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.45859375,
+            0.6319444444444444,
+            0.51953125,
+            0.7229166666666667
+          ],
+          0.6318359375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 10.867099976167083
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00012.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.324609375,
+            0.5784722222222223,
+            0.415234375,
+            0.6972222222222222
+          ],
+          0.88427734375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9316861252583784,
+          "confidence": 0.88427734375
+        }
+      ],
+      "inference_ms": 9.328700136393309
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00027.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3296875,
+            0.6416666666666667,
+            0.41484375,
+            0.7763888888888889
+          ],
+          0.8974609375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9218926600253363,
+          "confidence": 0.8974609375
+        }
+      ],
+      "inference_ms": 8.556399960070848
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00042.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.31953125,
+            0.8034722222222223,
+            0.415625,
+            0.9284722222222223
+          ],
+          0.90869140625
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8729459792548332,
+          "confidence": 0.90869140625
+        }
+      ],
+      "inference_ms": 10.12949994765222
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00057.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.325390625,
+            0.1607638888888889,
+            0.415234375,
+            0.28368055555555555
+          ],
+          0.93359375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9735500781134855,
+          "confidence": 0.93359375
+        }
+      ],
+      "inference_ms": 10.21279999986291
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00072.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.328515625,
+            0.8729166666666667,
+            0.40625,
+            0.9645833333333333
+          ],
+          0.927734375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9087988326171994,
+          "confidence": 0.927734375
+        }
+      ],
+      "inference_ms": 9.145300136879086
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00087.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.326953125,
+            0.8145833333333333,
+            0.414453125,
+            0.93125
+          ],
+          0.85888671875
+        ],
+        [
+          8,
+          [
+            0.33125,
+            0.825,
+            0.405078125,
+            0.9055555555555556
+          ],
+          0.275146484375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9631217539823638,
+          "confidence": 0.85888671875
+        }
+      ],
+      "inference_ms": 8.682599989697337
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00102.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.325390625,
+            0.8277777777777777,
+            0.412109375,
+            0.9333333333333333
+          ],
+          0.9599609375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8960088963587465,
+          "confidence": 0.9599609375
+        }
+      ],
+      "inference_ms": 9.169700089842081
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00117.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.33046875,
+            0.6645833333333333,
+            0.413671875,
+            0.7895833333333333
+          ],
+          0.9248046875
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8789718882077543,
+          "confidence": 0.9248046875
+        }
+      ],
+      "inference_ms": 8.492300054058433
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00132.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3328125,
+            0.6503472222222222,
+            0.4140625,
+            0.775
+          ],
+          0.93212890625
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.861323582430571,
+          "confidence": 0.93212890625
+        }
+      ],
+      "inference_ms": 8.854500018060207
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00147.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.326953125,
+            0.8763888888888889,
+            0.40625,
+            0.9625
+          ],
+          0.822265625
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8609555223335603,
+          "confidence": 0.822265625
+        }
+      ],
+      "inference_ms": 8.430999936535954
+    },
+    {
+      "image": "yolo_ds\\images\\val\\ship_00162.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.327734375,
+            0.875,
+            0.408203125,
+            0.9638888888888889
+          ],
+          0.91259765625
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9437267941050892,
+          "confidence": 0.91259765625
+        }
+      ],
+      "inference_ms": 9.140299865975976
+    },
+    {
+      "image": "yolo_ds\\images\\val\\speed_00012.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.346484375,
+            0.6409722222222223,
+            0.399609375,
+            0.7173611111111111
+          ],
+          0.85107421875
+        ],
+        [
+          7,
+          [
+            0.3390625,
+            0.6208333333333333,
+            0.39921875,
+            0.7166666666666667
+          ],
+          0.375732421875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.736900053918362
+    },
+    {
+      "image": "yolo_ds\\images\\val\\speed_00027.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.61171875,
+            0.6583333333333333,
+            0.65234375,
+            0.7166666666666667
+          ],
+          0.83740234375
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.356800070032477
+    },
+    {
+      "image": "yolo_ds\\images\\val\\spikes_00018.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.34140625,
+            0.6270833333333333,
+            0.39765625,
+            0.7159722222222222
+          ],
+          0.67236328125
+        ],
+        [
+          7,
+          [
+            0.348046875,
+            0.6475694444444444,
+            0.398046875,
+            0.7166666666666667
+          ],
+          0.48828125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.49379994906485
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00015.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.33828125,
+            0.625,
+            0.38203125,
+            0.7013888888888888
+          ],
+          0.81298828125
+        ],
+        [
+          7,
+          [
+            0.3390625,
+            0.6256944444444444,
+            0.3953125,
+            0.7145833333333333
+          ],
+          0.474609375
+        ],
+        [
+          7,
+          [
+            0.338671875,
+            0.6208333333333333,
+            0.377734375,
+            0.6833333333333333
+          ],
+          0.25390625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.709999965503812
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00030.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.334375,
+            0.37222222222222223,
+            0.39921875,
+            0.49583333333333335
+          ],
+          0.65673828125
+        ],
+        [
+          7,
+          [
+            0.337109375,
+            0.3732638888888889,
+            0.392578125,
+            0.46284722222222224
+          ],
+          0.42626953125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.478699950501323
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00045.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.352734375,
+            0.6465277777777778,
+            0.398828125,
+            0.7145833333333333
+          ],
+          0.7919921875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.077299851924181
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00060.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.337890625,
+            0.4305555555555556,
+            0.397265625,
+            0.5291666666666667
+          ],
+          0.78515625
+        ],
+        [
+          7,
+          [
+            0.34765625,
+            0.4496527777777778,
+            0.39765625,
+            0.5295138888888888
+          ],
+          0.494140625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.012100053951144
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00075.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.334375,
+            0.17743055555555556,
+            0.3984375,
+            0.284375
+          ],
+          0.8447265625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.175400016829371
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00093.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3359375,
+            0.4756944444444444,
+            0.3984375,
+            0.5763888888888888
+          ],
+          0.880859375
+        ],
+        [
+          7,
+          [
+            0.347265625,
+            0.49444444444444446,
+            0.398046875,
+            0.575
+          ],
+          0.4072265625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.062400156632066
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00108.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.337109375,
+            0.5875,
+            0.397265625,
+            0.6868055555555556
+          ],
+          0.77734375
+        ],
+        [
+          7,
+          [
+            0.348046875,
+            0.6083333333333333,
+            0.398046875,
+            0.6895833333333333
+          ],
+          0.56591796875
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.188500000163913
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00123.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.337109375,
+            0.5756944444444444,
+            0.394140625,
+            0.6694444444444444
+          ],
+          0.9072265625
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 9.564100066199899
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00138.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3171875,
+            0.46805555555555556,
+            0.409375,
+            0.5861111111111111
+          ],
+          0.875
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8565008296821421,
+          "confidence": 0.875
+        }
+      ],
+      "inference_ms": 7.752600125968456
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00153.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.3171875,
+            0.6413194444444444,
+            0.4078125,
+            0.7694444444444445
+          ],
+          0.8896484375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8021760697172278,
+          "confidence": 0.8896484375
+        }
+      ],
+      "inference_ms": 8.07589991018176
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00168.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.31953125,
+            0.48854166666666665,
+            0.4125,
+            0.6045138888888889
+          ],
+          0.8857421875
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.861539721558976,
+          "confidence": 0.8857421875
+        }
+      ],
+      "inference_ms": 8.450699970126152
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00183.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.322265625,
+            0.44583333333333336,
+            0.412890625,
+            0.5569444444444445
+          ],
+          0.8115234375
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.9166151440035968,
+          "confidence": 0.8115234375
+        }
+      ],
+      "inference_ms": 10.118199978023767
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00198.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 1,
+      "predicted_icons": [
+        [
+          8,
+          [
+            0.317578125,
+            0.49583333333333335,
+            0.416015625,
+            0.6194444444444445
+          ],
+          0.921875
+        ]
+      ],
+      "matches": [
+        {
+          "matched": true,
+          "iou": 0.8543809021043993,
+          "confidence": 0.921875
+        }
+      ],
+      "inference_ms": 8.611300028860569
+    },
+    {
+      "image": "yolo_ds\\images\\val\\stereo_madness_00213.jpg",
+      "model": "yolo_gd.pt",
+      "threshold": 0.15,
+      "expected_ships": 0,
+      "predicted_icons": [
+        [
+          7,
+          [
+            0.3390625,
+            0.56875,
+            0.395703125,
+            0.6694444444444444
+          ],
+          0.84814453125
+        ]
+      ],
+      "matches": [],
+      "inference_ms": 8.230000035837293
+    }
+  ],
+  "limitation": "Existing validation split; may share source videos with training. Not a generalization estimate."
+}

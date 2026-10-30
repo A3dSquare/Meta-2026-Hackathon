@@ -1,0 +1,15 @@
+{
+  "cases": 45,
+  "changed_cases": [],
+  "baseline": {
+    "mean_ms": 9.012031099862522,
+    "median_ms": 5.402599927037954,
+    "p95_ms": 16.32869988679886
+  },
+  "optimized": {
+    "mean_ms": 4.240171114603679,
+    "median_ms": 3.7667998112738132,
+    "p95_ms": 10.161200072616339
+  },
+  "limitation": "Recorded CPU search only; live end-to-end timing must be measured after restart."
+}

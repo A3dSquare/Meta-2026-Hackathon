@@ -1,0 +1,58 @@
+[
+  {
+    "case": 0,
+    "old_action": 0,
+    "new_action": 1,
+    "old_verified": false,
+    "new_verified": false
+  },
+  {
+    "case": 1,
+    "old_action": 1,
+    "new_action": 0,
+    "old_verified": false,
+    "new_verified": false
+  },
+  {
+    "case": 9,
+    "old_action": 0,
+    "new_action": 0,
+    "old_verified": true,
+    "new_verified": true
+  },
+  {
+    "case": 33,
+    "old_action": 0,
+    "new_action": 0,
+    "old_verified": false,
+    "new_verified": false
+  },
+  {
+    "case": 34,
+    "old_action": 0,
+    "new_action": 0,
+    "old_verified": false,
+    "new_verified": false
+  },
+  {
+    "case": 42,
+    "old_action": 0,
+    "new_action": 0,
+    "old_verified": false,
+    "new_verified": true
+  },
+  {
+    "case": 43,
+    "old_action": 0,
+    "new_action": 0,
+    "old_verified": false,
+    "new_verified": false
+  },
+  {
+    "case": 44,
+    "old_action": 0,
+    "new_action": 0,
+    "old_verified": false,
+    "new_verified": false
+  }
+]

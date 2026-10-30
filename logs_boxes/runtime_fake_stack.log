@@ -1,0 +1,12 @@
+[session] C:\Users\mysou\AppData\Local\Temp\tmpqu7h_ww9\sessions\20261030_032023_2f1da005
+[input] in a level: inputs on
+[input] (can't find a window titled 'Geometry Dash' to keep it in front -- make sure GD stays the active window yourself)
+[input] input delay 14 ms (0.38 steps; spread 13-24 ms) -- the blue line uses it as is
+[physics] jump 2.21b/0.40s (3 jumps), delay 14 ms; no other modes seen yet  (? = not enough yet)
+[physics] pads / orbs (x cube jump): no pad / orb launches measured yet
+saved C:\Users\mysou\AppData\Local\Temp\tmpqu7h_ww9\live.pt
+crashes in game: 9   deaths seen by env: 9   crash time measured: 9/9   ESC pauses: 4   updates: 2
+peak % by attempt (first 40): [5, 5, 5, 5, 5, 5, 5, 9, 5]
+peak % by attempt (last 20):  [5, 5, 5, 5, 5, 5, 5, 9, 5]
+deaths: 9  crash time measured on 9/9  completed level: False
+PASS

@@ -1,0 +1,4 @@
+{"time": 1793396099.780351, "session_id": "20261030_163459_bbd12302", "attempt": 1, "tag": "", "tail_steps": 1, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}
+{"time": 1793396151.1722314, "session_id": "20261030_163459_bbd12302", "attempt": 2, "tag": "", "tail_steps": 1250, "weight": 0.05, "tail_shaping_sum": -0.22014686187699728, "terminal_phi": 0.0, "tail_potential_mean": 0.005799999999999986}
+{"time": 1793396186.9356933, "session_id": "20261030_163459_bbd12302", "attempt": 3, "tag": "", "tail_steps": 231, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}
+{"time": 1793396208.2377477, "session_id": "20261030_163459_bbd12302", "attempt": 4, "tag": "", "tail_steps": 350, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}

@@ -1,0 +1,19 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793328727.0,1,24,3,1.0,21,measured,0,,"spike, chose wrong",20261029_215205_dc921841
+1793328732.9,2,164,109,5.0,31,measured,0,,"spike, trapped",20261029_215205_dc921841
+1793328739.7,3,302,107,5.0,31,measured,0,,"spike, chose wrong",20261029_215205_dc921841
+1793328754.5,4,604,275,14.0,27,measured,0,,"unknown, chose wrong (shield acted)",20261029_215205_dc921841
+1793328805.0,5,1478,845,50.0,29,measured,1,,"spike, trapped",20261029_215205_dc921841
+1793328826.9,6,1804,297,16.0,29,measured,2,,"spike, trapped",20261029_215205_dc921841
+1793328868.0,7,2508,683,38.0,21,measured,3,,"unknown, trapped",20261029_215205_dc921841
+1793328895.3,8,2946,391,22.0,47,measured,4,,"unknown, chose wrong",20261029_215205_dc921841
+1793328922.2,9,3372,396,22.0,30,measured,5,,"spike, trapped",20261029_215205_dc921841
+1793328949.7,10,3772,374,22.0,26,measured,6,,"unknown, trapped",20261029_215205_dc921841
+1793328964.6,11,3958,159,8.0,27,measured,7,,"spike, trapped (shield acted)",20261029_215205_dc921841
+1793329004.5,12,4652,672,38.0,22,measured,8,,"unknown, chose wrong (shield acted)",20261029_215205_dc921841
+1793329031.1,13,5068,387,22.0,29,measured,9,,"unknown, chose wrong (shield acted)",20261029_215205_dc921841
+1793329048.9,14,5324,227,12.0,29,measured,10,,"spike, chose wrong (shield acted)",20261029_215205_dc921841
+1793329075.7,15,5746,394,22.0,28,measured,11,,"unknown, chose wrong",20261029_215205_dc921841
+1793329103.9,16,6210,434,24.0,30,measured,12,,"block side, trapped (shield acted)",20261029_215205_dc921841
+1793329131.7,17,6658,395,22.0,53,measured,13,,"spike, trapped",20261029_215205_dc921841
+1793329295.7,18,7586,907,25.0,21,measured,14,,"unknown, chose wrong",20261029_215205_dc921841

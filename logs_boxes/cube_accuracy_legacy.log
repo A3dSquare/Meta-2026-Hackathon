@@ -1,0 +1,5 @@
+[input] Geometry Dash was NOT the active window -- SPACE was going to another window. Brought GD back to the front.
+[input] in a level: inputs on
+spikes visible per step (first 40): [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+deaths (measured_lag, source, true_lag): [(31, 'measured', 31), (31, 'measured', 31), (31, 'measured', 31)]
+PASS

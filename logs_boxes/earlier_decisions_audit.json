@@ -1,0 +1,1346 @@
+[
+  {
+    "file": "death_00311.json",
+    "attempt": 311,
+    "peak_pct": 1.0,
+    "trace": {
+      "last_verified": {
+        "index": 45,
+        "seconds_before_crash": 0,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 0.0,
+        "estimated_velocity": -3.001449088814418,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": null,
+      "last_action_with_safer_scored_alternative": {
+        "index": 28,
+        "seconds_before_crash": 0.583,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.37777777777777777
+        },
+        "measured_velocity": -11.665588379271274,
+        "estimated_velocity": -11.3947946632873,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00312.json",
+    "attempt": 312,
+    "peak_pct": 16.0,
+    "trace": {
+      "last_verified": {
+        "index": 27,
+        "seconds_before_crash": 0.534,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 4.12143190819273,
+        "estimated_velocity": 4.413502590789428,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 28,
+        "seconds_before_crash": 0.484,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.2759580612182617
+        },
+        "measured_velocity": -1.2291885653622783,
+        "estimated_velocity": -1.21074149951309,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 10,
+        "seconds_before_crash": 1.134,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.6
+        },
+        "measured_velocity": -7.205623891832009,
+        "estimated_velocity": -10.317654920216919,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00313.json",
+    "attempt": 313,
+    "peak_pct": 26.0,
+    "trace": {
+      "last_verified": null,
+      "first_after_verified": {
+        "index": 0,
+        "seconds_before_crash": 0.667,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.4666666666666666,
+          "worse": 0.24822786840576927
+        },
+        "measured_velocity": 22.177681547401075,
+        "estimated_velocity": 16.549291330981838,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": true,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00314.json",
+    "attempt": 314,
+    "peak_pct": 8.0,
+    "trace": {
+      "last_verified": {
+        "index": 39,
+        "seconds_before_crash": 0.067,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -0.08209862004763521,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "first_after_verified": {
+        "index": 40,
+        "seconds_before_crash": 0.033,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.047573611434837675
+        },
+        "measured_velocity": -0.36148444985904465,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00315.json",
+    "attempt": 315,
+    "peak_pct": 51.0,
+    "trace": {
+      "last_verified": {
+        "index": 18,
+        "seconds_before_crash": 0.833,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -0.8280600732474476,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "first_after_verified": {
+        "index": 19,
+        "seconds_before_crash": 0.8,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.7333333333333333,
+          "worse": 0.5558717846870422
+        },
+        "measured_velocity": -0.5063533706256339,
+        "estimated_velocity": -1.356289717982997,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00316.json",
+    "attempt": 316,
+    "peak_pct": 9.0,
+    "trace": {
+      "last_verified": null,
+      "first_after_verified": {
+        "index": 0,
+        "seconds_before_crash": 0.6,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.4666666666666666
+        },
+        "measured_velocity": -1.4175501780403577,
+        "estimated_velocity": -0.8760435437376373,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 4,
+        "seconds_before_crash": 0.466,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.37777777777777777
+        },
+        "measured_velocity": -15.216592069528698,
+        "estimated_velocity": -13.439267046509542,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": true,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00317.json",
+    "attempt": 317,
+    "peak_pct": 11.0,
+    "trace": {
+      "last_verified": null,
+      "first_after_verified": {
+        "index": 0,
+        "seconds_before_crash": 1.667,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.3731638491153717
+        },
+        "measured_velocity": -4.914211318591384,
+        "estimated_velocity": -5.938610797227209,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 11,
+        "seconds_before_crash": 1.184,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.4175988435745239
+        },
+        "measured_velocity": -7.382360267907678,
+        "estimated_velocity": -8.90789620904038,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": true,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00318.json",
+    "attempt": 318,
+    "peak_pct": 11.0,
+    "trace": {
+      "last_verified": null,
+      "first_after_verified": {
+        "index": 0,
+        "seconds_before_crash": 0.333,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.2631826973385439,
+          "worse": 0.2631826973385439
+        },
+        "measured_velocity": 15.69413272449241,
+        "estimated_velocity": 14.985640449547443,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": true,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00319.json",
+    "attempt": 319,
+    "peak_pct": 1.0,
+    "trace": {
+      "last_verified": {
+        "index": 44,
+        "seconds_before_crash": 0.033,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 0.0,
+        "estimated_velocity": -3.871669034017018,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 45,
+        "seconds_before_crash": 0,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unknown",
+        "sequence_safety": {
+          "nominal": 0.37777777777777777,
+          "worse": 0.37777777777777777
+        },
+        "measured_velocity": 0.0,
+        "estimated_velocity": -1.502834920520019,
+        "grounded": false,
+        "state_source": "missing player"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 22,
+        "seconds_before_crash": 0.783,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.37777777777777777
+        },
+        "measured_velocity": -12.510940602794323,
+        "estimated_velocity": -13.384843204033324,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00320.json",
+    "attempt": 320,
+    "peak_pct": 42.0,
+    "trace": {
+      "last_verified": null,
+      "first_after_verified": {
+        "index": 0,
+        "seconds_before_crash": 1.333,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": null,
+        "measured_velocity": 1.6844045471749538,
+        "estimated_velocity": 2.3482285494334336,
+        "grounded": false,
+        "state_source": "mode physics"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": true,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00321.json",
+    "attempt": 321,
+    "peak_pct": 2.0,
+    "trace": {
+      "last_verified": {
+        "index": 11,
+        "seconds_before_crash": 1.2,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -1.1665451440791366,
+        "estimated_velocity": -3.6326923663938686,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 12,
+        "seconds_before_crash": 1.15,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.7333333333333333
+        },
+        "measured_velocity": -7.715339429510216,
+        "estimated_velocity": -8.385063777817226,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 30,
+        "seconds_before_crash": 0.5,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.37777777777777777
+        },
+        "measured_velocity": -10.083716473165325,
+        "estimated_velocity": -12.831410150524734,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00322.json",
+    "attempt": 322,
+    "peak_pct": 57.99999999999999,
+    "trace": {
+      "last_verified": {
+        "index": 5,
+        "seconds_before_crash": 0.6,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -7.149460497360144,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "first_after_verified": {
+        "index": 6,
+        "seconds_before_crash": 0.567,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.3484577301221507,
+          "worse": 0.3484577301221507
+        },
+        "measured_velocity": 3.6386065320992627,
+        "estimated_velocity": 18.468626909002595,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00323.json",
+    "attempt": 323,
+    "peak_pct": 16.0,
+    "trace": {
+      "last_verified": {
+        "index": 29,
+        "seconds_before_crash": 0.483,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -12.538178967067662,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "first_after_verified": {
+        "index": 30,
+        "seconds_before_crash": 0.466,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.28645871537397255
+        },
+        "measured_velocity": -4.006343403192597,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 29,
+        "seconds_before_crash": 0.483,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -12.538178967067662,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00324.json",
+    "attempt": 324,
+    "peak_pct": 5.0,
+    "trace": {
+      "last_verified": {
+        "index": 32,
+        "seconds_before_crash": 0.3,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 15.735254543744714,
+        "estimated_velocity": 15.304666472486389,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 33,
+        "seconds_before_crash": 0.267,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.1769527180474121,
+          "worse": 0.17695271804741217
+        },
+        "measured_velocity": 4.47961275431044,
+        "estimated_velocity": 7.11899780764624,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00325.json",
+    "attempt": 325,
+    "peak_pct": 5.0,
+    "trace": {
+      "last_verified": null,
+      "first_after_verified": {
+        "index": 0,
+        "seconds_before_crash": 0.7,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.7333333333333333
+        },
+        "measured_velocity": 11.016934872959505,
+        "estimated_velocity": 8.820669448815442,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": true,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00326.json",
+    "attempt": 326,
+    "peak_pct": 15.0,
+    "trace": {
+      "last_verified": {
+        "index": 18,
+        "seconds_before_crash": 0.8,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -9.679812835763032,
+        "estimated_velocity": -11.63396045456599,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 19,
+        "seconds_before_crash": 0.783,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.6,
+          "worse": 1.0
+        },
+        "measured_velocity": -9.917951124203187,
+        "estimated_velocity": -12.8940056584078,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 7,
+        "seconds_before_crash": 1.233,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.37777777777777777
+        },
+        "measured_velocity": -10.954467675218513,
+        "estimated_velocity": -12.089459322635847,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00327.json",
+    "attempt": 327,
+    "peak_pct": 27.0,
+    "trace": {
+      "last_verified": {
+        "index": 7,
+        "seconds_before_crash": 0.5,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -17.89223081263598,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "first_after_verified": {
+        "index": 8,
+        "seconds_before_crash": 0.467,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.8739368915557861,
+          "worse": 0.8739368915557861
+        },
+        "measured_velocity": -2.8613956410992922,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00328.json",
+    "attempt": 328,
+    "peak_pct": 9.0,
+    "trace": {
+      "last_verified": {
+        "index": 44,
+        "seconds_before_crash": 0.05,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 2.8011002294789606,
+        "estimated_velocity": 0.5655523920659737,
+        "grounded": false,
+        "state_source": "raw motion; arc rejected"
+      },
+      "first_after_verified": {
+        "index": 45,
+        "seconds_before_crash": 0,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": null,
+        "measured_velocity": -3.8727959439153805,
+        "estimated_velocity": -5.005776559254191,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00329.json",
+    "attempt": 329,
+    "peak_pct": 16.0,
+    "trace": {
+      "last_verified": {
+        "index": 12,
+        "seconds_before_crash": 0.233,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 0.15324040426547222,
+        "estimated_velocity": 19.547393052196753,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 13,
+        "seconds_before_crash": 0.217,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.11835377663373947,
+          "worse": 0.11380171030759811
+        },
+        "measured_velocity": -2.2766650633771537,
+        "estimated_velocity": -2.0331651945269793,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00330.json",
+    "attempt": 330,
+    "peak_pct": 15.0,
+    "trace": {
+      "last_verified": {
+        "index": 18,
+        "seconds_before_crash": 0.8,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -11.105066251246924,
+        "estimated_velocity": -14.948860157671719,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 19,
+        "seconds_before_crash": 0.783,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.3138862821658049,
+          "worse": 0.5555555555555555
+        },
+        "measured_velocity": -9.177376906714407,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00331.json",
+    "attempt": 331,
+    "peak_pct": 19.0,
+    "trace": {
+      "last_verified": null,
+      "first_after_verified": {
+        "index": 0,
+        "seconds_before_crash": 0.234,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.6
+        },
+        "measured_velocity": 0.8555636257899089,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 3,
+        "seconds_before_crash": 0.134,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.09284374238455174
+        },
+        "measured_velocity": -5.402397166664692,
+        "estimated_velocity": -6.539418782093031,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": true,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00332.json",
+    "attempt": 332,
+    "peak_pct": 5.0,
+    "trace": {
+      "last_verified": {
+        "index": 22,
+        "seconds_before_crash": 0.7,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 8.892846196239129,
+        "estimated_velocity": 8.928251401248046,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 23,
+        "seconds_before_crash": 0.65,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.4870447814464569
+        },
+        "measured_velocity": 5.63474598645716,
+        "estimated_velocity": 4.438208524694845,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00333.json",
+    "attempt": 333,
+    "peak_pct": 63.0,
+    "trace": {
+      "last_verified": {
+        "index": 13,
+        "seconds_before_crash": 1.0,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 0.5670404470505872,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "first_after_verified": {
+        "index": 14,
+        "seconds_before_crash": 0.967,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.6444444444444444
+        },
+        "measured_velocity": 0.20091973780249286,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 16,
+        "seconds_before_crash": 0.9,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.6
+        },
+        "measured_velocity": 0.1994100099553476,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00334.json",
+    "attempt": 334,
+    "peak_pct": 19.0,
+    "trace": {
+      "last_verified": {
+        "index": 32,
+        "seconds_before_crash": 0.317,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 3.0547420638120464,
+        "estimated_velocity": 1.5507656481465604,
+        "grounded": false,
+        "state_source": "raw motion; arc rejected"
+      },
+      "first_after_verified": {
+        "index": 33,
+        "seconds_before_crash": 0.267,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.19620251556366708,
+          "worse": 0.1716772011182087
+        },
+        "measured_velocity": 15.057332048710823,
+        "estimated_velocity": 12.812854387828505,
+        "grounded": false,
+        "state_source": "raw motion; arc rejected"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 30,
+        "seconds_before_crash": 0.384,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.2867705992900545
+        },
+        "measured_velocity": -21.94092218306572,
+        "estimated_velocity": -23.36201600256845,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00335.json",
+    "attempt": 335,
+    "peak_pct": 5.0,
+    "trace": {
+      "last_verified": {
+        "index": 9,
+        "seconds_before_crash": 1.183,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 0.03908812061227886,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "first_after_verified": {
+        "index": 10,
+        "seconds_before_crash": 1.133,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.6888888888888888
+        },
+        "measured_velocity": -0.24373347661925798,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00336.json",
+    "attempt": 336,
+    "peak_pct": 19.0,
+    "trace": {
+      "last_verified": {
+        "index": 30,
+        "seconds_before_crash": 0.4,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 0.6457854039877375,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "first_after_verified": {
+        "index": 31,
+        "seconds_before_crash": 0.367,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.15576329827308655
+        },
+        "measured_velocity": 1.0627672191091317,
+        "estimated_velocity": 0.0,
+        "grounded": true,
+        "state_source": "supported rest"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 34,
+        "seconds_before_crash": 0.267,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.0975074743619566
+        },
+        "measured_velocity": -4.083087303610429,
+        "estimated_velocity": -5.161157703716546,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00337.json",
+    "attempt": 337,
+    "peak_pct": 10.0,
+    "trace": {
+      "last_verified": {
+        "index": 0,
+        "seconds_before_crash": 0.517,
+        "action": 1,
+        "planned_action": 1,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -13.539045285442654,
+        "estimated_velocity": -14.887561297378795,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 1,
+        "seconds_before_crash": 0.484,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.3333333333333333,
+          "worse": 0.3333333333333333
+        },
+        "measured_velocity": -15.096317227121023,
+        "estimated_velocity": -17.90594049102002,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00338.json",
+    "attempt": 338,
+    "peak_pct": 24.0,
+    "trace": {
+      "last_verified": {
+        "index": 1,
+        "seconds_before_crash": 1.4,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 14.792257930465592,
+        "estimated_velocity": 16.571995648602414,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 2,
+        "seconds_before_crash": 1.35,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.2951551063268573
+        },
+        "measured_velocity": 15.796014147226156,
+        "estimated_velocity": 12.077521542954486,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": null,
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00339.json",
+    "attempt": 339,
+    "peak_pct": 23.0,
+    "trace": {
+      "last_verified": {
+        "index": 23,
+        "seconds_before_crash": 0.651,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": -8.803085699243143,
+        "estimated_velocity": -10.390624414201849,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 24,
+        "seconds_before_crash": 0.601,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 0.06610805541276932,
+          "worse": 1.0
+        },
+        "measured_velocity": -17.0456738438084,
+        "estimated_velocity": -16.371216829405757,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 26,
+        "seconds_before_crash": 0.534,
+        "action": 0,
+        "planned_action": 1,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.37777777777777777
+        },
+        "measured_velocity": -18.370475954588173,
+        "estimated_velocity": -20.890946351602075,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  },
+  {
+    "file": "death_00340.json",
+    "attempt": 340,
+    "peak_pct": 10.0,
+    "trace": {
+      "last_verified": {
+        "index": 23,
+        "seconds_before_crash": 0.833,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "verified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 1.0
+        },
+        "measured_velocity": 11.032728056141432,
+        "estimated_velocity": 10.954511478773693,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "first_after_verified": {
+        "index": 24,
+        "seconds_before_crash": 0.783,
+        "action": 0,
+        "planned_action": 0,
+        "role": "planner bootstrap",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.5111111111111111
+        },
+        "measured_velocity": 11.147037158558486,
+        "estimated_velocity": 7.353497008817492,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "last_action_with_safer_scored_alternative": {
+        "index": 29,
+        "seconds_before_crash": 0.55,
+        "action": 1,
+        "planned_action": 0,
+        "role": "planner: limited forecast",
+        "state": "unverified",
+        "sequence_safety": {
+          "nominal": 1.0,
+          "worse": 0.37777777777777777
+        },
+        "measured_velocity": -11.69167071781111,
+        "estimated_velocity": -13.754700646942595,
+        "grounded": false,
+        "state_source": "validated local arc"
+      },
+      "history_limited": false,
+      "limitation": "Retrospective planner evidence, not proof that another action would survive."
+    }
+  }
+]

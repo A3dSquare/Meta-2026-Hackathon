@@ -1,0 +1,117 @@
+usage: preview_boxes.py [-h] [--backend {heuristic,yolo,yolo-only}]
+                        [--model MODEL] [--algo {dqn,ppo}] [--steps STEPS]
+                        [--device {cpu,cuda,auto}] [--frame-skip FRAME_SKIP]
+                        [--no-hires] [--death-lag DEATH_LAG] [--settle SETTLE]
+                        [--update-steps UPDATE_STEPS]
+                        [--replay-ratio REPLAY_RATIO]
+                        [--cpu-threads CPU_THREADS] [--route-controller]
+                        [--threaded-capture | --sync-capture] [--eps EPS]
+                        [--name NAME] [--minutes MINUTES]
+                        [--jump-margin JUMP_MARGIN]
+                        [--flight-margin FLIGHT_MARGIN]
+                        [--flight-buffer FLIGHT_BUFFER]
+                        [--flight-teacher-weight FLIGHT_TEACHER_WEIGHT]
+                        [--hold-cost HOLD_COST]
+                        [--clearance-reward [CLEARANCE_REWARD]] [--play]
+                        [--ms-delay] [--frontier] [--no-route]
+                        [--routes ROUTES] [--fast-steps]
+                        [--death-snaps DEATH_SNAPS] [--no-shield]
+                        [--motion-fix] [--hazards HAZARDS]
+                        [--motion-model MOTION_MODEL] [--icon-hue LO HI]
+                        [--scale SCALE] [--render-every RENDER_EVERY]
+
+box-policy live GUI + train
+
+options:
+  -h, --help            show this help message and exit
+  --backend {heuristic,yolo,yolo-only}
+                        heuristic = built-in rules; yolo = rules + YOLO for
+                        what they miss; yolo-only = everything from YOLO incl.
+                        the icon's mode (needs yolo_gd.pt)
+  --model MODEL         checkpoint to resume (.pt for dqn, .zip for ppo)
+  --algo {dqn,ppo}
+  --steps STEPS, --timesteps STEPS
+  --device {cpu,cuda,auto}
+  --frame-skip FRAME_SKIP
+                        game frames per decision (2 = 30 decisions/s)
+  --no-hires            detect on 320x180 only (faster, misses mini spikes)
+  --death-lag DEATH_LAG
+                        'auto' (measure camera freeze) or seconds between
+                        crash and % reset
+  --settle SETTLE       seconds to wait after training before un-pausing GD
+  --update-steps UPDATE_STEPS
+                        train after a death once this many new steps were
+                        played
+  --replay-ratio REPLAY_RATIO
+  --cpu-threads CPU_THREADS
+                        PyTorch threads for the CPU brain (default 1; 0 keeps
+                        library default)
+  --route-controller    new route-conditioned mode controllers, learned
+                        motion, persistent replay and evaluation gate;
+                        separate checkpoint
+  --threaded-capture    EXPERIMENTAL frame-reader thread; can worsen freshness
+                        under Python CPU load (default off)
+  --sync-capture        explicitly select the default synchronous capture path
+  --eps EPS             override starting exploration (default 0.15 fresh /
+                        checkpoint's value)
+  --name NAME           checkpoint name in ./checkpoints
+  --minutes MINUTES     stop cleanly (save + release keys) after this many
+                        minutes (0 = run until q)
+  --jump-margin JUMP_MARGIN
+                        only jump when it's this confident jumping beats not
+                        jumping (0 = off)
+  --flight-margin FLIGHT_MARGIN
+                        separate ship/wave thrust threshold (default 0; jump-
+                        margin applies to other modes)
+  --flight-buffer FLIGHT_BUFFER
+                        ship/wave trajectory clearance in blocks (0 disables
+                        buffered flight shield; default .75, max 2)
+  --flight-teacher-weight FLIGHT_TEACHER_WEIGHT
+                        coaching from verified safe ship/wave interventions
+                        (default .05, 0 disables; max .2)
+  --hold-cost HOLD_COST
+                        tiny penalty per step SPACE is held (0 = off)
+  --clearance-reward [CLEARANCE_REWARD]
+                        optional ship/wave clearance potential (default off;
+                        flag alone = 0.05; range 0..0.1)
+  --play                beat the level with what it knows: NO training --
+                        every attempt follows the best run saved for this
+                        level, practises the spot it died at, and the brain
+                        (no random moves) plays past it. Needs --model (and
+                        the route memory)
+  --ms-delay            blue line / shield use the input delay measured in ms
+                        (not whole steps); experimental -- off by default
+  --frontier            train where it gets stuck: every other attempt replays
+                        the best run saved for this level to ~3 s before its
+                        furthest point and the brain plays and LEARNS from
+                        there (the replayed part isn't learned from); the
+                        other attempts are normal training from the start
+  --no-route            turn off the route memory (per-level practice of spots
+                        it keeps dying at, routes/)
+  --routes ROUTES       folder the route memory keeps its levels in
+  --fast-steps          decide as soon as 2 game frames have passed even if
+                        processing ran long (more decisions/s, but their
+                        length varies; off = the tested behaviour)
+  --death-snaps DEATH_SNAPS
+                        save what the AI saw before each death to
+                        logs_boxes/sessions/<session>/deaths/ (keeps the
+                        newest N; 0 = off)
+  --no-shield           don't let the physics preview veto actions it predicts
+                        will crash
+  --motion-fix          also use the learned physics correction (experimental;
+                        off by default)
+  --hazards HAZARDS     folder of object pictures: deadly ones, learned/ (from
+                        deaths), safe/ (see hazards.py; 'none' = off).
+                        Learning from deaths needs --death-snaps
+  --motion-model MOTION_MODEL
+                        learned physics correction + tuned jump + input delay
+                        (shared by all brains and levels); 'none' = don't load
+                        or save one
+  --icon-hue LO HI      OpenCV hue range (0-179) of your icon's main colour;
+                        default green/cyan. e.g. yellow 20 35, orange 8 20,
+                        blue 95 125, pink 140 170, red 0 8
+  --scale SCALE         overlay window zoom
+  --render-every RENDER_EVERY
+                        draw every N decisions (drawing costs several ms; >1
+                        makes the decision length uneven, so only together
+                        with --fast-steps)

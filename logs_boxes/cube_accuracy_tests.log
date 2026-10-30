@@ -1,0 +1,42 @@
+[input] in a level: inputs on
+......................................................................................................................
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp0exd6jzk\sessions\20261030_051511_73bb5b15
+----------------------------------------------------------------------
+[session] detector fingerprint unavailable: OSError: test read failure; continuing
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp0exd6jzk\sessions\20261030_051511_150d7804
+[input] Geometry Dash was NOT the active window -- SPACE was going to another window. Brought GD back to the front.
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpzf7748y4\sessions\20261030_051511_2553825b
+[yolo] TensorRT engine on the GPU (NVIDIA GeForce RTX 5070 Ti)
+[yolo] model.pt on the CPU -- slow!
+[yolo] D:\Coding Projects\Meta 2026 Hackathon\tmp957nc6zz\model.engine is older than D:\Coding Projects\Meta 2026 Hackathon\tmp957nc6zz\model.pt (retrained since): using the .pt -- re-run --export
+[yolo] model.pt on the GPU (NVIDIA GeForce RTX 5070 Ti)
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpbaxgj4l7\sessions\20261030_051511_af256e3b
+Ran 118 tests in 3.691s
+
+OK
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpbcr8qmwp\sessions\20261030_051511_43ebb70b
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpo6rw1l34\sessions\20261030_051511_17d9fa63
+saved D:\Coding Projects\Meta 2026 Hackathon\tmpo6rw1l34\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpx07ohr1m\sessions\20261030_051511_f759406a
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmptsexy_ec\sessions\20261030_051511_da06a8f6
+saved D:\Coding Projects\Meta 2026 Hackathon\tmptsexy_ec\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp0q6jj4ne\sessions\20261030_051511_584ef3ee
+saved D:\Coding Projects\Meta 2026 Hackathon\tmp0q6jj4ne\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp_keznstf\sessions\20261030_051511_9d58512d
+saved D:\Coding Projects\Meta 2026 Hackathon\tmp_keznstf\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpjqm2794_\sessions\20261030_051511_bff15d10
+--play: the brain wasn't changed (nothing saved); the route memory is in ./routes
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpsp6ezse5\sessions\20261030_051512_5b91d453
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp1r45wcc2\sessions\20261030_051512_0d6f6f15
+[controller] imported legacy encoder; new route inputs, mode heads and motion model train separately
+[controller data] measured-velocity migration: kept 1, excluded 2 inconsistent examples; source is backed up before overwrite
+[session] C:\Users\mysou\AppData\Local\Temp\tmp5eycm_5h\sessions\20261030_051513_2205bb01
+saved C:\Users\mysou\AppData\Local\Temp\tmp5eycm_5h\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmpyeeqne0j\sessions\20261030_051513_293e5c18
+LEVEL COMPLETE: experience/candidate saved to C:\Users\mysou\AppData\Local\Temp\tmpyeeqne0j\route_controller.pt; controller promotion still requires validation.
+saved C:\Users\mysou\AppData\Local\Temp\tmpyeeqne0j\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmptjt76rc8\sessions\20261030_051513_fb908b42
+LEVEL COMPLETE during controller evaluation: progress saved; restart the same level and resume the controller to finish comparison.
+saved C:\Users\mysou\AppData\Local\Temp\tmptjt76rc8\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmpdbq1l660\sessions\20261030_051513_0325f3ee
+saved C:\Users\mysou\AppData\Local\Temp\tmpdbq1l660\route_controller.pt

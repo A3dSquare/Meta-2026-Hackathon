@@ -1,0 +1,12 @@
+{
+  "source": "checkpoints/best_boxes.pt",
+  "source_preserved": true,
+  "architecture": [
+    256,
+    256
+  ],
+  "observation_size": 263,
+  "inference_mean_ms": 0.4650420043617487,
+  "inference_p95_ms": 0.6073999684303999,
+  "role": "planner bootstrap"
+}

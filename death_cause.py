@@ -39,6 +39,39 @@ def _best(rec) -> float | None:
     return max(float(sr.get("1", 0.0)), float(sr.get("00", 0.0)), float(sr.get("01", 0.0)))
 
 
+def trace_decisions(buf, crash):
+    """Locate the final loss of verified planning, not a proven causal mistake.
+
+    Missing observations/plans are unknown, never evidence of a safe route.
+    Times use measured intervals rather than assuming a fixed frame rate.
+    """
+    rows=buf[:crash+1]
+    def state(r):
+        plan=r.get('route_plan') or {}
+        if not r.get('player') or not plan:return 'unknown'
+        return 'verified' if plan.get('verified') else 'unverified'
+    states=[state(r) for r in rows]
+    last=next((i for i in range(len(rows)-1,-1,-1) if states[i]=='verified'),None)
+    start=last+1 if last is not None else 0
+    def detail(i):
+        r=rows[i];plan=r.get('route_plan') or {};p=r.get('preview_inputs') or {}
+        return dict(index=i,seconds_before_crash=round(sum(
+            max(0.,float(q.get('motion_dt',q.get('dt',0.)) or 0.)) for q in rows[i+1:]),3),
+            action=r.get('a'),planned_action=plan.get('first_action'),
+            role=r.get('controller_role'),state=states[i],
+            sequence_safety=plan.get('sequence_safety'),
+            measured_velocity=r.get('vy'),estimated_velocity=p.get('vy0'),
+            grounded=p.get('grounded'),state_source=p.get('state_source'))
+    alternatives=[i for i,r in enumerate(rows) if r.get('player')
+                  and _best(r) is not None and _best(r)>=SAFE
+                  and _chosen(r) is not None and _chosen(r)<SAFE]
+    return dict(last_verified=detail(last) if last is not None else None,
+                first_after_verified=detail(start) if start<len(rows) else None,
+                last_action_with_safer_scored_alternative=detail(alternatives[-1]) if alternatives else None,
+                history_limited=last is None,
+                limitation='Retrospective planner evidence, not proof that another action would survive.')
+
+
 def classify(buf: list, lag: int) -> dict:
     """buf: the env's death-snapshot records (oldest first); lag: steps from the crash to the
     death signal. Returns {"what", "why", "text", ...}."""
@@ -87,8 +120,11 @@ def classify(buf: list, lag: int) -> dict:
         out["why"] = "trapped"
     elif chosen_ok and all(chosen_ok):
         out["why"] = "blue line wrong"
-    else:
+    elif any((_best(r) or 0.)>=SAFE and (_chosen(r) or 0.)<SAFE for r in before if r.get('player')):
         out["why"] = "chose wrong"
+    else:
+        out["why"] = "forecast became unsafe"
+    out['decision_trace']=trace_decisions(buf,crash)
     out["shielded"] = bool(shielded)
     out["mode"] = rec.get("mode")
     out["best_before"] = bv

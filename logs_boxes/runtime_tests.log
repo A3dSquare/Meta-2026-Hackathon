@@ -1,0 +1,30 @@
+[input] in a level: inputs on
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpu3h65pu6\sessions\20261030_031327_ff7996cb
+[session] detector fingerprint unavailable: OSError: test read failure; continuing
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpu3h65pu6\sessions\20261030_031327_881240f5
+[input] Geometry Dash was NOT the active window -- SPACE was going to another window. Brought GD back to the front.
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpaeuk1iqj\sessions\20261030_031327_7ab590d0
+[yolo] TensorRT engine on the GPU (NVIDIA GeForce RTX 5070 Ti)
+[yolo] model.pt on the CPU -- slow!
+[yolo] D:\Coding Projects\Meta 2026 Hackathon\tmpa8oo1gol\model.engine is older than D:\Coding Projects\Meta 2026 Hackathon\tmpa8oo1gol\model.pt (retrained since): using the .pt -- re-run --export
+[yolo] model.pt on the GPU (NVIDIA GeForce RTX 5070 Ti)
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmphd9lup82\sessions\20261030_031328_da900ab3
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpg94o2ks2\sessions\20261030_031328_c21a9c7d
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp1sx5pvzk\sessions\20261030_031328_05224f82
+saved D:\Coding Projects\Meta 2026 Hackathon\tmp1sx5pvzk\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpxg_q77_h\sessions\20261030_031328_abf3ae8c
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpw527ert1\sessions\20261030_031328_0ed40243
+saved D:\Coding Projects\Meta 2026 Hackathon\tmpw527ert1\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpxko2f835\sessions\20261030_031328_512f916b
+saved D:\Coding Projects\Meta 2026 Hackathon\tmpxko2f835\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpze33ti2_\sessions\20261030_031328_29940cfe
+saved D:\Coding Projects\Meta 2026 Hackathon\tmpze33ti2_\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpmrv_zgdr\sessions\20261030_031328_899e34ad
+--play: the brain wasn't changed (nothing saved); the route memory is in ./routes
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpa9v2vg0o\sessions\20261030_031330_58698ac6
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmp801cwo4u\sessions\20261030_031330_3690b357
+..............................................................................
+----------------------------------------------------------------------
+Ran 78 tests in 2.780s
+
+OK

@@ -42,13 +42,14 @@ class YoloDetector:
             raise FileNotFoundError(f"{path} missing: label some frames, then run python detect_yolo.py --train")
         # a TensorRT engine made from this model (python detect_yolo.py --export) is ~2-3x faster
         eng = os.path.splitext(path)[0] + ".engine"
-        self.engine = os.path.exists(eng) and os.path.getmtime(eng) >= os.path.getmtime(path)
-        if os.path.exists(eng) and not self.engine:
+        self.engine = str(device) != 'cpu' and os.path.exists(eng) and os.path.getmtime(eng) >= os.path.getmtime(path)
+        if os.path.exists(eng) and os.path.getmtime(eng) < os.path.getmtime(path):
             print(f"[yolo] {eng} is older than {path} (retrained since): using the .pt -- re-run --export")
+        self.loaded_path = os.path.abspath(eng if self.engine else path)
         self._m = YOLO(eng, task="detect") if self.engine else YOLO(path)
         try:
             import torch
-            dev = "GPU (" + torch.cuda.get_device_name(0) + ")" if torch.cuda.is_available() else "CPU -- slow!"
+            dev = "GPU (" + torch.cuda.get_device_name(0) + ")" if str(device) != 'cpu' and torch.cuda.is_available() else "CPU -- slow!"
         except Exception:
             dev = "CPU -- slow!"
         print(f"[yolo] {'TensorRT engine' if self.engine else os.path.basename(path)} on the {dev}")

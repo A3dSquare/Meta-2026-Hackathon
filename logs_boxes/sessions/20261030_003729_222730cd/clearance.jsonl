@@ -1,0 +1,2 @@
+{"time": 1793338650.5826893, "session_id": "20261030_003729_222730cd", "attempt": 1, "tag": "", "tail_steps": 2, "weight": 0.05, "tail_shaping_sum": 0.0, "terminal_phi": 0.0, "tail_potential_mean": 0.0}
+{"time": 1793338685.8958879, "session_id": "20261030_003729_222730cd", "attempt": 2, "tag": "", "tail_steps": 637, "weight": 0.05, "tail_shaping_sum": -0.04600000000000004, "terminal_phi": 0.0, "tail_potential_mean": 0.0036106750392464674}

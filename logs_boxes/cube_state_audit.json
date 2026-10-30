@@ -1,0 +1,208 @@
+{
+  "samples": 1102,
+  "rising_predicted_falling_before": 21,
+  "rising_predicted_falling_after": 0,
+  "examples": [
+    {
+      "index": 29,
+      "raw_velocity": 14.429239140190667,
+      "old_velocity": -12.623897752520463,
+      "new_velocity": 11.669287089522273,
+      "new_offset": -0.06919428079636347,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00044.json"
+    },
+    {
+      "index": 0,
+      "raw_velocity": 11.155716805013789,
+      "old_velocity": -10.07978779893763,
+      "new_velocity": 8.782950753852278,
+      "new_offset": 0.0,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00045.json"
+    },
+    {
+      "index": 20,
+      "raw_velocity": 18.766672820615717,
+      "old_velocity": -12.238428676006876,
+      "new_velocity": 15.479337931020101,
+      "new_offset": -0.07260841193521284,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00046.json"
+    },
+    {
+      "index": 21,
+      "raw_velocity": 14.271066513765474,
+      "old_velocity": -15.405974299557354,
+      "new_velocity": 12.311792307469624,
+      "new_offset": -0.0852067465498072,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00046.json"
+    },
+    {
+      "index": 12,
+      "raw_velocity": 12.650729787530892,
+      "old_velocity": -13.174688421458036,
+      "new_velocity": 15.454602332758807,
+      "new_offset": -0.013491922473809925,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00047.json"
+    },
+    {
+      "index": 38,
+      "raw_velocity": 19.38687872246524,
+      "old_velocity": -15.574341490002325,
+      "new_velocity": 15.996452531933036,
+      "new_offset": 0.028064079104316964,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00052.json"
+    },
+    {
+      "index": 29,
+      "raw_velocity": 18.520169448050897,
+      "old_velocity": -16.19116624822518,
+      "new_velocity": 16.30981255407321,
+      "new_offset": 0.013306605682067207,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00053.json"
+    },
+    {
+      "index": 15,
+      "raw_velocity": 17.866831322939984,
+      "old_velocity": -12.514040235953981,
+      "new_velocity": 15.586944147537725,
+      "new_offset": 0.0,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00057.json"
+    },
+    {
+      "index": 30,
+      "raw_velocity": 20.509039185990154,
+      "old_velocity": -11.693410181829055,
+      "new_velocity": 18.947339598914436,
+      "new_offset": 0.0,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00059.json"
+    },
+    {
+      "index": 10,
+      "raw_velocity": 16.444833110632636,
+      "old_velocity": -13.703809819034088,
+      "new_velocity": 15.604675980098783,
+      "new_offset": -0.044518457265165345,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00061.json"
+    },
+    {
+      "index": 4,
+      "raw_velocity": 16.612594312460416,
+      "old_velocity": -11.238280957555713,
+      "new_velocity": 15.148310294983679,
+      "new_offset": 0.0,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00062.json"
+    },
+    {
+      "index": 32,
+      "raw_velocity": 21.396640777881153,
+      "old_velocity": -11.852078653563389,
+      "new_velocity": 19.933230029411764,
+      "new_offset": 0.0,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00062.json"
+    },
+    {
+      "index": 1,
+      "raw_velocity": 18.77540896209328,
+      "old_velocity": -16.053555630770504,
+      "new_velocity": 13.968892524859005,
+      "new_offset": -0.175729529548869,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00063.json"
+    },
+    {
+      "index": 8,
+      "raw_velocity": 13.82039829737153,
+      "old_velocity": -5.543876494630457,
+      "new_velocity": 13.949831720453593,
+      "new_offset": -0.04646206134883624,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00063.json"
+    },
+    {
+      "index": 10,
+      "raw_velocity": 8.722968291249911,
+      "old_velocity": -17.233032191916763,
+      "new_velocity": 15.524861848349989,
+      "new_offset": 0.013234276031809156,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00065.json"
+    },
+    {
+      "index": 19,
+      "raw_velocity": 18.563678800833173,
+      "old_velocity": -15.381848309113195,
+      "new_velocity": 15.8046908226913,
+      "new_offset": -0.1402010673368812,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00065.json"
+    },
+    {
+      "index": 6,
+      "raw_velocity": 12.704133609348512,
+      "old_velocity": -17.745671247033314,
+      "new_velocity": 15.88150114129781,
+      "new_offset": -0.04051241428407226,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00067.json"
+    },
+    {
+      "index": 18,
+      "raw_velocity": 9.240414677719219,
+      "old_velocity": -9.170243871159208,
+      "new_velocity": 16.72197303257507,
+      "new_offset": -0.009737416521434561,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00068.json"
+    },
+    {
+      "index": 10,
+      "raw_velocity": 15.72357659010479,
+      "old_velocity": -14.277583108151507,
+      "new_velocity": 13.356293562206638,
+      "new_offset": 0.0,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00069.json"
+    },
+    {
+      "index": 1,
+      "raw_velocity": 14.66663959564814,
+      "old_velocity": -13.833139711045018,
+      "new_velocity": 13.077686863869312,
+      "new_offset": 0.0,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00070.json"
+    },
+    {
+      "index": 31,
+      "raw_velocity": 17.095377949586332,
+      "old_velocity": -17.94494086205434,
+      "new_velocity": 15.68343430258247,
+      "new_offset": -0.0937836391904836,
+      "grounded": false,
+      "file": "logs_boxes\\sessions\\20261030_044225_3d6e5163\\deaths\\death_00071.json"
+    }
+  ],
+  "limitation": "Recorded state-estimation replay. Not a live collision or level-completion benchmark.",
+  "one_observation_free_flight": {
+    "samples": 657,
+    "before": {
+      "median_blocks": 0.11173614756786604,
+      "p95_blocks": 0.8227725859661419
+    },
+    "after": {
+      "median_blocks": 0.06566899123558512,
+      "p95_blocks": 0.2695968762347254
+    }
+  }
+}

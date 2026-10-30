@@ -1,0 +1,6 @@
+[session] C:\Users\mysou\AppData\Local\Temp\tmpsmokp32v\sessions\20261030_141345_75f74994
+[input] in a level: inputs on
+[input] (can't find a window titled 'Geometry Dash' to keep it in front -- make sure GD stays the active window yourself)
+[input] input delay 14 ms (0.41 steps; spread 8-32 ms) -- the blue line uses it as is
+saved C:\Users\mysou\AppData\Local\Temp\tmpsmokp32v\route_controller.pt
+PASS: route observations, planner bootstrap, measured replay, training and atomic save; steps 600 updates 8 replay 32 heldout 0 promotions 0

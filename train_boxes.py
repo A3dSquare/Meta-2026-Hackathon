@@ -31,6 +31,15 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--update-steps", type=int, default=128,
                    help="train after a death once this many new steps were played")
     p.add_argument("--replay-ratio", type=float, default=4.0)
+    p.add_argument('--cpu-threads',type=int,default=1,
+                   help='PyTorch threads for the CPU brain (default 1; 0 keeps library default)')
+    p.add_argument('--route-controller',action='store_true',
+                   help='new route-conditioned mode controllers, learned motion, persistent replay and evaluation gate; separate checkpoint')
+    capture_mode=p.add_mutually_exclusive_group()
+    capture_mode.add_argument('--threaded-capture',action='store_true',
+                   help='EXPERIMENTAL frame-reader thread; can worsen freshness under Python CPU load (default off)')
+    capture_mode.add_argument('--sync-capture',action='store_true',
+                   help='explicitly select the default synchronous capture path')
     p.add_argument("--eps", type=float, default=None,
                    help="override starting exploration (default 0.15 fresh / checkpoint's value)")
     p.add_argument("--name", default="preview_boxes", help="checkpoint name in ./checkpoints")
@@ -38,8 +47,17 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                    help="stop cleanly (save + release keys) after this many minutes (0 = run until q)")
     p.add_argument("--jump-margin", type=float, default=0.3,
                    help="only jump when it's this confident jumping beats not jumping (0 = off)")
+    p.add_argument('--flight-margin', type=float, default=0.,
+                   help='separate ship/wave thrust threshold (default 0; jump-margin applies to other modes)')
+    p.add_argument('--flight-buffer', type=float, default=.75,
+                   help='ship/wave trajectory clearance in blocks (0 disables buffered flight shield; default .75, max 2)')
+    p.add_argument('--flight-teacher-weight', type=float, default=.05,
+                   help='coaching from verified safe ship/wave interventions (default .05, 0 disables; max .2)')
     p.add_argument("--hold-cost", type=float, default=0.02,
                    help="tiny penalty per step SPACE is held (0 = off)")
+    from flight_reward import clearance_weight
+    p.add_argument('--clearance-reward', nargs='?', const=.05, default=0., type=clearance_weight,
+                   help='optional ship/wave clearance potential (default off; flag alone = 0.05; range 0..0.1)')
     p.add_argument("--play", action="store_true",
                    help="beat the level with what it knows: NO training -- every attempt follows the "
                         "best run saved for this level, practises the spot it died at, and the brain "
@@ -59,7 +77,7 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                    help="decide as soon as 2 game frames have passed even if processing ran long "
                         "(more decisions/s, but their length varies; off = the tested behaviour)")
     p.add_argument("--death-snaps", type=int, default=30,
-                   help="save what the AI saw before each death to logs_boxes/deaths/ "
+                   help="save what the AI saw before each death to logs_boxes/sessions/<session>/deaths/ "
                         "(keeps the newest N; 0 = off)")
     p.add_argument("--no-shield", action="store_true",
                    help="don't let the physics preview veto actions it predicts will crash")
@@ -91,7 +109,9 @@ def build(args):
             dev = "cuda" if torch.cuda.is_available() else "cpu"
         except Exception:
             dev = "cpu"
-    cap = GDCapture(CaptureConfig())
+    if args.cpu_threads < 0:
+        raise ValueError('--cpu-threads must be nonnegative')
+    cap = GDCapture(CaptureConfig(prefetch=args.threaded_capture))
     cap.start()
     for _ in range(10):
         cap.read()
@@ -118,16 +138,33 @@ def build(args):
         env.hazmem = HazardMemory(args.hazards)
         if env.hazmem.active:
             print(f"[hazards] {len(env.hazmem.templates)} object picture(s) in {args.hazards}/ in use")
-    cfg = TrainConfig(algo=args.algo, total_steps=args.steps, device=dev, name=args.name,
+    cfg = TrainConfig(algo=args.algo, total_steps=args.steps, device=dev, name=args.name,cpu_threads=args.cpu_threads,
                       update_steps=args.update_steps, replay_ratio=args.replay_ratio,
                       jump_margin=args.jump_margin, hold_cost=args.hold_cost,
+                      clearance_weight=args.clearance_reward,
+                      flight_margin=args.flight_margin,flight_buffer=args.flight_buffer,
+                      flight_teacher_weight=args.flight_teacher_weight,
                       shield=not args.no_shield, route=not args.no_route or args.play or args.frontier,
                       route_dir=args.routes,
                       play=bool(args.play), frontier=bool(args.frontier) and not args.play)
+    if args.route_controller:
+        if cfg.algo!='dqn':raise ValueError('--route-controller currently requires --algo dqn')
+        from route_controller import RouteObservationEnv
+        cfg.route_controller=True
+        if cfg.name=='preview_boxes':cfg.name='route_controller'
+        # Conservative candidate updates. Deployed weights are protected by
+        # the held-out gate; optimizer/replay/exploration persist on restart.
+        cfg.lr=1e-4;cfg.buffer_size=20_000;cfg.replay_ratio=min(cfg.replay_ratio,.5)
+        cfg.max_grad_steps=128;cfg.jump_margin=0.;cfg.flight_margin=0.
+        env=RouteObservationEnv(env)
+        print('[controller] separate route_controller checkpoint; planner bootstrap until each mode passes validation')
     if getattr(args, "ms_delay", False):
         import env_boxes as _eb
         _eb.USE_MS_DELAY = True
         print("--ms-delay: the blue line uses the input delay in ms")
+    if args.clearance_reward:
+        print(f'--clearance-reward: ship/wave potential weight {args.clearance_reward:g}'
+              + (' (ignored in --play)' if args.play else '; base survival/death rewards unchanged'))
     if args.frontier and args.play:
         print("--frontier and --play: --play wins (no training)")
     elif args.frontier:
@@ -142,6 +179,8 @@ def build(args):
         cfg.eps_start = float(args.eps)
     print(f"algo={cfg.algo} device={dev} frame_skip={args.frame_skip} hires={not args.no_hires} "
           f"death_lag={args.death_lag} detector={args.backend}")
+    print(f'[flight] buffer={cfg.flight_buffer:g} blocks; thrust margin={cfg.flight_margin:g}; '
+          f'coach weight={cfg.flight_teacher_weight:g} (requires verified physics)')
     return cap, base, env, cfg
 
 

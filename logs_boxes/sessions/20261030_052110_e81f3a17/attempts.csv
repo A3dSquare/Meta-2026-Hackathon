@@ -1,0 +1,1548 @@
+time,attempt,total_steps,survived_steps,peak_pct,death_lag,lag_src,updates,route,cause,session_id
+1793355675.8,1,154,122,5.0,32,measured,0,,"spike, chose wrong",20261030_052110_e81f3a17
+1793355691.3,2,498,313,14.0,31,measured,1,,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793355708.6,3,872,314,14.0,60,measured,2,,"spike, trapped",20261030_052110_e81f3a17
+1793355728.3,4,1306,402,18.0,32,measured,3,,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793355733.9,5,1382,44,1.0,32,measured,4,,"spike, chose wrong",20261030_052110_e81f3a17
+1793355744.2,6,1668,254,10.0,32,measured,4,,"spike, chose wrong",20261030_052110_e81f3a17
+1793355765.1,7,2122,427,19.0,27,measured,5,,"spike, chose wrong",20261030_052110_e81f3a17
+1793355785.9,8,2582,429,19.0,31,measured,6,,"spike, chose wrong",20261030_052110_e81f3a17
+1793355807.0,9,3026,413,19.0,31,measured,7,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793355825.3,10,3436,378,16.0,32,measured,8,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793355847.3,11,3930,430,19.0,64,measured,9,,"unknown, trapped",20261030_052110_e81f3a17
+1793355862.7,12,4252,290,13.0,32,measured,10,,"spike, chose wrong",20261030_052110_e81f3a17
+1793355883.6,13,4716,438,19.0,26,measured,11,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793355902.7,14,5126,354,16.0,56,measured,12,,"block side, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793355923.5,15,5570,417,19.0,27,measured,13,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793355935.2,16,5810,208,8.0,32,measured,14,,"spike, chose wrong",20261030_052110_e81f3a17
+1793355957.0,17,6284,412,19.0,62,measured,15,,"spike, chose wrong",20261030_052110_e81f3a17
+1793355977.8,18,6726,415,19.0,27,measured,16,,"spike, chose wrong",20261030_052110_e81f3a17
+1793355992.4,19,7036,279,12.0,31,measured,17,,"spike, trapped",20261030_052110_e81f3a17
+1793356013.4,20,7468,405,19.0,27,measured,18,,"spike, trapped",20261030_052110_e81f3a17
+1793356031.7,21,7870,370,16.0,32,measured,19,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793356048.1,22,8214,311,14.0,33,measured,20,,"spike, trapped",20261030_052110_e81f3a17
+1793356061.4,23,8486,239,10.0,33,measured,21,,"spike, trapped",20261030_052110_e81f3a17
+1793356074.0,24,8746,205,8.0,55,measured,22,,"spike, trapped",20261030_052110_e81f3a17
+1793356094.8,25,9192,416,19.0,30,measured,23,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793356116.7,26,9672,416,19.0,64,measured,24,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356130.0,27,9948,243,10.0,33,measured,25,,"spike, trapped",20261030_052110_e81f3a17
+1793356144.7,28,10256,277,12.0,31,measured,26,,"spike, trapped",20261030_052110_e81f3a17
+1793356165.5,29,10702,417,19.0,29,measured,27,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356186.3,30,11148,420,19.0,26,measured,28,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356201.0,31,11452,272,12.0,32,measured,29,,"spike, trapped",20261030_052110_e81f3a17
+1793356207.5,32,11550,57,1.0,41,measured,30,,"unknown, trapped",20261030_052110_e81f3a17
+1793356225.3,33,12008,427,19.0,31,measured,30,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793356247.2,34,12490,423,19.0,59,measured,31,,"spike, trapped",20261030_052110_e81f3a17
+1793356268.0,35,12926,409,19.0,27,measured,32,,"spike, trapped",20261030_052110_e81f3a17
+1793356277.6,36,13112,153,6.0,33,measured,33,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356298.0,37,13552,414,19.0,26,measured,34,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356318.9,38,14004,425,19.0,27,measured,35,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356340.7,39,14468,405,19.0,59,measured,36,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356358.8,40,14858,357,16.0,33,measured,37,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356374.3,41,15194,276,12.0,60,measured,38,,"spike, trapped",20261030_052110_e81f3a17
+1793356383.2,42,15358,132,5.0,32,measured,39,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356401.0,43,15756,367,16.0,31,measured,40,,"block side, trapped",20261030_052110_e81f3a17
+1793356422.0,44,16210,427,19.0,27,measured,41,,"spike, trapped",20261030_052110_e81f3a17
+1793356436.5,45,16508,267,12.0,31,measured,42,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793356439.3,46,16578,42,1.0,28,measured,42,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793356450.1,47,16872,262,11.0,32,measured,42,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793356471.1,48,17334,430,23.0,32,measured,42,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793356489.0,49,17780,414,19.0,32,measured,42,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793356491.7,50,17844,40,1.0,24,measured,42,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793356509.5,51,18280,410,19.0,26,measured,42,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793356532.3,52,18742,406,19.0,56,measured,43,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356554.5,53,19188,415,19.0,31,measured,44,,"spike, chose wrong",20261030_052110_e81f3a17
+1793356576.8,54,19620,405,19.0,27,measured,45,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793356628.0,55,20726,1075,58.0,31,measured,45,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793356636.7,56,20964,205,8.0,33,measured,45,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793356639.3,57,21024,38,1.0,22,measured,45,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793356657.2,58,21468,413,19.0,31,measured,45,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793356677.5,59,21922,421,22.0,33,measured,45,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793356680.8,60,22014,44,1.0,48,measured,45,,"unknown, trapped",20261030_052110_e81f3a17
+1793356694.1,61,22358,313,14.0,31,measured,45,,"spike, trapped",20261030_052110_e81f3a17
+1793356717.5,62,22848,426,19.0,64,measured,46,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793356748.9,63,23546,676,34.0,22,measured,46,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793356803.9,64,24840,1262,63.0,32,measured,46,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793356806.5,65,24904,43,1.0,21,measured,46,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793356813.1,66,25080,144,6.0,32,measured,46,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793356833.1,67,25542,427,22.0,35,measured,46,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793356846.5,68,25884,310,14.0,32,measured,46,,"spike, trapped",20261030_052110_e81f3a17
+1793356868.7,69,26334,423,19.0,27,measured,47,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793356873.5,70,26452,73,3.0,45,measured,47,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793356879.6,71,26628,145,5.0,31,measured,47,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793356882.4,72,26696,44,1.0,24,measured,47,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793356900.1,73,27134,411,19.0,27,measured,47,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793356921.0,74,27602,437,23.0,31,measured,47,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793356923.8,75,27674,40,1.0,32,measured,47,,"spike, trapped",20261030_052110_e81f3a17
+1793356937.9,76,28048,315,14.0,59,measured,47,,"unknown, trapped",20261030_052110_e81f3a17
+1793356960.2,77,28498,422,19.0,28,measured,48,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357009.9,78,29542,1013,56.0,31,measured,48,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793357028.7,79,30006,409,19.0,55,measured,48,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793357035.2,80,30178,141,6.0,31,measured,48,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793357053.1,81,30622,413,19.0,31,measured,48,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357108.2,82,31796,1142,63.0,32,measured,48,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793357126.0,83,32252,425,19.0,31,measured,48,,"spike, trapped",20261030_052110_e81f3a17
+1793357148.2,84,32698,419,19.0,27,measured,49,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793357169.2,85,33170,440,23.0,32,measured,49,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793357180.4,86,33480,249,10.0,61,measured,49,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793357200.8,87,33926,414,22.0,32,measured,49,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793357206.5,88,34088,129,5.0,33,measured,49,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357213.6,89,34270,132,6.0,50,measured,49,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793357231.6,90,34704,403,19.0,31,measured,49,,"head hit, chose wrong",20261030_052110_e81f3a17
+1793357254.8,91,35172,412,19.0,56,measured,50,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357267.2,92,35454,251,13.0,31,measured,50,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793357280.9,93,35800,315,14.0,31,measured,50,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793357301.2,94,36254,421,22.0,33,measured,50,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793357319.0,95,36698,413,19.0,31,measured,50,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357341.0,96,37200,441,23.0,61,measured,50,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793357354.4,97,37542,311,14.0,31,measured,50,,"spike, trapped",20261030_052110_e81f3a17
+1793357374.2,98,37938,363,16.0,33,measured,51,controller_eval_incumbent,"block side, chose wrong",20261030_052110_e81f3a17
+1793357390.3,99,38308,314,16.0,56,measured,51,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793357395.9,100,38462,122,5.0,32,measured,51,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793357415.9,101,38908,413,22.0,33,measured,51,controller_eval_candidate,"unknown, chose wrong",20261030_052110_e81f3a17
+1793357426.2,102,39182,241,10.0,33,measured,51,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357434.8,103,39388,176,8.0,30,measured,51,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793357452.6,104,39834,420,19.0,26,measured,51,,"spike, chose wrong",20261030_052110_e81f3a17
+1793357472.3,105,40226,359,16.0,33,measured,52,controller_eval_incumbent,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793357493.4,106,40710,451,23.0,33,measured,52,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793357507.1,107,41062,320,14.0,32,measured,52,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793357528.2,108,41536,418,22.0,56,measured,52,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793357541.6,109,41884,315,14.0,33,measured,52,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357584.5,110,42818,901,48.0,33,measured,52,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793357602.4,111,43254,409,19.0,27,measured,52,,"spike, chose wrong",20261030_052110_e81f3a17
+1793357625.6,112,43726,414,19.0,58,measured,53,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357655.6,113,44372,616,33.0,30,measured,53,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793357673.3,114,44808,409,19.0,27,measured,53,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357683.6,115,45054,213,10.0,33,measured,53,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793357692.2,116,45280,195,8.0,31,measured,53,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357707.5,117,45616,304,16.0,32,measured,53,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793357725.4,118,46066,419,19.0,31,measured,53,,"spike, chose wrong",20261030_052110_e81f3a17
+1793357734.0,119,46186,88,3.0,32,measured,54,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793357737.4,120,46272,45,1.0,41,measured,54,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793357755.2,121,46730,425,19.0,33,measured,54,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793357763.8,122,46940,178,8.0,32,measured,54,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793357777.3,123,47294,290,13.0,64,measured,54,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357788.1,124,47556,230,11.0,32,measured,54,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793357793.8,125,47710,123,5.0,31,measured,54,,"spike, chose wrong",20261030_052110_e81f3a17
+1793357810.4,126,48060,317,14.0,33,measured,55,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357813.1,127,48128,35,1.0,33,measured,55,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793357831.1,128,48584,423,19.0,33,measured,55,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357851.4,129,49036,420,22.0,32,measured,55,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793357865.6,130,49414,320,14.0,58,measured,55,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793357878.0,131,49696,250,13.0,32,measured,55,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793357889.6,132,50000,271,12.0,33,measured,55,,"spike, trapped",20261030_052110_e81f3a17
+1793357912.9,133,50482,424,19.0,58,measured,56,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357915.6,134,50548,40,1.0,26,measured,56,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793357933.3,135,50988,414,19.0,26,measured,56,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357942.7,136,51224,182,8.0,54,measured,56,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793357960.4,137,51658,409,19.0,25,measured,56,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793357967.0,138,51824,134,6.0,32,measured,56,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793357977.4,139,52102,245,10.0,33,measured,56,,"spike, trapped",20261030_052110_e81f3a17
+1793358000.6,140,52586,421,19.0,63,measured,57,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793358021.8,141,53062,443,23.0,33,measured,57,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793358030.4,142,53302,207,8.0,33,measured,57,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358050.7,143,53764,429,22.0,33,measured,57,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793358068.5,144,54200,409,19.0,27,measured,57,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793358089.5,145,54664,433,23.0,31,measured,57,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358107.4,146,55112,417,19.0,31,measured,57,,"spike, chose wrong",20261030_052110_e81f3a17
+1793358120.5,147,55352,209,8.0,31,measured,58,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793358140.8,148,55812,428,22.0,32,measured,58,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793358152.1,149,56112,239,10.0,61,measured,58,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358154.7,150,56174,42,1.0,20,measured,58,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358172.6,151,56624,422,19.0,28,measured,58,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358192.5,152,57086,429,22.0,33,measured,58,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793358201.2,153,57324,206,8.0,32,measured,58,,"spike, chose wrong",20261030_052110_e81f3a17
+1793358215.8,154,57604,248,10.0,32,measured,59,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358225.2,155,57846,187,8.0,55,measured,59,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793358240.3,156,58234,355,16.0,33,measured,59,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358250.5,157,58478,212,10.0,32,measured,59,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793358269.3,158,58938,403,19.0,57,measured,59,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793358289.5,159,59396,427,22.0,31,measured,59,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358307.4,160,59842,419,19.0,27,measured,59,,"spike, chose wrong",20261030_052110_e81f3a17
+1793358327.6,161,60248,375,17.0,31,measured,60,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358348.7,162,60722,417,22.0,57,measured,60,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793358360.3,163,61026,272,12.0,32,measured,60,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358366.4,164,61180,122,5.0,32,measured,60,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793358383.1,165,61606,394,18.0,32,measured,60,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793358403.3,166,62062,425,22.0,31,measured,60,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358406.7,167,62156,49,1.0,45,measured,60,,"unknown, trapped",20261030_052110_e81f3a17
+1793358424.6,168,62618,429,19.0,33,measured,60,,"spike, trapped",20261030_052110_e81f3a17
+1793358446.9,169,63064,420,19.0,26,measured,61,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358467.1,170,63522,426,22.0,32,measured,61,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793358475.8,171,63764,209,8.0,33,measured,61,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358497.8,172,64256,431,23.0,61,measured,61,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793358512.8,173,64646,357,16.0,33,measured,61,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358515.5,174,64710,35,1.0,29,measured,61,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793358534.5,175,65178,404,19.0,64,measured,61,,"spike, trapped",20261030_052110_e81f3a17
+1793358556.7,176,65624,418,19.0,28,measured,62,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793358559.3,177,65694,38,1.0,32,measured,62,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793358570.2,178,65976,250,11.0,32,measured,62,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358572.9,179,66044,44,1.0,24,measured,62,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358590.6,180,66482,412,19.0,26,measured,62,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793358603.0,181,66768,255,13.0,31,measured,62,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358616.3,182,67110,309,14.0,33,measured,62,,"spike, trapped",20261030_052110_e81f3a17
+1793358638.3,183,67562,426,19.0,26,measured,63,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793358658.6,184,68006,411,22.0,33,measured,63,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358667.3,185,68244,205,8.0,33,measured,63,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358688.4,186,68722,420,22.0,58,measured,63,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793358706.3,187,69178,424,19.0,32,measured,63,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358726.5,188,69634,425,22.0,31,measured,63,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793358739.9,189,69974,307,14.0,33,measured,63,,"spike, trapped",20261030_052110_e81f3a17
+1793358763.0,190,70442,412,19.0,56,measured,64,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358798.2,191,71208,743,39.0,23,measured,64,controller_eval_candidate,"head hit, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358810.0,192,71532,261,11.0,63,measured,64,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358816.7,193,71694,130,6.0,32,measured,64,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793358834.5,194,72134,412,19.0,28,measured,64,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358889.6,195,73282,1117,63.0,31,measured,64,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793358892.9,196,73370,42,1.0,46,measured,64,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793358906.3,197,73710,307,14.0,33,measured,64,,"spike, trapped",20261030_052110_e81f3a17
+1793358928.5,198,74154,414,19.0,30,measured,65,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793358931.1,199,74220,44,1.0,22,measured,65,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358944.9,200,74576,323,14.0,33,measured,65,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793358965.9,201,75048,439,23.0,33,measured,65,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358970.0,202,75160,88,3.0,24,measured,65,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793358972.7,203,75224,36,1.0,28,measured,65,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793358990.6,204,75678,425,19.0,29,measured,65,,"spike, chose wrong",20261030_052110_e81f3a17
+1793359007.4,205,76020,281,12.0,61,measured,66,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793359022.8,206,76378,325,16.0,33,measured,66,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793359041.5,207,76856,416,19.0,62,measured,66,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793359054.0,208,77144,257,13.0,31,measured,66,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793359071.7,209,77582,411,19.0,27,measured,66,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793359092.7,210,78056,441,23.0,33,measured,66,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793359110.6,211,78496,413,19.0,27,measured,66,,"head hit, chose wrong",20261030_052110_e81f3a17
+1793359129.0,212,78880,324,14.0,60,measured,67,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793359159.1,213,79536,627,33.0,29,measured,67,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793359176.9,214,79968,406,19.0,26,measured,67,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793359179.5,215,80036,36,1.0,32,measured,67,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793359191.1,216,80332,264,12.0,32,measured,67,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793359204.5,217,80646,249,13.0,65,measured,67,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793359222.4,218,81084,406,19.0,32,measured,67,,"head hit, chose wrong",20261030_052110_e81f3a17
+1793359245.8,219,81564,414,19.0,66,measured,68,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793359294.9,220,82594,999,56.0,31,measured,68,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793359299.0,221,82708,83,3.0,31,measured,68,controller_eval_incumbent,"spike, blue line wrong",20261030_052110_e81f3a17
+1793359319.3,222,83158,417,22.0,33,measured,68,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793359329.7,223,83432,241,10.0,33,measured,68,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793359353.6,224,83948,494,26.0,22,measured,68,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793359360.1,225,84126,124,5.0,54,measured,68,,"spike, trapped",20261030_052110_e81f3a17
+1793359381.4,226,84580,423,19.0,31,measured,69,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793359401.7,227,85028,416,22.0,32,measured,69,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793359419.5,228,85476,421,19.0,27,measured,69,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793359440.5,229,85928,421,23.0,31,measured,69,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793359454.7,230,86298,338,15.0,32,measured,69,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793359467.1,231,86590,259,13.0,33,measured,69,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793359480.5,232,86928,305,14.0,33,measured,69,,"spike, trapped",20261030_052110_e81f3a17
+1793359503.8,233,87404,419,19.0,57,measured,70,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793359514.1,234,87650,213,10.0,33,measured,70,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793359525.6,235,87954,272,12.0,32,measured,70,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793359528.3,236,88022,46,1.0,22,measured,70,controller_eval_candidate,"unknown, chose wrong",20261030_052110_e81f3a17
+1793359546.2,237,88462,413,19.0,27,measured,70,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793359567.0,238,88934,415,22.0,57,measured,70,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793359572.7,239,89090,123,5.0,33,measured,70,,"spike, trapped",20261030_052110_e81f3a17
+1793359589.5,240,89446,325,14.0,31,measured,71,controller_eval_incumbent,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793359632.5,241,90358,879,48.0,33,measured,71,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793359650.2,242,90810,426,19.0,26,measured,71,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793359671.3,243,91292,424,22.0,58,measured,71,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793359689.1,244,91736,417,19.0,27,measured,71,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793359727.7,245,92558,796,42.0,26,measured,71,controller_eval_candidate,"block side, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793359746.5,246,93034,415,19.0,61,measured,71,,"spike, chose wrong",20261030_052110_e81f3a17
+1793359759.5,247,93274,207,8.0,33,measured,72,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793359779.5,248,93728,422,22.0,32,measured,72,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793359797.5,249,94178,419,19.0,31,measured,72,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793359817.8,250,94642,431,22.0,33,measured,72,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793359827.2,251,94902,205,8.0,55,measured,72,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793359847.5,252,95360,425,22.0,33,measured,72,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793359856.2,253,95602,210,8.0,32,measured,72,,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793359878.2,254,96054,426,19.0,26,measured,73,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793359900.2,255,96558,442,23.0,62,measured,73,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793359918.0,256,97004,415,19.0,31,measured,73,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793359948.1,257,97660,628,33.0,28,measured,73,controller_eval_candidate,"block side, trapped",20261030_052110_e81f3a17
+1793359951.4,258,97750,43,1.0,47,measured,73,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793359972.4,259,98212,428,23.0,34,measured,73,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793359975.1,260,98284,40,1.0,32,measured,73,,"spike, trapped",20261030_052110_e81f3a17
+1793359983.7,261,98532,217,8.0,31,measured,73,,"spike, chose wrong",20261030_052110_e81f3a17
+1793360004.2,262,98950,362,16.0,56,measured,74,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793360006.9,263,99014,42,1.0,22,measured,74,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793360012.6,264,99176,129,5.0,33,measured,74,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793360032.8,265,99648,440,22.0,32,measured,74,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793360044.1,266,99948,239,10.0,61,measured,74,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793360064.5,267,100408,428,22.0,32,measured,74,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793360083.4,268,100882,418,19.0,56,measured,74,,"spike, chose wrong",20261030_052110_e81f3a17
+1793360105.7,269,101344,431,19.0,31,measured,75,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793360108.3,270,101410,46,1.0,20,measured,75,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793360121.6,271,101760,317,14.0,33,measured,75,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793360142.7,272,102224,407,22.0,57,measured,75,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793360156.0,273,102566,309,14.0,33,measured,75,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793360177.0,274,103026,424,23.0,36,measured,75,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793360194.9,275,103480,422,19.0,32,measured,75,,"spike, chose wrong",20261030_052110_e81f3a17
+1793360217.1,276,103932,425,19.0,27,measured,76,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793360272.8,277,105116,1134,63.0,50,measured,76,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793360281.4,278,105354,207,8.0,31,measured,76,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793360284.1,279,105420,40,1.0,26,measured,76,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793360297.9,280,105776,323,14.0,33,measured,76,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793360336.5,281,106586,788,42.0,22,measured,76,controller_eval_candidate,"unknown, chose wrong",20261030_052110_e81f3a17
+1793360343.3,282,106776,135,5.0,55,measured,76,,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793360349.6,283,106854,46,1.0,32,measured,77,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793360352.3,284,106922,36,1.0,32,measured,77,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793360362.6,285,107204,251,10.0,31,measured,77,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793360411.7,286,108234,998,56.0,32,measured,77,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793360425.8,287,108600,305,14.0,61,measured,77,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793360456.6,288,109278,631,33.0,47,measured,77,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793360474.4,289,109704,400,19.0,26,measured,77,,"spike, chose wrong",20261030_052110_e81f3a17
+1793360494.0,290,110096,360,16.0,32,measured,78,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793360503.4,291,110326,174,8.0,56,measured,78,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793360521.2,292,110760,404,19.0,30,measured,78,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793360541.5,293,111222,429,22.0,33,measured,78,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793360560.4,294,111708,423,19.0,63,measured,78,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793360590.5,295,112352,616,33.0,28,measured,78,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793360603.7,296,112696,311,14.0,33,measured,78,,"spike, trapped",20261030_052110_e81f3a17
+1793360625.9,297,113152,427,19.0,29,measured,79,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793360663.9,298,113990,817,42.0,21,measured,79,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793360681.6,299,114420,405,19.0,25,measured,79,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793360694.0,300,114710,258,13.0,32,measured,79,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793360702.6,301,114952,211,8.0,31,measured,79,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793360722.6,302,115392,409,22.0,31,measured,79,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793360734.2,303,115702,278,12.0,32,measured,79,,"unknown, trapped",20261030_052110_e81f3a17
+1793360753.8,304,116110,377,16.0,31,measured,80,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793360774.9,305,116574,431,23.0,33,measured,80,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793360792.6,306,117008,409,19.0,25,measured,80,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793360835.5,307,117936,896,48.0,32,measured,80,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793360850.2,308,118328,331,14.0,61,measured,80,controller_eval_incumbent,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793360871.3,309,118796,436,23.0,32,measured,80,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793360884.7,310,119140,312,14.0,32,measured,80,,"spike, chose wrong",20261030_052110_e81f3a17
+1793360907.9,311,119620,418,19.0,62,measured,81,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793360929.0,312,120088,436,23.0,32,measured,81,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793360934.7,313,120250,129,5.0,33,measured,81,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793360941.3,314,120414,131,6.0,33,measured,81,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793360958.9,315,120838,400,19.0,24,measured,81,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793360967.6,316,121040,170,8.0,32,measured,81,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793360981.0,317,121376,304,14.0,32,measured,81,,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793361003.1,318,121808,406,19.0,26,measured,82,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361023.4,319,122276,435,22.0,33,measured,82,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793361041.2,320,122720,413,19.0,31,measured,82,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361063.2,321,123208,422,23.0,66,measured,82,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793361081.3,322,123674,435,19.0,31,measured,82,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793361086.9,323,123814,108,5.0,32,measured,82,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793361099.5,324,124154,278,12.0,62,measured,82,,"spike, trapped",20261030_052110_e81f3a17
+1793361115.6,325,124464,278,12.0,32,measured,83,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793361118.2,326,124528,34,1.0,30,measured,83,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793361137.1,327,125008,415,19.0,65,measured,83,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361158.2,328,125466,425,23.0,33,measured,83,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793361172.4,329,125832,307,14.0,59,measured,83,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793361202.4,330,126508,647,33.0,29,measured,83,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793361209.6,331,126712,153,6.0,51,measured,83,,"spike, trapped",20261030_052110_e81f3a17
+1793361228.8,332,127112,367,16.0,33,measured,84,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793361249.8,333,127574,430,23.0,32,measured,84,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793361263.0,334,127906,300,14.0,32,measured,84,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793361273.3,335,128162,223,10.0,33,measured,84,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793361287.9,336,128534,340,15.0,32,measured,84,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361296.5,337,128740,174,8.0,32,measured,84,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793361311.2,338,129124,351,15.0,33,measured,84,,"spike, chose wrong",20261030_052110_e81f3a17
+1793361325.1,339,129394,215,8.0,55,measured,85,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793361327.8,340,129464,38,1.0,32,measured,85,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793361345.5,341,129908,414,19.0,30,measured,85,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361365.7,342,130352,414,22.0,30,measured,85,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793361379.0,343,130686,303,14.0,31,measured,85,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361385.6,344,130852,134,6.0,32,measured,85,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793361403.4,345,131298,417,19.0,29,measured,85,,"head hit, trapped",20261030_052110_e81f3a17
+1793361424.4,346,131726,396,18.0,32,measured,86,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361445.5,347,132184,426,23.0,32,measured,86,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793361463.3,348,132630,418,19.0,28,measured,86,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361475.6,349,132904,242,13.0,32,measured,86,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793361494.4,350,133386,418,19.0,64,measured,86,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361506.8,351,133670,253,13.0,31,measured,86,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793361524.7,352,134106,407,19.0,29,measured,86,,"unknown, trapped",20261030_052110_e81f3a17
+1793361537.8,353,134350,211,8.0,33,measured,87,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361559.7,354,134840,431,23.0,59,measured,87,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793361577.6,355,135278,412,19.0,26,measured,87,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793361598.6,356,135732,422,23.0,32,measured,87,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793361616.4,357,136166,403,19.0,31,measured,87,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361637.5,358,136624,425,23.0,33,measured,87,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793361653.6,359,137050,371,16.0,55,measured,87,,"unknown, trapped",20261030_052110_e81f3a17
+1793361666.6,360,137292,210,8.0,32,measured,88,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793361675.2,361,137494,171,8.0,31,measured,88,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793361688.5,362,137830,304,14.0,32,measured,88,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793361727.1,363,138646,794,42.0,22,measured,88,controller_eval_candidate,"block side, trapped",20261030_052110_e81f3a17
+1793361730.4,364,138734,44,1.0,44,measured,88,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793361743.6,365,139034,269,14.0,31,measured,88,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793361762.6,366,139520,422,19.0,64,measured,88,,"head hit, trapped",20261030_052110_e81f3a17
+1793361784.7,367,139978,425,19.0,33,measured,89,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793361805.8,368,140466,431,22.0,57,measured,89,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793361817.5,369,140768,269,12.0,33,measured,89,controller_eval_incumbent,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793361830.7,370,141074,274,14.0,32,measured,89,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793361848.5,371,141508,407,19.0,27,measured,89,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361869.5,372,141974,434,23.0,32,measured,89,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793361883.7,373,142342,307,14.0,61,measured,89,,"spike, trapped",20261030_052110_e81f3a17
+1793361905.9,374,142804,432,19.0,30,measured,90,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361926.1,375,143258,421,22.0,33,measured,90,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793361944.9,376,143732,412,19.0,62,measured,90,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793361965.2,377,144172,408,22.0,32,measured,90,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793361974.6,378,144426,198,8.0,56,measured,90,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793361995.7,379,144886,422,23.0,38,measured,90,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793362013.6,380,145340,422,19.0,32,measured,90,,"spike, trapped",20261030_052110_e81f3a17
+1793362035.8,381,145778,410,19.0,28,measured,91,controller_eval_incumbent,"spike, blue line wrong",20261030_052110_e81f3a17
+1793362051.6,382,146152,318,16.0,56,measured,91,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793362066.9,383,146548,363,16.0,33,measured,91,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793362086.9,384,147012,432,22.0,32,measured,91,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793362104.6,385,147450,411,19.0,27,measured,91,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793362134.6,386,148100,622,33.0,28,measured,91,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793362153.4,387,148578,413,19.0,65,measured,91,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793362166.4,388,148820,211,8.0,31,measured,92,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793362188.4,389,149296,416,23.0,60,measured,92,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793362206.2,390,149752,430,19.0,26,measured,92,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793362227.0,391,150234,422,22.0,60,measured,92,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793362244.8,392,150674,412,19.0,28,measured,92,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793362293.8,393,151708,1001,56.0,33,measured,92,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793362300.2,394,151888,126,5.0,54,measured,92,,"spike, trapped",20261030_052110_e81f3a17
+1793362306.5,395,151966,53,1.0,25,measured,93,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793362309.1,396,152028,52,1.0,10,measured,93,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793362311.8,397,152098,39,1.0,31,measured,93,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793362314.5,398,152162,41,1.0,23,measured,93,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793362332.3,399,152608,418,19.0,28,measured,93,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793362340.9,400,152812,172,8.0,32,measured,93,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793362359.8,401,153286,417,19.0,57,measured,93,,"spike, trapped",20261030_052110_e81f3a17
+1793362381.9,402,153728,414,19.0,28,measured,94,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793362384.6,403,153788,33,1.0,27,measured,94,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793362399.6,404,154162,342,16.0,32,measured,94,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793362419.9,405,154612,417,22.0,33,measured,94,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793362430.2,406,154884,240,10.0,32,measured,94,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793362438.9,407,155088,172,8.0,32,measured,94,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793362442.2,408,155180,42,1.0,50,measured,94,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793362460.1,409,155626,419,19.0,27,measured,94,,"spike, chose wrong",20261030_052110_e81f3a17
+1793362468.6,410,155742,83,3.0,33,measured,95,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793362471.3,411,155808,42,1.0,24,measured,95,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793362489.1,412,156248,413,19.0,27,measured,95,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793362519.8,413,156938,645,33.0,45,measured,95,controller_eval_candidate,"head hit, trapped",20261030_052110_e81f3a17
+1793362537.5,414,157376,412,19.0,26,measured,95,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793362558.6,415,157832,424,23.0,32,measured,95,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793362571.9,416,158170,305,14.0,33,measured,95,,"spike, chose wrong",20261030_052110_e81f3a17
+1793362595.2,417,158646,411,19.0,65,measured,96,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793362613.9,418,159074,395,20.0,33,measured,96,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793362631.7,419,159516,410,19.0,32,measured,96,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793362641.1,420,159748,177,8.0,55,measured,96,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793362654.4,421,160090,309,14.0,33,measured,96,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793362704.0,422,161142,1004,56.0,48,measured,96,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793362709.7,423,161304,129,5.0,33,measured,96,,"spike, trapped",20261030_052110_e81f3a17
+1793362715.6,424,161378,51,1.0,23,measured,97,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793362718.2,425,161442,42,1.0,22,measured,97,controller_eval_candidate,"unknown, trapped (shield acted)",20261030_052110_e81f3a17
+1793362736.1,426,161872,404,19.0,26,measured,97,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793362757.1,427,162338,433,23.0,33,measured,97,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793362770.4,428,162688,319,14.0,31,measured,97,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793362825.5,429,163850,1130,63.0,32,measured,97,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793362843.4,430,164292,415,19.0,27,measured,97,,"spike, chose wrong",20261030_052110_e81f3a17
+1793362866.5,431,164778,421,19.0,65,measured,98,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793362886.8,432,165230,420,22.0,32,measured,98,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793362898.4,433,165534,272,12.0,32,measured,98,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793362919.4,434,166002,436,23.0,32,measured,98,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793362934.0,435,166382,348,15.0,32,measured,98,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793362956.0,436,166886,444,23.0,60,measured,98,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793362973.9,437,167340,426,19.0,28,measured,98,,"spike, chose wrong",20261030_052110_e81f3a17
+1793362996.0,438,167786,414,19.0,32,measured,99,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793363017.1,439,168252,433,23.0,33,measured,99,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793363031.3,440,168624,312,14.0,60,measured,99,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793363052.4,441,169078,422,23.0,32,measured,99,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793363067.7,442,169484,373,16.0,33,measured,99,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793363111.2,443,170432,899,48.0,49,measured,99,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793363129.1,444,170876,409,19.0,35,measured,99,,"unknown, trapped",20261030_052110_e81f3a17
+1793363152.3,445,171360,422,19.0,62,measured,100,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793363182.3,446,172008,621,33.0,27,measured,100,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793363194.8,447,172350,281,12.0,61,measured,100,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793363215.1,448,172800,419,22.0,31,measured,100,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793363226.3,449,173102,243,10.0,59,measured,100,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793363256.4,450,173774,643,33.0,29,measured,100,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793363274.2,451,174216,414,19.0,28,measured,100,,"spike, chose wrong",20261030_052110_e81f3a17
+1793363296.3,452,174654,410,19.0,28,measured,101,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793363299.6,453,174738,38,1.0,46,measured,101,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793363317.4,454,175186,417,19.0,31,measured,101,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793363338.5,455,175650,431,23.0,33,measured,101,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793363341.1,456,175720,47,1.0,23,measured,101,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793363343.8,457,175788,43,1.0,25,measured,101,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793363362.7,458,176268,415,19.0,65,measured,101,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793363384.9,459,176708,412,19.0,28,measured,102,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793363407.3,460,177202,462,24.0,32,measured,102,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793363418.1,461,177490,256,11.0,32,measured,102,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793363431.7,462,177812,256,13.0,66,measured,102,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793363449.5,463,178252,407,19.0,33,measured,102,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793363471.5,464,178754,441,23.0,61,measured,102,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793363481.9,465,179032,246,10.0,32,measured,102,,"spike, trapped",20261030_052110_e81f3a17
+1793363499.7,466,179372,308,14.0,32,measured,103,controller_eval_incumbent,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793363520.7,467,179832,428,23.0,32,measured,103,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793363523.4,468,179900,48,1.0,20,measured,103,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793363528.3,469,180022,70,3.0,52,measured,103,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793363546.2,470,180464,415,19.0,27,measured,103,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793363567.1,471,180932,436,23.0,32,measured,103,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793363582.6,472,181336,348,15.0,56,measured,103,,"spike, trapped",20261030_052110_e81f3a17
+1793363604.7,473,181788,424,19.0,28,measured,104,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793363617.1,474,182074,253,13.0,33,measured,104,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793363636.0,475,182550,416,19.0,60,measured,104,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793363641.6,476,182696,114,5.0,32,measured,104,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793363659.5,477,183138,415,19.0,27,measured,104,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793363703.6,478,184058,887,50.0,33,measured,104,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793363721.5,479,184494,399,19.0,37,measured,104,,"head hit, chose wrong",20261030_052110_e81f3a17
+1793363743.5,480,184930,409,19.0,27,measured,105,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793363786.4,481,185822,860,48.0,32,measured,105,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793363799.8,482,186164,309,14.0,33,measured,105,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793363803.1,483,186246,39,1.0,43,measured,105,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793363813.4,484,186512,235,10.0,31,measured,105,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793363863.3,485,187532,989,56.0,31,measured,105,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793363873.6,486,187804,242,10.0,30,measured,105,,"spike, trapped",20261030_052110_e81f3a17
+1793363897.0,487,188284,416,19.0,64,measured,106,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793363939.9,488,189222,906,48.0,32,measured,106,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793363951.5,489,189532,277,12.0,33,measured,106,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793363972.6,490,189994,432,23.0,30,measured,106,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793363990.3,491,190434,415,19.0,25,measured,106,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793364012.3,492,190934,438,23.0,62,measured,106,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793364025.6,493,191272,305,14.0,33,measured,106,,"spike, trapped",20261030_052110_e81f3a17
+1793364047.8,494,191714,412,19.0,30,measured,107,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793364068.9,495,192186,415,22.0,57,measured,107,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793364082.2,496,192536,318,14.0,32,measured,107,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364101.0,497,192956,388,20.0,32,measured,107,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793364106.7,498,193116,127,5.0,33,measured,107,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364145.9,499,193946,797,42.0,33,measured,107,controller_eval_candidate,"head hit, trapped",20261030_052110_e81f3a17
+1793364160.5,500,194326,349,15.0,31,measured,107,,"spike, trapped",20261030_052110_e81f3a17
+1793364173.6,501,194564,206,8.0,32,measured,108,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364194.7,502,195030,433,23.0,33,measured,108,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793364208.8,503,195394,332,15.0,32,measured,108,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364229.9,504,195866,439,23.0,33,measured,108,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793364244.9,505,196252,354,16.0,32,measured,108,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364265.2,506,196706,422,22.0,32,measured,108,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793364271.6,507,196884,124,5.0,54,measured,108,,"spike, trapped",20261030_052110_e81f3a17
+1793364285.5,508,197158,243,10.0,31,measured,109,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793364305.8,509,197600,410,22.0,32,measured,109,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793364311.4,510,197752,120,5.0,32,measured,109,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364331.5,511,198194,409,22.0,33,measured,109,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793364349.3,512,198632,407,19.0,31,measured,109,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793364369.5,513,199066,402,22.0,32,measured,109,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793364383.9,514,199436,310,14.0,60,measured,109,,"spike, trapped",20261030_052110_e81f3a17
+1793364394.1,515,199598,129,5.0,33,measured,110,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364415.1,516,200070,439,23.0,33,measured,110,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793364428.4,517,200408,306,14.0,32,measured,110,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793364449.5,518,200886,422,22.0,56,measured,110,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793364464.8,519,201288,371,16.0,31,measured,110,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793364477.2,520,201564,245,13.0,31,measured,110,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793364496.1,521,202028,399,19.0,65,measured,110,,"spike, trapped",20261030_052110_e81f3a17
+1793364506.2,522,202188,128,5.0,32,measured,111,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364526.5,523,202634,413,22.0,33,measured,111,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793364544.3,524,203078,418,19.0,26,measured,111,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793364556.7,525,203358,248,13.0,32,measured,111,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793364565.3,526,203590,200,8.0,32,measured,111,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364585.6,527,204040,418,22.0,32,measured,111,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793364603.5,528,204472,401,19.0,31,measured,111,,"spike, chose wrong",20261030_052110_e81f3a17
+1793364621.2,529,204816,313,14.0,31,measured,112,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364641.5,530,205272,423,22.0,33,measured,112,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793364659.3,531,205708,404,19.0,32,measured,112,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793364680.4,532,206178,413,22.0,57,measured,112,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793364689.1,533,206416,205,8.0,33,measured,112,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793364709.1,534,206856,407,22.0,33,measured,112,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793364722.5,535,207196,308,14.0,32,measured,112,,"spike, trapped",20261030_052110_e81f3a17
+1793364742.7,536,207608,380,17.0,32,measured,113,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364772.7,537,208272,638,33.0,26,measured,113,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793364791.6,538,208740,403,19.0,65,measured,113,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793364812.7,539,209208,435,23.0,33,measured,113,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793364819.3,540,209390,150,6.0,32,measured,113,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364839.3,541,209830,408,22.0,32,measured,113,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793364857.1,542,210266,408,19.0,28,measured,113,,"spike, chose wrong",20261030_052110_e81f3a17
+1793364879.2,543,210718,426,19.0,26,measured,114,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793364930.6,544,211794,1044,58.0,32,measured,114,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793364941.9,545,212102,246,10.0,62,measured,114,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793364952.2,546,212342,207,10.0,33,measured,114,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793364969.9,547,212782,411,19.0,29,measured,114,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793364990.2,548,213230,415,22.0,33,measured,114,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793365009.0,549,213712,418,19.0,64,measured,114,,"spike, trapped",20261030_052110_e81f3a17
+1793365031.3,550,214152,409,19.0,31,measured,115,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793365044.8,551,214484,267,13.0,65,measured,115,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793365058.1,552,214822,306,14.0,32,measured,115,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793365080.1,553,215322,440,23.0,60,measured,115,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793365097.9,554,215766,415,19.0,29,measured,115,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793365118.9,555,216228,430,23.0,32,measured,115,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793365136.7,556,216666,407,19.0,31,measured,115,,"spike, chose wrong",20261030_052110_e81f3a17
+1793365145.2,557,216784,86,3.0,32,measured,116,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793365212.7,558,218210,1393,77.0,33,measured,116,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793365215.4,559,218282,40,1.0,32,measured,116,controller_eval_incumbent,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793365221.9,560,218448,135,6.0,31,measured,116,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793365240.8,561,218916,407,19.0,61,measured,116,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793365292.1,562,220004,1054,58.0,34,measured,116,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793365301.6,563,220266,207,8.0,55,measured,116,,"spike, chose wrong",20261030_052110_e81f3a17
+1793365323.9,564,220704,406,19.0,32,measured,117,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793365332.6,565,220914,178,8.0,32,measured,117,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793365350.3,566,221366,422,19.0,30,measured,117,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793365353.0,567,221434,42,1.0,26,measured,117,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793365367.1,568,221796,301,14.0,61,measured,117,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793365387.5,569,222246,418,22.0,32,measured,117,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793365405.3,570,222672,401,19.0,25,measured,117,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793365418.2,571,222916,211,8.0,33,measured,118,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793365426.9,572,223126,179,8.0,31,measured,118,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793365445.8,573,223606,413,19.0,67,measured,118,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793365466.1,574,224060,421,22.0,33,measured,118,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793365479.3,575,224392,300,14.0,32,measured,118,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793365500.4,576,224866,418,22.0,56,measured,118,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793365509.1,577,225104,206,8.0,32,measured,118,,"spike, trapped",20261030_052110_e81f3a17
+1793365531.1,578,225542,412,19.0,26,measured,119,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793365580.9,579,226560,987,56.0,31,measured,119,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793365598.6,580,226994,407,19.0,27,measured,119,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793365608.0,581,227228,179,8.0,55,measured,119,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793365625.9,582,227666,407,19.0,31,measured,119,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793365646.7,583,228136,414,22.0,56,measured,119,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793365661.8,584,228522,354,16.0,32,measured,119,,"spike, trapped",20261030_052110_e81f3a17
+1793365685.1,585,228996,408,19.0,66,measured,120,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793365735.4,586,230042,998,56.0,48,measured,120,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793365742.0,587,230220,146,6.0,32,measured,120,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793365744.7,588,230282,36,1.0,26,measured,120,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793365747.3,589,230354,41,1.0,31,measured,120,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793365768.4,590,230816,430,23.0,32,measured,120,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793365786.3,591,231250,405,19.0,29,measured,120,,"spike, trapped",20261030_052110_e81f3a17
+1793365808.5,592,231686,407,19.0,29,measured,121,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793365821.7,593,231980,262,14.0,32,measured,121,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793365835.4,594,232328,316,14.0,32,measured,121,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793365856.5,595,232804,446,23.0,30,measured,121,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793365859.8,596,232896,43,1.0,49,measured,121,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793365873.1,597,233190,262,14.0,32,measured,121,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793365891.0,598,233642,424,19.0,28,measured,121,,"spike, trapped",20261030_052110_e81f3a17
+1793365903.9,599,233872,198,8.0,32,measured,122,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793365924.2,600,234326,421,22.0,33,measured,122,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793365926.9,601,234398,44,1.0,28,measured,122,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793365947.2,602,234854,425,22.0,31,measured,122,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793365963.3,603,235266,356,16.0,56,measured,122,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793365973.5,604,235506,208,10.0,32,measured,122,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793365986.8,605,235832,292,14.0,34,measured,122,,"unknown, trapped",20261030_052110_e81f3a17
+1793366010.1,606,236316,425,19.0,59,measured,123,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793366030.3,607,236754,406,22.0,32,measured,123,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793366048.1,608,237202,418,19.0,30,measured,123,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366054.4,609,237362,106,5.0,54,measured,123,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793366072.2,610,237808,414,19.0,32,measured,123,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366092.2,611,238256,415,22.0,33,measured,123,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793366100.9,612,238490,201,8.0,33,measured,123,,"spike, trapped",20261030_052110_e81f3a17
+1793366122.8,613,238932,413,19.0,29,measured,124,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366125.4,614,238996,40,1.0,24,measured,124,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793366128.2,615,239068,41,1.0,31,measured,124,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366136.8,616,239274,174,8.0,32,measured,124,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793366155.7,617,239732,399,19.0,59,measured,124,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793366176.0,618,240190,426,22.0,32,measured,124,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793366187.6,619,240492,270,12.0,32,measured,124,,"unknown, trapped",20261030_052110_e81f3a17
+1793366207.9,620,240916,368,16.0,56,measured,125,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366228.2,621,241374,425,22.0,33,measured,125,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793366242.4,622,241736,303,14.0,59,measured,125,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366254.8,623,242032,264,13.0,32,measured,125,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793366272.6,624,242480,423,19.0,25,measured,125,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793366285.0,625,242760,247,13.0,33,measured,125,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793366291.1,626,242928,136,5.0,32,measured,125,,"spike, trapped",20261030_052110_e81f3a17
+1793366306.9,627,243252,292,13.0,32,measured,126,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366328.9,628,243748,435,23.0,61,measured,126,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793366339.8,629,244036,257,11.0,31,measured,126,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366360.8,630,244518,426,22.0,56,measured,126,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793366378.7,631,244962,417,19.0,27,measured,126,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366381.3,632,245030,37,1.0,31,measured,126,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793366387.4,633,245198,136,5.0,32,measured,126,,"spike, trapped",20261030_052110_e81f3a17
+1793366408.7,634,245650,420,19.0,32,measured,127,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366412.0,635,245736,41,1.0,45,measured,127,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793366427.0,636,246114,346,16.0,32,measured,127,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366447.3,637,246554,408,22.0,32,measured,127,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793366453.1,638,246710,123,5.0,33,measured,127,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366462.4,639,246938,173,8.0,55,measured,127,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793366480.3,640,247384,416,19.0,30,measured,127,,"spike, chose wrong",20261030_052110_e81f3a17
+1793366487.4,641,247454,37,1.0,33,measured,128,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366498.3,642,247710,223,11.0,33,measured,128,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793366517.1,643,248186,412,19.0,64,measured,128,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793366538.1,644,248646,429,23.0,31,measured,128,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793366549.7,645,248954,277,12.0,31,measured,128,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366560.0,646,249190,203,10.0,33,measured,128,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793366577.8,647,249632,416,19.0,26,measured,128,,"spike, trapped",20261030_052110_e81f3a17
+1793366600.0,648,250080,419,19.0,29,measured,129,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366630.7,649,250776,648,33.0,48,measured,129,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793366644.0,650,251102,294,14.0,32,measured,129,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366665.0,651,251558,423,23.0,33,measured,129,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793366678.3,652,251900,310,14.0,32,measured,129,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366698.6,653,252360,428,22.0,32,measured,129,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793366701.3,654,252432,41,1.0,31,measured,129,,"spike, trapped",20261030_052110_e81f3a17
+1793366714.7,655,252792,328,14.0,32,measured,129,,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793366733.3,656,253188,336,14.0,60,measured,130,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366754.4,657,253660,438,23.0,34,measured,130,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793366767.7,658,253996,305,14.0,31,measured,130,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366787.7,659,254452,424,22.0,32,measured,130,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793366805.5,660,254894,414,19.0,28,measured,130,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366818.9,661,255206,248,13.0,64,measured,130,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793366836.9,662,255666,429,19.0,31,measured,130,,"spike, trapped",20261030_052110_e81f3a17
+1793366860.3,663,256150,417,19.0,67,measured,131,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366915.4,664,257324,1142,63.0,32,measured,131,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793366922.6,665,257526,150,6.0,52,measured,131,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793366925.3,666,257590,41,1.0,23,measured,131,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793366943.1,667,258036,418,19.0,28,measured,131,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793366998.2,668,259208,1139,63.0,33,measured,131,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793367016.0,669,259652,411,19.0,33,measured,131,,"spike, trapped",20261030_052110_e81f3a17
+1793367038.1,670,260106,428,19.0,26,measured,132,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793367058.4,671,260550,411,22.0,33,measured,132,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793367071.7,672,260886,305,14.0,31,measured,132,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793367093.7,673,261370,423,23.0,61,measured,132,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793367111.5,674,261818,422,19.0,26,measured,132,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793367132.5,675,262282,432,23.0,32,measured,132,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793367151.5,676,262768,420,19.0,66,measured,132,,"spike, trapped",20261030_052110_e81f3a17
+1793367173.7,677,263226,431,19.0,27,measured,133,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793367216.6,678,264152,893,48.0,33,measured,133,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793367222.3,679,264308,124,5.0,32,measured,133,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793367243.3,680,264758,418,23.0,32,measured,133,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793367251.9,681,265002,213,8.0,31,measured,133,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793367273.0,682,265474,441,23.0,31,measured,133,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793367290.9,683,265916,412,19.0,30,measured,133,,"spike, trapped",20261030_052110_e81f3a17
+1793367310.6,684,266306,358,16.0,32,measured,134,controller_eval_incumbent,"block side, trapped",20261030_052110_e81f3a17
+1793367332.6,685,266822,455,23.0,61,measured,134,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793367341.2,686,267062,209,8.0,31,measured,134,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793367362.3,687,267528,410,22.0,56,measured,134,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793367386.4,688,268114,564,26.0,22,measured,134,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793367406.3,689,268556,410,22.0,32,measured,134,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793367424.2,690,268988,401,19.0,31,measured,134,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793367447.5,691,269466,413,19.0,65,measured,135,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793367454.0,692,269624,125,6.0,33,measured,135,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793367471.8,693,270072,419,19.0,29,measured,135,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793367492.6,694,270544,415,22.0,57,measured,135,controller_eval_candidate,"block side, trapped",20261030_052110_e81f3a17
+1793367505.9,695,270884,307,14.0,33,measured,135,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793367518.4,696,271166,249,13.0,33,measured,135,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793367536.2,697,271608,415,19.0,27,measured,135,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793367558.3,698,272050,412,19.0,30,measured,136,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793367579.4,699,272504,421,23.0,33,measured,136,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793367593.6,700,272864,300,14.0,60,measured,136,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793367613.6,701,273300,403,22.0,33,measured,136,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793367632.5,702,273764,403,19.0,61,measured,136,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793367639.1,703,273928,132,6.0,32,measured,136,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793367654.4,704,274314,354,16.0,32,measured,136,,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793367676.5,705,274754,411,19.0,29,measured,137,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793367696.5,706,275210,423,22.0,33,measured,137,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793367709.8,707,275552,309,14.0,33,measured,137,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793367739.7,708,276200,620,33.0,28,measured,137,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793367757.5,709,276644,416,19.0,28,measured,137,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793367801.0,710,277572,878,48.0,50,measured,137,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793367818.8,711,278008,406,19.0,30,measured,137,,"spike, chose wrong",20261030_052110_e81f3a17
+1793367825.8,712,278080,49,1.0,23,measured,138,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793367828.5,713,278146,36,1.0,30,measured,138,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793367834.2,714,278304,126,5.0,32,measured,138,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793367845.3,715,278570,207,10.0,59,measured,138,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793367863.1,716,279012,415,19.0,27,measured,138,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793367893.1,717,279666,628,33.0,26,measured,138,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793367912.1,718,280146,414,19.0,66,measured,138,,"spike, chose wrong",20261030_052110_e81f3a17
+1793367934.3,719,280604,426,19.0,32,measured,139,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793367954.6,720,281054,417,22.0,33,measured,139,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793367972.4,721,281494,408,19.0,32,measured,139,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793367992.7,722,281962,437,22.0,31,measured,139,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793368010.4,723,282392,404,19.0,26,measured,139,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793368022.8,724,282678,254,13.0,32,measured,139,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793368036.2,725,283018,307,14.0,33,measured,139,,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793368059.4,726,283496,420,19.0,58,measured,140,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793368080.5,727,283954,426,23.0,32,measured,140,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793368093.8,728,284290,304,14.0,32,measured,140,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793368109.1,729,284638,316,16.0,32,measured,140,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793368115.2,730,284810,140,5.0,32,measured,140,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793368127.7,731,285096,254,13.0,32,measured,140,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793368145.5,732,285534,412,19.0,26,measured,140,,"spike, chose wrong",20261030_052110_e81f3a17
+1793368167.8,733,285962,401,19.0,27,measured,141,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793368205.8,734,286756,772,42.0,22,measured,141,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793368223.4,735,287174,392,19.0,26,measured,141,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793368279.2,736,288354,1128,63.0,52,measured,141,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793368290.7,737,288652,268,12.0,30,measured,141,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793368345.8,738,289796,1112,63.0,32,measured,141,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793368360.9,739,290182,353,16.0,33,measured,141,,"spike, chose wrong",20261030_052110_e81f3a17
+1793368384.2,740,290666,418,19.0,66,measured,142,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793368405.2,741,291122,425,23.0,31,measured,142,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793368423.0,742,291552,400,19.0,30,measured,142,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793368472.8,743,292592,1009,56.0,31,measured,142,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793368490.6,744,293028,406,19.0,30,measured,142,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793368510.9,745,293480,420,22.0,32,measured,142,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793368525.0,746,293860,319,14.0,61,measured,142,,"spike, trapped",20261030_052110_e81f3a17
+1793368547.3,747,294288,400,19.0,28,measured,143,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793368569.2,748,294776,427,23.0,61,measured,143,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793368587.1,749,295228,420,19.0,32,measured,143,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793368608.1,750,295684,425,23.0,31,measured,143,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793368627.0,751,296166,420,19.0,62,measured,143,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793368648.0,752,296624,428,23.0,30,measured,143,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793368660.6,753,296956,271,12.0,61,measured,143,,"spike, trapped",20261030_052110_e81f3a17
+1793368682.9,754,297392,408,19.0,28,measured,144,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793368703.9,755,297864,440,23.0,32,measured,144,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793368721.6,756,298310,415,19.0,31,measured,144,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793368725.8,757,298410,70,3.0,30,measured,144,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793368743.6,758,298838,400,19.0,28,measured,144,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793368764.6,759,299312,417,22.0,57,measured,144,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793368782.4,760,299742,404,19.0,26,measured,144,,"spike, chose wrong",20261030_052110_e81f3a17
+1793368789.8,761,299818,44,1.0,32,measured,145,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793368810.0,762,300258,408,22.0,32,measured,145,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793368828.9,763,300748,425,19.0,65,measured,145,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793368850.0,764,301202,422,23.0,32,measured,145,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793368863.3,765,301530,295,14.0,33,measured,145,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793368876.8,766,301856,260,13.0,66,measured,145,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793368885.5,767,302090,203,8.0,31,measured,145,,"spike, trapped",20261030_052110_e81f3a17
+1793368907.6,768,302548,425,19.0,33,measured,146,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793368945.6,769,303342,772,42.0,22,measured,146,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793368948.9,770,303432,43,1.0,47,measured,146,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793368969.2,771,303886,421,22.0,33,measured,146,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793368987.0,772,304324,408,19.0,30,measured,146,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793368999.4,773,304606,250,13.0,32,measured,146,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793369015.5,774,305022,360,16.0,56,measured,146,,"unknown, trapped (shield acted)",20261030_052110_e81f3a17
+1793369037.7,775,305460,407,19.0,31,measured,147,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793369047.0,776,305692,178,8.0,54,measured,147,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793369063.7,777,306106,383,18.0,31,measured,147,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793369074.0,778,306340,202,10.0,32,measured,147,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793369092.9,779,306826,420,19.0,66,measured,147,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369113.2,780,307266,407,22.0,33,measured,147,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793369121.9,781,307500,201,8.0,33,measured,147,,"spike, trapped",20261030_052110_e81f3a17
+1793369143.8,782,307948,422,19.0,26,measured,148,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793369157.1,783,308238,258,14.0,32,measured,148,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793369174.8,784,308676,406,19.0,32,measured,148,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369183.5,785,308888,180,8.0,32,measured,148,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793369201.3,786,309324,409,19.0,27,measured,148,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369222.3,787,309790,410,22.0,56,measured,148,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793369240.2,788,310230,414,19.0,26,measured,148,,"spike, chose wrong",20261030_052110_e81f3a17
+1793369260.4,789,310640,378,17.0,32,measured,149,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369315.5,790,311782,1111,63.0,31,measured,149,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793369318.1,791,311854,41,1.0,31,measured,149,controller_eval_incumbent,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793369320.8,792,311920,36,1.0,30,measured,149,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793369327.4,793,312106,154,6.0,32,measured,149,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793369349.4,794,312590,423,23.0,61,measured,149,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793369362.8,795,312934,311,14.0,33,measured,149,,"spike, trapped",20261030_052110_e81f3a17
+1793369373.7,796,313120,155,6.0,31,measured,150,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793369394.0,797,313566,413,22.0,33,measured,150,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793369408.2,798,313928,329,15.0,33,measured,150,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793369420.6,799,314212,253,13.0,31,measured,150,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793369427.4,800,314408,142,5.0,54,measured,150,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793369462.8,801,315168,736,39.0,24,measured,150,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793369476.5,802,315520,320,14.0,32,measured,150,,"spike, chose wrong",20261030_052110_e81f3a17
+1793369491.1,803,315798,246,10.0,32,measured,151,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369512.2,804,316260,430,23.0,32,measured,151,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793369531.1,805,316716,397,19.0,59,measured,151,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369574.0,806,317650,902,48.0,32,measured,151,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793369591.9,807,318084,402,19.0,32,measured,151,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369612.9,808,318540,424,23.0,32,measured,151,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793369630.8,809,318990,420,19.0,30,measured,151,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793369643.9,810,319228,205,8.0,33,measured,152,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369646.5,811,319292,40,1.0,24,measured,152,controller_eval_candidate,"unknown, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793369664.3,812,319730,412,19.0,26,measured,152,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369674.6,813,319974,212,10.0,32,measured,152,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793369688.8,814,320340,306,14.0,60,measured,152,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793369691.6,815,320406,35,1.0,31,measured,152,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793369709.3,816,320836,404,19.0,26,measured,152,,"spike, trapped",20261030_052110_e81f3a17
+1793369728.9,817,321218,350,16.0,32,measured,153,controller_eval_incumbent,"block side, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793369738.3,818,321446,173,8.0,55,measured,153,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793369749.2,819,321728,250,11.0,32,measured,153,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793369769.5,820,322178,418,22.0,32,measured,153,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793369784.0,821,322552,342,15.0,32,measured,153,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369805.1,822,323012,427,23.0,33,measured,153,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793369824.1,823,323490,412,19.0,66,measured,153,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793369846.4,824,323926,408,19.0,28,measured,154,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793369866.3,825,324364,405,22.0,33,measured,154,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793369884.2,826,324804,404,19.0,36,measured,154,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793369906.2,827,325288,423,23.0,61,measured,154,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793369924.1,828,325748,430,19.0,30,measured,154,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793369942.9,829,326154,375,20.0,31,measured,154,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793369949.3,830,326332,122,5.0,56,measured,154,,"spike, trapped",20261030_052110_e81f3a17
+1793369955.5,831,326406,43,1.0,31,measured,155,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793369958.2,832,326472,41,1.0,25,measured,155,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793369973.5,833,326860,356,16.0,32,measured,155,controller_eval_incumbent,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793369993.8,834,327312,420,22.0,32,measured,155,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793370005.0,835,327612,239,10.0,61,measured,155,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793370026.1,836,328068,423,23.0,33,measured,155,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793370045.1,837,328536,402,19.0,66,measured,155,,"spike, chose wrong",20261030_052110_e81f3a17
+1793370067.5,838,328990,422,19.0,32,measured,156,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793370070.1,839,329056,40,1.0,26,measured,156,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370087.9,840,329484,400,19.0,28,measured,156,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793370100.3,841,329762,245,13.0,33,measured,156,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793370115.5,842,330156,362,16.0,32,measured,156,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793370136.6,843,330620,433,23.0,31,measured,156,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793370150.4,844,330974,321,14.0,33,measured,156,,"spike, trapped",20261030_052110_e81f3a17
+1793370172.6,845,331410,408,19.0,28,measured,157,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793370202.6,846,332070,631,33.0,29,measured,157,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793370206.6,847,332184,91,3.0,23,measured,157,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793370222.7,848,332552,312,16.0,56,measured,157,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370236.0,849,332888,301,14.0,35,measured,157,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793370257.1,850,333354,409,22.0,57,measured,157,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793370275.0,851,333802,417,19.0,31,measured,157,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793370298.3,852,334274,414,19.0,58,measured,158,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793370318.6,853,334718,412,22.0,32,measured,158,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370336.5,854,335150,405,19.0,27,measured,158,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793370391.6,855,336312,1129,63.0,33,measured,158,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793370409.3,856,336742,405,19.0,25,measured,158,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793370449.2,857,337580,816,45.0,22,measured,158,controller_eval_candidate,"block side, trapped",20261030_052110_e81f3a17
+1793370467.0,858,338016,411,19.0,25,measured,158,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793370490.2,859,338502,421,19.0,65,measured,159,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793370510.5,860,338948,414,22.0,32,measured,159,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793370523.8,861,339290,309,14.0,33,measured,159,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370537.3,862,339604,249,13.0,65,measured,159,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370555.2,863,340050,415,19.0,31,measured,159,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793370559.3,864,340152,80,3.0,22,measured,159,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370577.3,865,340590,406,19.0,32,measured,159,,"spike, chose wrong",20261030_052110_e81f3a17
+1793370585.0,866,340684,41,1.0,53,measured,160,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793370605.3,867,341126,409,22.0,33,measured,160,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793370623.1,868,341562,404,19.0,32,measured,160,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793370625.7,869,341628,34,1.0,32,measured,160,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370644.7,870,342114,419,19.0,67,measured,160,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793370675.5,871,342772,612,33.0,46,measured,160,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793370682.0,872,342954,150,6.0,32,measured,160,,"spike, trapped",20261030_052110_e81f3a17
+1793370694.3,873,343200,214,8.0,32,measured,161,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370715.4,874,343666,409,22.0,57,measured,161,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370726.2,875,343958,261,11.0,31,measured,161,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793370756.2,876,344610,624,33.0,28,measured,161,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793370771.2,877,344994,353,16.0,31,measured,161,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793370784.4,878,345294,269,14.0,31,measured,161,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793370802.3,879,345744,423,19.0,27,measured,161,,"spike, chose wrong",20261030_052110_e81f3a17
+1793370809.3,880,345818,50,1.0,24,measured,162,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793370829.7,881,346262,411,22.0,33,measured,162,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793370835.4,882,346422,127,5.0,33,measured,162,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793370847.7,883,346710,257,13.0,31,measured,162,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793370862.9,884,347096,355,16.0,31,measured,162,controller_eval_incumbent,"block side, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370865.7,885,347164,43,1.0,25,measured,162,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370872.9,886,347364,149,6.0,51,measured,162,,"spike, trapped",20261030_052110_e81f3a17
+1793370894.4,887,347822,427,19.0,31,measured,163,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793370915.5,888,348290,435,23.0,33,measured,163,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793370929.6,889,348658,308,14.0,60,measured,163,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793370938.4,890,348868,178,8.0,32,measured,163,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370946.9,891,349094,195,8.0,31,measured,163,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370955.6,892,349302,177,8.0,31,measured,163,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793370973.5,893,349740,408,19.0,30,measured,163,,"spike, chose wrong",20261030_052110_e81f3a17
+1793370996.8,894,350222,419,19.0,63,measured,164,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793371017.8,895,350676,422,23.0,32,measured,164,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793371035.6,896,351118,415,19.0,27,measured,164,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371093.9,897,352356,1204,66.0,34,measured,164,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793371109.2,898,352752,363,16.0,33,measured,164,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793371119.4,899,352996,213,10.0,31,measured,164,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793371134.2,900,353382,325,14.0,61,measured,164,,"unknown, trapped (shield acted)",20261030_052110_e81f3a17
+1793371156.4,901,353842,432,19.0,28,measured,165,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371178.3,902,354336,432,23.0,62,measured,165,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793371189.9,903,354644,276,12.0,32,measured,165,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371195.5,904,354778,103,5.0,31,measured,165,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793371213.4,905,355236,427,19.0,31,measured,165,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371216.7,906,355324,36,1.0,52,measured,165,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793371234.5,907,355766,412,19.0,30,measured,165,,"spike, chose wrong",20261030_052110_e81f3a17
+1793371257.9,908,356258,428,19.0,64,measured,166,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793371277.9,909,356710,420,22.0,32,measured,166,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793371287.3,910,356974,209,8.0,55,measured,166,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793371307.6,911,357426,421,22.0,31,measured,166,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793371325.5,912,357866,408,19.0,32,measured,166,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793371345.7,913,358320,422,22.0,32,measured,166,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793371351.5,914,358476,123,5.0,33,measured,166,,"spike, trapped",20261030_052110_e81f3a17
+1793371372.4,915,358912,410,19.0,26,measured,167,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371382.6,916,359158,214,10.0,32,measured,167,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793371400.4,917,359604,416,19.0,30,measured,167,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793371403.1,918,359670,36,1.0,30,measured,167,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793371418.4,919,360066,363,16.0,33,measured,167,controller_eval_incumbent,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793371439.5,920,360542,418,22.0,58,measured,167,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793371452.9,921,360880,306,14.0,32,measured,167,,"spike, trapped",20261030_052110_e81f3a17
+1793371476.2,922,361366,425,19.0,61,measured,168,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371478.8,923,361434,43,1.0,25,measured,168,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793371496.6,924,361888,422,19.0,32,measured,168,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371552.3,925,363080,1140,63.0,52,measured,168,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793371562.7,926,363358,247,10.0,31,measured,168,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371583.7,927,363818,427,23.0,33,measured,168,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793371601.7,928,364260,410,19.0,32,measured,168,,"spike, chose wrong",20261030_052110_e81f3a17
+1793371619.2,929,364608,316,14.0,32,measured,169,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371640.3,930,365080,440,23.0,32,measured,169,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793371658.0,931,365514,408,19.0,26,measured,169,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793371679.0,932,365986,441,23.0,31,measured,169,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793371698.0,933,366458,414,19.0,58,measured,169,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793371700.7,934,366520,36,1.0,26,measured,169,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793371718.5,935,366966,420,19.0,26,measured,169,,"spike, chose wrong",20261030_052110_e81f3a17
+1793371737.5,936,367338,336,15.0,36,measured,170,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793371759.4,937,367832,433,23.0,61,measured,170,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793371777.3,938,368286,428,19.0,26,measured,170,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793371797.6,939,368752,434,22.0,32,measured,170,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793371803.9,940,368926,121,5.0,53,measured,170,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371833.9,941,369574,622,33.0,26,measured,170,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793371842.8,942,369812,209,9.0,29,measured,170,,"spike, chose wrong",20261030_052110_e81f3a17
+1793371864.9,943,370278,434,19.0,32,measured,171,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793371885.9,944,370744,434,23.0,32,measured,171,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793371899.1,945,371080,305,14.0,31,measured,171,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371948.1,946,372102,990,56.0,32,measured,171,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793371956.8,947,372340,206,8.0,32,measured,171,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793371977.1,948,372784,413,22.0,31,measured,171,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793371991.4,949,373158,312,14.0,62,measured,171,,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793372013.5,950,373608,423,19.0,27,measured,172,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793372033.8,951,374074,433,22.0,33,measured,172,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793372047.6,952,374414,308,14.0,32,measured,172,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793372068.6,953,374904,434,22.0,56,measured,172,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793372086.5,954,375350,420,19.0,26,measured,172,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793372109.3,955,375866,484,25.0,32,measured,172,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793372114.9,956,376026,129,5.0,31,measured,172,,"spike, trapped",20261030_052110_e81f3a17
+1793372129.8,957,376332,275,12.0,31,measured,173,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793372176.9,958,377352,988,53.0,32,measured,173,controller_eval_candidate,"unknown, trapped (shield acted)",20261030_052110_e81f3a17
+1793372180.2,959,377444,42,1.0,50,measured,173,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793372232.2,960,378556,1062,58.0,50,measured,173,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793372250.0,961,378996,413,19.0,27,measured,173,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793372258.6,962,379212,185,8.0,31,measured,173,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793372277.6,963,379686,407,19.0,67,measured,173,,"head hit, chose wrong",20261030_052110_e81f3a17
+1793372299.9,964,380138,425,19.0,27,measured,174,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793372329.8,965,380800,636,33.0,26,measured,174,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793372339.2,966,381062,207,8.0,55,measured,174,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793372341.9,967,381128,35,1.0,31,measured,174,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793372352.3,968,381404,243,10.0,33,measured,174,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793372407.4,969,382558,1123,63.0,31,measured,174,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793372416.1,970,382794,204,8.0,32,measured,174,,"spike, chose wrong",20261030_052110_e81f3a17
+1793372428.9,971,383038,211,8.0,33,measured,175,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793372435.4,972,383200,129,6.0,33,measured,175,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793372453.3,973,383642,414,19.0,28,measured,175,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793372483.9,974,384310,623,33.0,45,measured,175,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793372497.2,975,384652,310,14.0,32,measured,175,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793372499.9,976,384718,41,1.0,25,measured,175,controller_eval_candidate,"unknown, trapped (shield acted)",20261030_052110_e81f3a17
+1793372513.3,977,385064,314,14.0,32,measured,175,,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793372535.5,978,385506,411,19.0,31,measured,176,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793372556.5,979,385960,422,23.0,32,measured,176,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793372575.5,980,386422,402,19.0,60,measured,176,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793372596.5,981,386884,430,23.0,32,measured,176,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793372612.3,982,387290,350,16.0,56,measured,176,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793372631.1,983,387694,372,20.0,32,measured,176,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793372636.8,984,387850,123,5.0,33,measured,176,,"spike, chose wrong",20261030_052110_e81f3a17
+1793372657.8,985,388300,423,19.0,27,measured,177,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793372679.8,986,388802,442,23.0,60,measured,177,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793372686.4,987,388980,146,6.0,32,measured,177,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793372707.5,988,389436,423,23.0,33,measured,177,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793372725.2,989,389866,405,19.0,25,measured,177,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793372780.3,990,391010,1112,63.0,32,measured,177,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793372798.2,991,391458,416,19.0,32,measured,177,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793372821.5,992,391934,409,19.0,67,measured,178,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793372860.1,993,392742,785,42.0,23,measured,178,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793372877.9,994,393184,412,19.0,30,measured,178,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793372926.8,995,394206,990,56.0,32,measured,178,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793372940.1,996,394544,306,14.0,32,measured,178,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793372946.2,997,394692,117,5.0,31,measured,178,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793372964.1,998,395120,402,19.0,26,measured,178,,"spike, chose wrong",20261030_052110_e81f3a17
+1793372986.4,999,395564,413,19.0,31,measured,179,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373007.4,1000,396024,429,23.0,31,measured,179,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793373026.4,1001,396492,402,19.0,66,measured,179,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373069.4,1002,397412,887,48.0,33,measured,179,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793373087.2,1003,397854,411,19.0,31,measured,179,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373130.1,1004,398766,880,48.0,32,measured,179,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793373148.0,1005,399208,416,19.0,26,measured,179,,"spike, chose wrong",20261030_052110_e81f3a17
+1793373158.1,1006,399366,127,5.0,31,measured,180,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373179.1,1007,399828,430,23.0,32,measured,180,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793373197.0,1008,400262,403,19.0,31,measured,180,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793373205.7,1009,400470,175,8.0,33,measured,180,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793373224.6,1010,400934,405,19.0,59,measured,180,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373245.5,1011,401394,429,23.0,31,measured,180,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793373263.4,1012,401840,414,19.0,32,measured,180,,"spike, chose wrong",20261030_052110_e81f3a17
+1793373285.6,1013,402276,407,19.0,29,measured,181,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793373334.7,1014,403326,1017,56.0,33,measured,181,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793373352.5,1015,403772,414,19.0,32,measured,181,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793373367.4,1016,404124,296,15.0,56,measured,181,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793373373.5,1017,404300,144,5.0,32,measured,181,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793373393.8,1018,404764,433,22.0,31,measured,181,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793373412.8,1019,405244,415,19.0,65,measured,181,,"spike, chose wrong",20261030_052110_e81f3a17
+1793373434.9,1020,405690,416,19.0,30,measured,182,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373437.6,1021,405756,39,1.0,27,measured,182,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793373455.3,1022,406186,404,19.0,26,measured,182,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793373469.5,1023,406526,278,14.0,62,measured,182,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793373479.7,1024,406796,239,10.0,31,measured,182,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793373501.7,1025,407288,431,23.0,61,measured,182,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793373519.7,1026,407738,424,19.0,26,measured,182,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793373543.0,1027,408204,399,19.0,67,measured,183,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373594.3,1028,409274,1038,58.0,32,measured,183,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793373609.3,1029,409658,352,16.0,32,measured,183,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373612.7,1030,409736,42,1.0,36,measured,183,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793373615.4,1031,409808,41,1.0,31,measured,183,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373618.1,1032,409870,38,1.0,24,measured,183,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793373636.0,1033,410306,404,19.0,32,measured,183,,"spike, chose wrong",20261030_052110_e81f3a17
+1793373658.2,1034,410734,401,19.0,27,measured,184,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373707.8,1035,411792,1009,56.0,49,measured,184,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793373713.5,1036,411948,124,5.0,32,measured,184,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793373762.5,1037,412992,1012,56.0,32,measured,184,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793373778.6,1038,413398,351,16.0,55,measured,184,controller_eval_incumbent,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793373787.9,1039,413630,199,9.0,33,measured,184,controller_eval_candidate,"block side, chose wrong",20261030_052110_e81f3a17
+1793373803.2,1040,414016,355,16.0,31,measured,184,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793373825.5,1041,414452,410,19.0,26,measured,185,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793373828.2,1042,414520,40,1.0,28,measured,185,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793373839.4,1043,414818,237,10.0,61,measured,185,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793373859.7,1044,415280,430,22.0,32,measured,185,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793373869.1,1045,415536,202,8.0,54,measured,185,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793373899.2,1046,416190,627,33.0,27,measured,185,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793373912.5,1047,416534,312,14.0,32,measured,185,,"spike, trapped",20261030_052110_e81f3a17
+1793373935.8,1048,417022,422,19.0,66,measured,186,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793373979.3,1049,417936,864,48.0,50,measured,186,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793373997.2,1050,418372,404,19.0,32,measured,186,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374027.2,1051,419016,616,33.0,28,measured,186,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793374030.5,1052,419106,39,1.0,51,measured,186,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374050.8,1053,419558,420,22.0,32,measured,186,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793374065.9,1054,419940,349,16.0,33,measured,186,,"spike, trapped",20261030_052110_e81f3a17
+1793374085.7,1055,420332,336,15.0,56,measured,187,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374106.7,1056,420814,449,23.0,33,measured,187,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793374124.8,1057,421262,418,19.0,30,measured,187,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374127.5,1058,421324,39,1.0,23,measured,187,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793374130.2,1059,421396,47,1.0,25,measured,187,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793374173.2,1060,422300,871,48.0,33,measured,187,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793374191.0,1061,422750,419,19.0,31,measured,187,,"spike, trapped",20261030_052110_e81f3a17
+1793374201.6,1062,422920,138,5.0,32,measured,188,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793374222.7,1063,423404,426,22.0,58,measured,188,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793374226.9,1064,423514,83,3.0,27,measured,188,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793374269.8,1065,424434,888,48.0,32,measured,188,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793374285.1,1066,424826,361,16.0,31,measured,188,controller_eval_incumbent,"block side, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793374297.5,1067,425100,242,13.0,32,measured,188,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793374303.9,1068,425272,118,5.0,54,measured,188,,"spike, trapped",20261030_052110_e81f3a17
+1793374325.2,1069,425716,416,19.0,28,measured,189,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793374337.6,1070,426002,253,13.0,33,measured,189,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793374350.8,1071,426336,301,14.0,33,measured,189,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374371.8,1072,426804,436,23.0,32,measured,189,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793374382.0,1073,427076,241,10.0,31,measured,189,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374395.6,1074,427390,249,13.0,65,measured,189,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793374398.2,1075,427458,40,1.0,28,measured,189,,"spike, chose wrong",20261030_052110_e81f3a17
+1793374416.1,1076,427898,414,19.0,26,measured,189,,"spike, chose wrong",20261030_052110_e81f3a17
+1793374439.4,1077,428372,416,19.0,58,measured,190,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374459.6,1078,428818,413,22.0,33,measured,190,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793374477.4,1079,429250,401,19.0,31,measured,190,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374507.4,1080,429888,611,33.0,27,measured,190,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793374513.1,1081,430044,123,5.0,33,measured,190,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374523.3,1082,430278,202,10.0,32,measured,190,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793374541.2,1083,430716,406,19.0,32,measured,190,,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793374563.5,1084,431150,408,19.0,26,measured,191,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793374583.6,1085,431586,405,22.0,31,measured,191,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793374596.9,1086,431918,299,14.0,33,measured,191,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374617.2,1087,432362,411,22.0,33,measured,191,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793374620.5,1088,432450,41,1.0,47,measured,191,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793374640.8,1089,432886,405,22.0,31,measured,191,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793374659.8,1090,433336,391,19.0,59,measured,191,,"spike, chose wrong",20261030_052110_e81f3a17
+1793374682.0,1091,433782,421,19.0,25,measured,192,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793374690.6,1092,433984,170,8.0,32,measured,192,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793374708.4,1093,434422,412,19.0,26,measured,192,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793374717.0,1094,434624,170,8.0,32,measured,192,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793374719.7,1095,434694,46,1.0,24,measured,192,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793374726.3,1096,434864,138,6.0,32,measured,192,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793374740.6,1097,435238,313,14.0,61,measured,192,,"spike, trapped",20261030_052110_e81f3a17
+1793374756.6,1098,435552,283,12.0,31,measured,193,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793374759.3,1099,435614,39,1.0,23,measured,193,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793374778.3,1100,436094,413,19.0,67,measured,193,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793374780.9,1101,436160,44,1.0,22,measured,193,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793374798.8,1102,436600,408,19.0,32,measured,193,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793374837.4,1103,437430,808,42.0,22,measured,193,controller_eval_candidate,"head hit, trapped",20261030_052110_e81f3a17
+1793374855.2,1104,437874,414,19.0,30,measured,193,,"spike, chose wrong",20261030_052110_e81f3a17
+1793374862.8,1105,437968,50,1.0,44,measured,194,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793374883.9,1106,438450,450,23.0,32,measured,194,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793374897.2,1107,438794,312,14.0,32,measured,194,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793374948.5,1108,439872,1047,58.0,31,measured,194,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793374957.2,1109,440112,209,8.0,31,measured,194,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793374979.2,1110,440604,432,23.0,60,measured,194,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793374987.9,1111,440836,200,8.0,32,measured,194,,"spike, chose wrong",20261030_052110_e81f3a17
+1793375009.8,1112,441278,416,19.0,26,measured,195,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375020.1,1113,441522,211,10.0,33,measured,195,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793375039.0,1114,441990,403,19.0,65,measured,195,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793375060.1,1115,442450,429,23.0,31,measured,195,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793375069.5,1116,442714,208,8.0,56,measured,195,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375090.5,1117,443190,444,23.0,32,measured,195,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793375099.3,1118,443422,200,8.0,32,measured,195,,"spike, chose wrong",20261030_052110_e81f3a17
+1793375121.2,1119,443876,424,19.0,30,measured,196,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793375168.4,1120,444880,972,53.0,32,measured,196,controller_eval_candidate,"unknown, trapped (shield acted)",20261030_052110_e81f3a17
+1793375181.6,1121,445228,316,14.0,32,measured,196,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375192.8,1122,445492,204,10.0,60,measured,196,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793375210.6,1123,445928,409,19.0,27,measured,196,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793375231.4,1124,446396,412,22.0,56,measured,196,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793375244.8,1125,446740,311,14.0,33,measured,196,,"spike, trapped",20261030_052110_e81f3a17
+1793375266.9,1126,447186,415,19.0,31,measured,197,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793375288.0,1127,447648,405,22.0,57,measured,197,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375303.0,1128,448038,358,16.0,32,measured,197,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793375313.3,1129,448284,215,10.0,31,measured,197,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793375327.5,1130,448656,311,14.0,61,measured,197,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375330.3,1131,448720,40,1.0,24,measured,197,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375341.9,1132,449016,264,12.0,32,measured,197,,"spike, trapped",20261030_052110_e81f3a17
+1793375365.2,1133,449504,421,19.0,67,measured,198,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375371.0,1134,449644,108,5.0,32,measured,198,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375388.7,1135,450072,403,19.0,25,measured,198,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375408.9,1136,450518,413,22.0,33,measured,198,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793375417.5,1137,450758,209,8.0,31,measured,198,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793375426.2,1138,450966,176,8.0,32,measured,198,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375444.2,1139,451412,415,19.0,31,measured,198,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793375466.5,1140,451854,410,19.0,32,measured,199,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793375486.7,1141,452298,410,22.0,34,measured,199,controller_eval_candidate,"unknown, chose wrong",20261030_052110_e81f3a17
+1793375496.2,1142,452554,200,8.0,56,measured,199,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375502.3,1143,452706,119,5.0,33,measured,199,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375512.7,1144,452984,246,10.0,32,measured,199,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793375533.0,1145,453440,423,22.0,33,measured,199,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793375538.6,1146,453598,126,5.0,32,measured,199,,"spike, trapped",20261030_052110_e81f3a17
+1793375550.5,1147,453842,213,8.0,31,measured,200,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375557.7,1148,454020,126,6.0,52,measured,200,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375560.4,1149,454094,42,1.0,32,measured,200,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793375569.8,1150,454310,183,9.0,33,measured,200,controller_eval_candidate,"block side, chose wrong",20261030_052110_e81f3a17
+1793375578.4,1151,454548,206,8.0,32,measured,200,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793375599.5,1152,455024,445,23.0,31,measured,200,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793375618.6,1153,455494,409,19.0,61,measured,200,,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375627.0,1154,455612,86,3.0,32,measured,201,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375657.8,1155,456290,633,33.0,45,measured,201,controller_eval_candidate,"unknown, trapped (shield acted)",20261030_052110_e81f3a17
+1793375666.4,1156,456528,205,8.0,33,measured,201,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375701.6,1157,457298,747,39.0,23,measured,201,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793375719.4,1158,457738,412,19.0,28,measured,201,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793375728.7,1159,457974,181,8.0,55,measured,201,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793375746.7,1160,458418,418,19.0,26,measured,201,,"spike, chose wrong",20261030_052110_e81f3a17
+1793375768.8,1161,458858,408,19.0,32,measured,202,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793375771.6,1162,458926,42,1.0,26,measured,202,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375790.5,1163,459394,407,19.0,61,measured,202,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375811.5,1164,459862,436,23.0,32,measured,202,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793375829.2,1165,460308,414,19.0,32,measured,202,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375884.4,1166,461488,1147,63.0,33,measured,202,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375902.3,1167,461922,403,19.0,31,measured,202,,"spike, chose wrong",20261030_052110_e81f3a17
+1793375924.5,1168,462378,427,19.0,29,measured,203,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793375937.7,1169,462682,272,14.0,32,measured,203,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793375946.4,1170,462924,210,8.0,32,measured,203,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793375955.0,1171,463126,171,8.0,31,measured,203,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793375973.9,1172,463602,416,19.0,60,measured,203,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793375994.2,1173,464056,421,22.0,33,measured,203,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793376008.9,1174,464430,341,15.0,33,measured,203,,"spike, trapped",20261030_052110_e81f3a17
+1793376031.0,1175,464886,430,19.0,26,measured,204,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793376037.5,1176,465050,110,5.0,54,measured,204,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376055.3,1177,465492,415,19.0,27,measured,204,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793376063.9,1178,465700,176,8.0,32,measured,204,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793376067.2,1179,465788,47,1.0,41,measured,204,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793376069.9,1180,465854,44,1.0,22,measured,204,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376080.2,1181,466132,245,10.0,33,measured,204,,"spike, trapped",20261030_052110_e81f3a17
+1793376095.1,1182,466416,251,10.0,33,measured,205,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793376117.1,1183,466910,434,23.0,60,measured,205,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376134.9,1184,467356,420,19.0,26,measured,205,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793376186.7,1185,468454,1066,59.0,32,measured,205,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793376205.7,1186,468926,403,19.0,69,measured,205,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793376261.5,1187,470128,1151,63.0,51,measured,205,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376267.6,1188,470296,136,5.0,32,measured,205,,"spike, trapped",20261030_052110_e81f3a17
+1793376279.7,1189,470534,206,8.0,32,measured,206,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793376300.7,1190,471004,438,23.0,32,measured,206,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793376318.5,1191,471450,416,19.0,30,measured,206,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793376331.0,1192,471730,247,13.0,33,measured,206,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376340.3,1193,471986,202,8.0,54,measured,206,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793376343.0,1194,472052,43,1.0,23,measured,206,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376360.9,1195,472490,410,19.0,28,measured,206,,"spike, trapped",20261030_052110_e81f3a17
+1793376383.1,1196,472932,410,19.0,32,measured,207,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793376404.1,1197,473406,442,23.0,32,measured,207,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376423.1,1198,473872,406,19.0,60,measured,207,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793376441.8,1199,474280,375,20.0,33,measured,207,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793376457.1,1200,474664,352,16.0,32,measured,207,controller_eval_incumbent,"block side, trapped (shield acted)",20261030_052110_e81f3a17
+1793376487.1,1201,475314,622,33.0,28,measured,207,controller_eval_candidate,"block side, trapped",20261030_052110_e81f3a17
+1793376493.7,1202,475496,149,6.0,33,measured,207,,"spike, trapped",20261030_052110_e81f3a17
+1793376515.0,1203,475952,427,19.0,29,measured,208,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793376526.2,1204,476216,205,10.0,59,measured,208,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793376544.0,1205,476660,416,19.0,28,measured,208,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793376574.0,1206,477326,638,33.0,28,measured,208,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793376592.0,1207,477768,406,19.0,36,measured,208,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793376594.6,1208,477828,36,1.0,24,measured,208,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376613.7,1209,478300,405,19.0,67,measured,208,,"spike, chose wrong",20261030_052110_e81f3a17
+1793376636.0,1210,478750,418,19.0,32,measured,209,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793376657.0,1211,479222,440,23.0,32,measured,209,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376674.9,1212,479674,420,19.0,32,measured,209,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793376696.9,1213,480170,435,23.0,61,measured,209,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793376708.5,1214,480482,280,12.0,32,measured,209,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793376747.1,1215,481290,785,42.0,23,measured,209,controller_eval_candidate,"head hit, trapped",20261030_052110_e81f3a17
+1793376760.4,1216,481628,305,14.0,33,measured,209,,"spike, chose wrong",20261030_052110_e81f3a17
+1793376782.7,1217,482082,425,19.0,29,measured,210,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793376791.3,1218,482282,168,8.0,32,measured,210,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793376807.1,1219,482688,351,16.0,55,measured,210,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793376827.4,1220,483156,435,22.0,33,measured,210,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793376846.4,1221,483628,412,19.0,60,measured,210,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793376850.5,1222,483730,78,3.0,24,measured,210,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793376868.3,1223,484152,394,19.0,28,measured,210,,"head hit, chose wrong",20261030_052110_e81f3a17
+1793376890.4,1224,484604,421,19.0,31,measured,211,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793376911.5,1225,485076,439,23.0,33,measured,211,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376924.8,1226,485426,317,14.0,33,measured,211,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793376928.1,1227,485510,41,1.0,43,measured,211,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793376945.9,1228,485946,406,19.0,30,measured,211,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793376967.0,1229,486404,426,23.0,32,measured,211,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793376975.7,1230,486634,198,8.0,32,measured,211,,"spike, chose wrong",20261030_052110_e81f3a17
+1793376998.7,1231,487108,409,19.0,65,measured,212,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793377028.7,1232,487782,647,33.0,27,measured,212,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793377042.9,1233,488152,309,14.0,61,measured,212,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377064.0,1234,488630,445,23.0,33,measured,212,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793377077.2,1235,488970,307,14.0,33,measured,212,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793377085.9,1236,489174,173,8.0,31,measured,212,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377103.7,1237,489620,420,19.0,26,measured,212,,"spike, chose wrong",20261030_052110_e81f3a17
+1793377117.5,1238,489888,213,8.0,55,measured,213,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793377168.9,1239,490976,1055,58.0,33,measured,213,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793377177.5,1240,491208,201,8.0,31,measured,213,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793377180.2,1241,491272,39,1.0,25,measured,213,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377190.5,1242,491548,243,10.0,33,measured,213,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377212.5,1243,492038,428,23.0,62,measured,213,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377230.3,1244,492474,408,19.0,28,measured,213,,"head hit, chose wrong",20261030_052110_e81f3a17
+1793377252.5,1245,492908,407,19.0,27,measured,214,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793377264.8,1246,493190,250,13.0,32,measured,214,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793377283.7,1247,493650,388,19.0,72,measured,214,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793377292.4,1248,493866,184,8.0,32,measured,214,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377305.8,1249,494202,303,14.0,33,measured,214,controller_eval_incumbent,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377319.0,1250,494502,268,14.0,32,measured,214,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793377321.7,1251,494574,45,1.0,27,measured,214,,"unknown, trapped",20261030_052110_e81f3a17
+1793377336.4,1252,494958,351,15.0,33,measured,214,,"spike, chose wrong",20261030_052110_e81f3a17
+1793377356.8,1253,495372,359,16.0,55,measured,215,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793377377.8,1254,495838,433,23.0,33,measured,215,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377380.5,1255,495908,44,1.0,26,measured,215,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793377383.1,1256,495974,36,1.0,30,measured,215,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793377386.5,1257,496068,49,1.0,45,measured,215,controller_eval_incumbent,"unknown, trapped (shield acted)",20261030_052110_e81f3a17
+1793377444.4,1258,497324,1224,66.0,32,measured,215,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793377450.1,1259,497474,118,5.0,32,measured,215,,"spike, trapped",20261030_052110_e81f3a17
+1793377465.7,1260,497806,271,12.0,61,measured,216,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377472.3,1261,497976,138,6.0,32,measured,216,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793377475.0,1262,498044,45,1.0,23,measured,216,controller_eval_incumbent,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377530.1,1263,499208,1132,63.0,32,measured,216,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793377548.0,1264,499638,397,19.0,33,measured,216,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377569.0,1265,500096,426,23.0,32,measured,216,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793377574.7,1266,500254,125,5.0,33,measured,216,,"spike, trapped",20261030_052110_e81f3a17
+1793377582.8,1267,500390,84,3.0,52,measured,217,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377588.5,1268,500532,111,5.0,31,measured,217,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793377603.5,1269,500926,362,16.0,32,measured,217,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377624.6,1270,501398,439,23.0,33,measured,217,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377639.6,1271,501786,356,16.0,32,measured,217,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377661.7,1272,502278,430,23.0,62,measured,217,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377675.5,1273,502638,328,14.0,32,measured,217,,"spike, trapped",20261030_052110_e81f3a17
+1793377688.6,1274,502882,212,8.0,32,measured,218,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793377709.6,1275,503358,419,22.0,57,measured,218,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793377723.9,1276,503728,337,15.0,33,measured,218,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377732.5,1277,503932,173,8.0,31,measured,218,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377738.1,1278,504092,129,5.0,31,measured,218,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793377758.4,1279,504548,423,22.0,33,measured,218,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377776.6,1280,505010,431,19.0,31,measured,218,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793377798.7,1281,505450,413,19.0,27,measured,219,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793377819.7,1282,505924,441,23.0,33,measured,219,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793377833.8,1283,506300,314,14.0,62,measured,219,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377842.5,1284,506510,179,8.0,31,measured,219,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793377860.4,1285,506958,415,19.0,33,measured,219,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377881.4,1286,507434,443,23.0,33,measured,219,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793377893.1,1287,507744,278,12.0,32,measured,219,,"spike, trapped",20261030_052110_e81f3a17
+1793377903.9,1288,507928,130,5.0,54,measured,220,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793377969.2,1289,509356,1404,75.0,24,measured,220,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793377988.1,1290,509812,396,19.0,60,measured,220,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793377996.8,1291,510024,179,8.0,33,measured,220,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793378014.5,1292,510468,414,19.0,30,measured,220,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793378061.9,1293,511458,959,54.0,31,measured,220,controller_eval_candidate,"head hit, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378079.8,1294,511892,403,19.0,31,measured,220,,"spike, chose wrong",20261030_052110_e81f3a17
+1793378097.5,1295,512236,312,14.0,32,measured,221,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793378140.5,1296,513144,876,48.0,32,measured,221,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793378158.2,1297,513578,407,19.0,27,measured,221,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793378179.3,1298,514034,424,23.0,32,measured,221,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793378198.1,1299,514516,426,19.0,56,measured,221,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793378219.2,1300,514970,422,23.0,32,measured,221,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793378234.2,1301,515362,360,16.0,32,measured,221,,"spike, trapped",20261030_052110_e81f3a17
+1793378252.0,1302,515712,318,14.0,32,measured,222,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793378254.6,1303,515776,41,1.0,23,measured,222,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378272.4,1304,516220,414,19.0,30,measured,222,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793378275.2,1305,516284,41,1.0,23,measured,222,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378293.0,1306,516718,401,19.0,33,measured,222,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793378296.3,1307,516802,43,1.0,41,measured,222,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378309.6,1308,517150,315,14.0,33,measured,222,,"spike, trapped",20261030_052110_e81f3a17
+1793378331.8,1309,517590,413,19.0,27,measured,223,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793378353.7,1310,518070,419,23.0,61,measured,223,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378371.6,1311,518520,423,19.0,27,measured,223,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793378380.1,1312,518718,166,8.0,32,measured,223,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378399.1,1313,519190,412,19.0,60,measured,223,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793378420.1,1314,519662,439,23.0,33,measured,223,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378435.5,1315,520040,345,16.0,33,measured,223,,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378454.1,1316,520410,310,14.0,60,measured,224,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793378503.9,1317,521452,1011,56.0,31,measured,224,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793378517.1,1318,521790,306,14.0,32,measured,224,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793378526.5,1319,522010,165,8.0,55,measured,224,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378535.2,1320,522240,199,8.0,31,measured,224,controller_eval_incumbent,"spike, blue line wrong",20261030_052110_e81f3a17
+1793378556.2,1321,522704,432,23.0,32,measured,224,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378562.0,1322,522860,123,5.0,33,measured,224,,"spike, trapped",20261030_052110_e81f3a17
+1793378583.0,1323,523308,421,19.0,27,measured,225,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793378613.7,1324,523998,646,33.0,44,measured,225,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793378631.5,1325,524428,401,19.0,29,measured,225,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793378651.7,1326,524882,423,22.0,31,measured,225,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793378667.0,1327,525264,351,16.0,31,measured,225,controller_eval_incumbent,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378688.1,1328,525728,434,23.0,30,measured,225,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378701.9,1329,526072,311,14.0,33,measured,225,,"spike, trapped",20261030_052110_e81f3a17
+1793378724.1,1330,526504,405,19.0,27,measured,226,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793378746.0,1331,526996,431,23.0,61,measured,226,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793378763.8,1332,527446,421,19.0,29,measured,226,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793378784.9,1333,527904,426,23.0,32,measured,226,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793378787.6,1334,527974,38,1.0,32,measured,226,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793378837.4,1335,529024,1018,56.0,32,measured,226,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793378840.1,1336,529096,46,1.0,26,measured,226,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793378856.0,1337,529510,358,16.0,56,measured,226,,"spike, trapped",20261030_052110_e81f3a17
+1793378878.1,1338,529954,414,19.0,30,measured,227,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793378884.7,1339,530110,124,6.0,32,measured,227,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793378903.6,1340,530584,409,19.0,65,measured,227,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793378912.3,1341,530788,172,8.0,32,measured,227,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793378930.2,1342,531222,407,19.0,27,measured,227,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793378932.8,1343,531282,43,1.0,17,measured,227,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793378943.2,1344,531552,238,10.0,32,measured,227,,"spike, trapped",20261030_052110_e81f3a17
+1793378965.5,1345,531988,403,19.0,33,measured,228,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793378977.9,1346,532264,243,13.0,33,measured,228,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793378995.6,1347,532702,410,19.0,28,measured,228,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793378999.0,1348,532786,34,1.0,50,measured,228,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793379016.7,1349,533226,410,19.0,30,measured,228,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793379074.2,1350,534440,1181,65.0,33,measured,228,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793379087.5,1351,534782,310,14.0,32,measured,228,,"spike, trapped",20261030_052110_e81f3a17
+1793379110.8,1352,535264,421,19.0,61,measured,229,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793379115.0,1353,535366,71,3.0,31,measured,229,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793379126.5,1354,535672,274,12.0,32,measured,229,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793379147.5,1355,536126,425,23.0,29,measured,229,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793379165.4,1356,536566,413,19.0,27,measured,229,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793379173.9,1357,536768,171,8.0,31,measured,229,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793379191.8,1358,537192,397,19.0,27,measured,229,,"spike, chose wrong",20261030_052110_e81f3a17
+1793379211.5,1359,537572,347,16.0,33,measured,230,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793379214.1,1360,537638,31,1.0,35,measured,230,controller_eval_candidate,"unknown, chose wrong",20261030_052110_e81f3a17
+1793379230.2,1361,538058,365,16.0,55,measured,230,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793379250.2,1362,538502,412,22.0,32,measured,230,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793379268.0,1363,538946,414,19.0,30,measured,230,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793379289.0,1364,539406,427,23.0,33,measured,230,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793379308.1,1365,539874,410,19.0,58,measured,230,,"spike, trapped",20261030_052110_e81f3a17
+1793379315.1,1366,539946,52,1.0,20,measured,231,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793379325.4,1367,540190,212,10.0,32,measured,231,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793379340.0,1368,540560,337,15.0,33,measured,231,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793379395.1,1369,541720,1128,63.0,32,measured,231,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793379397.7,1370,541788,45,1.0,23,measured,231,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793379441.3,1371,542712,874,48.0,50,measured,231,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793379459.2,1372,543140,400,19.0,28,measured,231,,"spike, chose wrong",20261030_052110_e81f3a17
+1793379481.2,1373,543586,417,19.0,29,measured,232,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793379528.7,1374,544602,983,54.0,33,measured,232,controller_eval_candidate,"block side, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793379532.1,1375,544694,39,1.0,53,measured,232,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793379534.7,1376,544758,34,1.0,30,measured,232,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793379552.6,1377,545210,425,19.0,27,measured,232,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793379566.1,1378,545530,253,13.0,67,measured,232,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793379583.9,1379,545972,416,19.0,26,measured,232,,"spike, chose wrong",20261030_052110_e81f3a17
+1793379607.2,1380,546452,420,19.0,60,measured,233,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793379615.8,1381,546662,178,8.0,32,measured,233,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793379633.6,1382,547092,404,19.0,26,measured,233,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793379663.6,1383,547744,626,33.0,26,measured,233,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793379678.8,1384,548132,356,16.0,32,measured,233,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793379733.9,1385,549334,1170,63.0,32,measured,233,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793379751.8,1386,549766,404,19.0,28,measured,233,,"spike, chose wrong",20261030_052110_e81f3a17
+1793379769.5,1387,550114,317,14.0,31,measured,234,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793379791.5,1388,550620,445,23.0,61,measured,234,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793379800.2,1389,550850,198,8.0,32,measured,234,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793379821.2,1390,551310,428,23.0,32,measured,234,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793379835.5,1391,551672,302,14.0,60,measured,234,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793379842.1,1392,551836,131,6.0,33,measured,234,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793379859.9,1393,552270,408,19.0,26,measured,234,,"spike, chose wrong",20261030_052110_e81f3a17
+1793379883.2,1394,552756,425,19.0,61,measured,235,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793379895.5,1395,553044,256,13.0,32,measured,235,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793379908.8,1396,553382,305,14.0,33,measured,235,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793379911.5,1397,553448,43,1.0,23,measured,235,controller_eval_candidate,"unknown, trapped (shield acted)",20261030_052110_e81f3a17
+1793379929.3,1398,553876,399,19.0,29,measured,235,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793379950.3,1399,554336,429,23.0,31,measured,235,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793379961.6,1400,554636,239,10.0,61,measured,235,,"spike, chose wrong",20261030_052110_e81f3a17
+1793379984.0,1401,555078,411,19.0,31,measured,236,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380004.3,1402,555526,415,22.0,33,measured,236,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793380013.7,1403,555778,196,8.0,56,measured,236,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380052.9,1404,556612,800,42.0,34,measured,236,controller_eval_candidate,"unknown, chose wrong",20261030_052110_e81f3a17
+1793380067.9,1405,556998,355,16.0,31,measured,236,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380089.0,1406,557474,420,22.0,56,measured,236,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793380106.9,1407,557902,397,19.0,31,measured,236,,"spike, chose wrong",20261030_052110_e81f3a17
+1793380130.2,1408,558384,423,19.0,59,measured,237,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380132.9,1409,558452,36,1.0,32,measured,237,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793380146.6,1410,558808,324,14.0,32,measured,237,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793380153.2,1411,558972,132,6.0,32,measured,237,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793380171.0,1412,559400,399,19.0,29,measured,237,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793380191.2,1413,559850,419,22.0,31,measured,237,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793380196.9,1414,560010,128,5.0,32,measured,237,,"spike, chose wrong",20261030_052110_e81f3a17
+1793380217.9,1415,560436,398,19.0,28,measured,238,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793380238.9,1416,560898,430,23.0,32,measured,238,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793380256.7,1417,561330,406,19.0,26,measured,238,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793380312.4,1418,562560,1179,63.0,51,measured,238,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793380330.5,1419,563016,426,19.0,30,measured,238,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380350.7,1420,563476,429,22.0,31,measured,238,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793380369.7,1421,563946,410,19.0,60,measured,238,,"spike, chose wrong",20261030_052110_e81f3a17
+1793380391.8,1422,564382,411,19.0,25,measured,239,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380413.8,1423,564878,435,23.0,61,measured,239,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793380431.6,1424,565316,406,19.0,32,measured,239,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380452.6,1425,565786,439,23.0,31,measured,239,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793380470.4,1426,566216,403,19.0,27,measured,239,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380482.8,1427,566506,258,13.0,32,measured,239,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793380501.8,1428,566984,416,19.0,62,measured,239,,"spike, chose wrong",20261030_052110_e81f3a17
+1793380514.7,1429,567224,209,8.0,31,measured,240,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793380534.7,1430,567668,411,22.0,33,measured,240,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793380552.5,1431,568096,400,19.0,28,measured,240,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793380572.7,1432,568542,415,22.0,31,measured,240,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793380590.6,1433,568992,418,19.0,32,measured,240,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793380611.6,1434,569452,428,23.0,32,measured,240,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793380629.4,1435,569898,419,19.0,27,measured,240,,"spike, chose wrong",20261030_052110_e81f3a17
+1793380652.8,1436,570370,410,19.0,62,measured,241,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380655.4,1437,570436,37,1.0,29,measured,241,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793380665.7,1438,570714,247,10.0,31,measured,241,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793380674.4,1439,570920,173,8.0,33,measured,241,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793380692.2,1440,571352,405,19.0,27,measured,241,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793380700.8,1441,571554,170,8.0,32,measured,241,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793380718.7,1442,572004,418,19.0,32,measured,241,,"spike, trapped",20261030_052110_e81f3a17
+1793380740.9,1443,572438,406,19.0,28,measured,242,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793380744.1,1444,572518,43,1.0,37,measured,242,controller_eval_candidate,"unknown, chose wrong",20261030_052110_e81f3a17
+1793380759.4,1445,572916,359,16.0,39,measured,242,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793380780.5,1446,573400,427,22.0,57,measured,242,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793380789.2,1447,573628,197,8.0,31,measured,242,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380809.2,1448,574070,410,22.0,32,measured,242,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793380828.1,1449,574540,404,19.0,66,measured,242,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793380835.2,1450,574616,43,1.0,33,measured,243,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380855.4,1451,575070,422,22.0,32,measured,243,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793380873.3,1452,575514,418,19.0,26,measured,243,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793380916.2,1453,576432,885,48.0,33,measured,243,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793380921.9,1454,576590,125,5.0,33,measured,243,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793380964.8,1455,577512,891,48.0,31,measured,243,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793380982.8,1456,577964,420,19.0,32,measured,243,,"spike, chose wrong",20261030_052110_e81f3a17
+1793381005.0,1457,578402,411,19.0,27,measured,244,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793381025.2,1458,578858,425,22.0,31,measured,244,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793381034.6,1459,579114,201,8.0,55,measured,244,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793381077.6,1460,580028,881,48.0,33,measured,244,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793381096.6,1461,580502,408,19.0,66,measured,244,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793381103.2,1462,580664,129,6.0,33,measured,244,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793381121.2,1463,581118,421,19.0,33,measured,244,,"spike, chose wrong",20261030_052110_e81f3a17
+1793381140.8,1464,581516,366,16.0,32,measured,245,controller_eval_incumbent,"block side, chose wrong",20261030_052110_e81f3a17
+1793381154.1,1465,581810,262,14.0,32,measured,245,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793381162.7,1466,582044,202,8.0,32,measured,245,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793381165.4,1467,582108,40,1.0,24,measured,245,controller_eval_candidate,"unknown, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793381183.3,1468,582554,419,19.0,27,measured,245,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793381203.4,1469,583008,423,22.0,31,measured,245,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793381218.5,1470,583402,361,16.0,33,measured,245,,"spike, trapped",20261030_052110_e81f3a17
+1793381240.7,1471,583856,422,19.0,32,measured,246,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793381261.8,1472,584336,423,22.0,57,measured,246,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793381264.5,1473,584408,41,1.0,31,measured,246,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793381285.6,1474,584866,425,23.0,33,measured,246,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793381289.7,1475,584982,83,3.0,33,measured,246,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793381333.2,1476,585932,900,48.0,50,measured,246,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793381351.1,1477,586388,428,19.0,28,measured,246,,"unknown, chose wrong",20261030_052110_e81f3a17
+1793381374.3,1478,586862,415,19.0,59,measured,247,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793381412.9,1479,587670,786,42.0,22,measured,247,controller_eval_candidate,"unknown, chose wrong",20261030_052110_e81f3a17
+1793381428.9,1480,588092,367,16.0,55,measured,247,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793381448.9,1481,588546,419,22.0,35,measured,247,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793381463.6,1482,588924,317,14.0,61,measured,247,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793381484.7,1483,589384,427,23.0,33,measured,247,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793381502.5,1484,589812,399,19.0,29,measured,247,,"head hit, trapped",20261030_052110_e81f3a17
+1793381524.7,1485,590254,411,19.0,31,measured,248,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793381546.6,1486,590754,439,23.0,61,measured,248,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793381564.5,1487,591206,424,19.0,28,measured,248,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793381567.1,1488,591268,34,1.0,28,measured,248,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793381586.0,1489,591730,403,19.0,59,measured,248,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793381588.7,1490,591794,34,1.0,30,measured,248,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793381606.6,1491,592226,402,19.0,30,measured,248,,"head hit, chose wrong",20261030_052110_e81f3a17
+1793381628.7,1492,592666,411,19.0,29,measured,249,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793381640.5,1493,592944,215,11.0,63,measured,249,controller_eval_candidate,"spike, chose wrong",20261030_052110_e81f3a17
+1793381650.9,1494,593222,245,10.0,33,measured,249,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793381690.9,1495,594056,814,45.0,20,measured,249,controller_eval_candidate,"unknown, trapped (shield acted)",20261030_052110_e81f3a17
+1793381708.6,1496,594500,414,19.0,30,measured,249,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793381712.0,1497,594580,36,1.0,44,measured,249,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793381729.8,1498,595016,410,19.0,26,measured,249,,"spike, chose wrong",20261030_052110_e81f3a17
+1793381753.1,1499,595480,405,19.0,59,measured,250,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793381774.1,1500,595932,419,23.0,33,measured,250,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793381792.2,1501,596380,416,19.0,32,measured,250,controller_eval_incumbent,"head hit, chose wrong",20261030_052110_e81f3a17
+1793381794.9,1502,596442,32,1.0,30,measured,250,controller_eval_candidate,"spike, blue line wrong (shield acted)",20261030_052110_e81f3a17
+1793381803.5,1503,596674,199,8.0,33,measured,250,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793381857.8,1504,597842,1137,62.0,31,measured,250,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793381869.4,1505,598150,277,12.0,31,measured,250,,"spike, trapped",20261030_052110_e81f3a17
+1793381889.2,1506,598544,361,16.0,33,measured,251,controller_eval_incumbent,"block side, chose wrong",20261030_052110_e81f3a17
+1793381925.0,1507,599308,729,39.0,35,measured,251,controller_eval_candidate,"head hit, trapped",20261030_052110_e81f3a17
+1793381942.7,1508,599742,407,19.0,27,measured,251,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793381993.0,1509,600818,1028,56.0,48,measured,251,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793382003.3,1510,601090,241,10.0,31,measured,251,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793382023.7,1511,601538,415,22.0,33,measured,251,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793382041.5,1512,601974,410,19.0,26,measured,251,,"spike, chose wrong",20261030_052110_e81f3a17
+1793382063.6,1513,602424,423,19.0,27,measured,252,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793382084.6,1514,602886,429,23.0,33,measured,252,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793382103.5,1515,603346,401,19.0,59,measured,252,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793382124.5,1516,603800,422,23.0,32,measured,252,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793382133.1,1517,604032,201,8.0,31,measured,252,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793382152.8,1518,604468,378,20.0,58,measured,252,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793382170.7,1519,604892,397,19.0,27,measured,252,,"spike, chose wrong",20261030_052110_e81f3a17
+1793382190.0,1520,605280,356,16.0,32,measured,253,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793382258.7,1521,606672,1343,78.0,49,measured,253,controller_eval_candidate,"unknown, chose wrong",20261030_052110_e81f3a17
+1793382261.4,1522,606732,29,1.0,31,measured,253,controller_eval_incumbent,"unknown, chose wrong",20261030_052110_e81f3a17
+1793382307.0,1523,607532,767,51.0,33,measured,253,controller_eval_candidate,"head hit, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793382316.5,1524,607748,160,8.0,56,measured,253,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793382336.7,1525,608118,338,22.0,32,measured,253,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793382350.1,1526,608398,248,14.0,32,measured,253,,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793382370.1,1527,608740,312,16.0,30,measured,254,controller_eval_incumbent,"block side, chose wrong",20261030_052110_e81f3a17
+1793382372.7,1528,608790,29,1.0,21,measured,254,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793382402.8,1529,609364,549,33.0,25,measured,254,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793382432.9,1530,609876,486,33.0,26,measured,254,controller_eval_candidate,"unknown, trapped",20261030_052110_e81f3a17
+1793382450.7,1531,610222,316,19.0,30,measured,254,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793382472.7,1532,610608,328,23.0,58,measured,254,controller_eval_candidate,"spike, chose wrong (shield acted)",20261030_052110_e81f3a17
+1793382490.7,1533,610958,320,19.0,30,measured,254,,"spike, chose wrong",20261030_052110_e81f3a17
+1793382513.1,1534,611314,324,19.0,32,measured,255,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793382516.4,1535,611374,24,1.0,36,measured,255,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793382534.3,1536,611726,324,19.0,28,measured,255,controller_eval_incumbent,"unknown, trapped",20261030_052110_e81f3a17
+1793382537.0,1537,611774,22,1.0,26,measured,255,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793382550.9,1538,611824,25,1.0,25,measured,255,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793382565.1,1539,612108,224,14.0,60,measured,255,controller_eval_candidate,"spike, trapped",20261030_052110_e81f3a17
+1793382575.5,1540,612328,188,10.0,32,measured,255,,"spike, trapped",20261030_052110_e81f3a17
+1793382590.7,1541,612562,204,11.0,30,measured,256,controller_eval_incumbent,"spike, chose wrong",20261030_052110_e81f3a17
+1793382599.3,1542,612728,135,8.0,31,measured,256,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793382642.3,1543,613518,758,48.0,32,measured,256,controller_eval_incumbent,"spike, trapped",20261030_052110_e81f3a17
+1793382653.4,1544,613730,153,10.0,59,measured,256,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793382671.3,1545,614080,318,19.0,32,measured,256,controller_eval_incumbent,"head hit, trapped",20261030_052110_e81f3a17
+1793382675.5,1546,614154,51,3.0,23,measured,256,controller_eval_candidate,"spike, trapped (shield acted)",20261030_052110_e81f3a17
+1793382694.2,1547,614510,325,20.0,31,measured,256,,"spike, chose wrong",20261030_052110_e81f3a17

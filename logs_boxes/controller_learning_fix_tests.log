@@ -1,0 +1,43 @@
+[controller] imported legacy encoder; new route inputs, mode heads and motion model train separately
+[controller data] measured-velocity migration: kept 1, excluded 2 inconsistent examples; source is backed up before overwrite
+[controller] old one-action evaluation cancelled; collecting balanced action supervision before live comparison
+[session] C:\Users\mysou\AppData\Local\Temp\tmpa2nmh7t2\sessions\20261030_125620_beacbe71
+saved C:\Users\mysou\AppData\Local\Temp\tmpa2nmh7t2\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmp2y21519e\sessions\20261030_125620_7b74c506
+LEVEL COMPLETE: experience/candidate saved to C:\Users\mysou\AppData\Local\Temp\tmp2y21519e\route_controller.pt; controller promotion still requires validation.
+saved C:\Users\mysou\AppData\Local\Temp\tmp2y21519e\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmp1epvzpm8\sessions\20261030_125620_fe2aba18
+LEVEL COMPLETE during controller evaluation: progress saved; restart the same level and resume the controller to finish comparison.
+saved C:\Users\mysou\AppData\Local\Temp\tmp1epvzpm8\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmpuq2tusvh\sessions\20261030_125620_b8f0c353
+saved C:\Users\mysou\AppData\Local\Temp\tmpuq2tusvh\route_controller.pt
+[input] in a level: inputs on
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpahn8g_r8\sessions\20261030_125622_d9ba5771
+[session] detector fingerprint unavailable: OSError: test read failure; continuing
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpahn8g_r8\sessions\20261030_125622_1d5d81ef
+[input] Geometry Dash was NOT the active window -- SPACE was going to another window. Brought GD back to the front.
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpywj0sxmq\sessions\20261030_125622_442b7d47
+[yolo] TensorRT engine on the GPU (NVIDIA GeForce RTX 5070 Ti)
+[yolo] model.pt on the CPU -- slow!
+...........................................................................................................................
+[yolo] D:\Coding Projects\Meta 2026 Hackathon\tmppfkwd9x0\model.engine is older than D:\Coding Projects\Meta 2026 Hackathon\tmppfkwd9x0\model.pt (retrained since): using the .pt -- re-run --export
+[yolo] model.pt on the GPU (NVIDIA GeForce RTX 5070 Ti)
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpuuu7h6tb\sessions\20261030_125623_b5af319e
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpdquygju0\sessions\20261030_125623_79286d75
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpvkgiosza\sessions\20261030_125623_bfaa4a17
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpu5ui7ies\sessions\20261030_125623_a1e4d1a7
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpkqq_91xy\sessions\20261030_125623_5cbe3138
+saved D:\Coding Projects\Meta 2026 Hackathon\tmpkqq_91xy\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpa34ipax0\sessions\20261030_125623_a4ac6f5b
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpex7g1q3d\sessions\20261030_125623_678a6412
+saved D:\Coding Projects\Meta 2026 Hackathon\tmpex7g1q3d\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpv9mevyiy\sessions\20261030_125623_eb6975a2
+saved D:\Coding Projects\Meta 2026 Hackathon\tmpv9mevyiy\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmphc105qeq\sessions\20261030_125623_9045a36d
+saved D:\Coding Projects\Meta 2026 Hackathon\tmphc105qeq\preview_boxes.pt
+[session] D:\Coding Projects\Meta 2026 Hackathon\tmpkvt9c2se\sessions\20261030_125623_94cf4872
+----------------------------------------------------------------------
+--play: the brain wasn't changed (nothing saved); the route memory is in ./routes
+Ran 123 tests in 5.220s
+
+OK

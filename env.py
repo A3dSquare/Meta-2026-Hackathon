@@ -106,6 +106,7 @@ class GymGDEnv(gym.Env):
         self._owns_inp = inp is None
         self._steps = 0
         self._paused = False
+        self.profile = None
 
     # ------------------------------------------------------------------ #
     def _ensure_started(self) -> None:
@@ -133,9 +134,15 @@ class GymGDEnv(gym.Env):
             self.reward.suspend()
             self.reward.step(obs)
             return (_stacked_to_hwc(obs), 0.0, False, False,
-                    {"paused": True, "attempts": self.reward.attempts})
+                    {"paused": True, "attempts": self.reward.attempts,
+                     "action_applied": 0, "input_health": self.inp.health})
+        import time
+        t_capture = time.perf_counter()
         obs = self.cap.read()  # hard 60Hz lock lives here
+        if self.profile is not None:
+            self.profile.add('capture_main',time.perf_counter()-t_capture)
         self.inp.step(action)  # strict Discrete(2) -> SPACE, change-only
+        t_percent = time.perf_counter()
         if self.cfg.pct_hook is not None:
             full = getattr(self.cap, "last_fullres", None)
             pct = self.cfg.pct_hook(full)
@@ -143,6 +150,8 @@ class GymGDEnv(gym.Env):
             pct = self.pct.tick(getattr(self.cap, "last_fullres", None))
         else:
             pct = None
+        if self.profile is not None:
+            self.profile.add('percent_read',time.perf_counter()-t_percent)
         done_flag = self.cfg.complete_hook(obs) if self.cfg.complete_hook else False
         from gd import action_to_hold
         try:
@@ -154,7 +163,10 @@ class GymGDEnv(gym.Env):
             self._pending_edge = None
         except Exception:
             pass
+        t_reward = time.perf_counter()
         r, done, info = self.reward.step(obs, pct=pct, completed=bool(done_flag), held=_held, spike_edge=_edge)
+        if self.profile is not None:
+            self.profile.add('reward_check',time.perf_counter()-t_reward)
         if isinstance(pct, tuple) and len(pct) == 3:    # how long since the % was last read (ticks)
             info = dict(info, pct_age=int(pct[2]))
         self._steps += 1
@@ -165,6 +177,7 @@ class GymGDEnv(gym.Env):
             "attempts": self.reward.attempts,
             "best_fill": self.reward.best_fill,
             "total": self.reward.total,
+            "action_applied": int(bool(action_to_hold(action))), "input_health": self.inp.health,
         })
         return _stacked_to_hwc(obs), float(r), terminated, truncated, info
 
