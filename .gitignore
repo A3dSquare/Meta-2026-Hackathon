@@ -3,10 +3,8 @@
 # Everything below is regenerated or machine-local and must NOT be committed.
 
 # --- model weights / checkpoints (large binaries, regenerated every run) ---
-checkpoints/
+checkpoints/*
 *.zip
-digit_cnn.pt
-yolo_gd.pt
 best*.pt
 *.onnx
 
@@ -74,3 +72,10 @@ _to_delete/
 tmp*/
 *.engine
 yolo_gd_prev.pt
+
+# --- needed to run it: the brain + physics, the detector, the % reader and the routes ---
+!checkpoints/manual_v21/
+checkpoints/manual_v21/*
+!checkpoints/manual_v21/route_controller.pt
+!checkpoints/manual_v21/motion_model.npz
+!routes/*/frames.npz
