@@ -182,12 +182,16 @@ class BalancedReplay:
     def __len__(self):return sum(map(len,self.buckets.values()))
 
     def add(self,row):
-        key=(int(row['mode']),bool(row['success']))
+        key=(('human',int(row['mode']),int(row['teacher'] if row['teacher']>=0 else row['action']))
+             if row.get('source')=='human' else (int(row['mode']),bool(row['success'])))
+        # Additional bounded reserves protect manual inputs from a long history
+        # of automatic play, and protect rare presses from common releases.
+        quota=max(1,self.quota//2) if key[0]=='human' else self.quota
         self.seen[key]+=1;bucket=self.buckets[key]
-        if len(bucket)<self.quota:bucket.append(row)
+        if len(bucket)<quota:bucket.append(row)
         else:
             i=int(self.rng.integers(self.seen[key]))
-            if i<self.quota:bucket[i]=row
+            if i<quota:bucket[i]=row
 
     def sample(self,n):
         keys=[k for k,b in self.buckets.items() if b]
@@ -203,8 +207,23 @@ class BalancedReplay:
 
     def rows(self):return [r for b in self.buckets.values() for r in b]
 
-    def state(self):return dict(quota=self.quota,buckets=dict(self.buckets),seen=dict(self.seen),rng=self.rng.bit_generator.state)
+    def state(self):return dict(version=2,quota=self.quota,buckets=dict(self.buckets),seen=dict(self.seen),rng=self.rng.bit_generator.state)
 
     def load(self,state):
         self.quota=state['quota'];self.buckets=defaultdict(list,state['buckets']);self.seen=defaultdict(int,state['seen'])
         self.rng.bit_generator.state=state['rng']
+        if state.get('version',1)<2:
+            # Older discarded demonstrations cannot be reconstructed here;
+            # --refresh-demonstrations replays the originals into these reserves.
+            human=[]
+            for key,bucket in list(self.buckets.items()):
+                human.extend(r for r in bucket if r.get('source')=='human')
+                self.buckets[key]=[r for r in bucket if r.get('source')!='human']
+            for row in human:self.add(row)
+
+    def clear_human(self):
+        """Rebuild demonstrations without duplicating existing human samples."""
+        for key,bucket in list(self.buckets.items()):
+            if key[0]=='human':
+                del self.buckets[key];self.seen.pop(key,None)
+            else:self.buckets[key]=[r for r in bucket if r.get('source')!='human']

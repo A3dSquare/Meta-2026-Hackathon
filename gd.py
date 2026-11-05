@@ -137,6 +137,7 @@ class GDInput:
         self._steps: int = 0  # set()/step() calls
         self._closed: bool = False
         self._resends = 0
+        self.last_send_t = None  # perf_counter() of the last keyDown/keyUp syscall
         self._state_reader = state_reader
         # Fake backends must supply their own state reader.
         if state_reader is None and backend is None and key == 'space' and getattr(pydirectinput, '__file__', None):
@@ -198,6 +199,8 @@ class GDInput:
         else:
             self._backend.keyUp(self.key)
             self._ups += 1
+        import time as _time
+        self.last_send_t = _time.perf_counter()
         self._held = want
         self._changes += 1
         return True

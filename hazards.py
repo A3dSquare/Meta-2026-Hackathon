@@ -38,6 +38,11 @@ import time
 
 import numpy as np
 
+try:
+    import cv2 as _CV2
+except Exception:
+    _CV2 = None
+
 BLOCK_FRAC_H = 30.0 / 320.0            # one block as a fraction of the frame height
 FRAME_W, FRAME_H = 640, 360            # pictures are kept at this frame size
 MATCH = 0.78                           # similarity needed for a match (0..1)
@@ -47,7 +52,7 @@ MAX_HITS = 6                           # more matches than this in one frame = b
 
 
 def _gray(bgr):
-    import cv2
+    cv2 = _CV2 if _CV2 is not None else __import__("cv2")
     g = cv2.cvtColor(np.ascontiguousarray(bgr[:, :, :3]), cv2.COLOR_BGR2GRAY)
     return cv2.GaussianBlur(g, (3, 3), 0)
 
@@ -76,7 +81,7 @@ class HazardMemory:
     # -- pictures ------------------------------------------------------------
     def reload(self) -> None:
         """(Re)read the picture folders (cheap; done every ~10 s so deleting a file works live)."""
-        import cv2
+        cv2 = _CV2 if _CV2 is not None else __import__("cv2")
         out = []
         dirs = [("hazard", self.root)] + ([("learned", os.path.join(self.root, "learned"))] if self.LEARN else [])
         for kind, d in dirs + [("safe", os.path.join(self.root, "safe"))]:
@@ -133,7 +138,7 @@ class HazardMemory:
         return ents
 
     def _match(self, hires_bgr, ents) -> list:
-        import cv2
+        cv2 = _CV2 if _CV2 is not None else __import__("cv2")
         img = np.asarray(hires_bgr)
         H, W = img.shape[:2]
         px = ents.player_pos()[0]

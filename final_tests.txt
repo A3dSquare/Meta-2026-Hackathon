@@ -1,0 +1,85 @@
+...............................F...................................................................[input] in a level: inputs on
+[session] d:\Coding Projects\Meta 2026 Hackathon\tmpv3reeb4d\sessions\20261102_025424_beb6221a
+[session] detector fingerprint unavailable: OSError: test read failure; continuing
+[session] d:\Coding Projects\Meta 2026 Hackathon\tmpv3reeb4d\sessions\20261102_025424_4ca1ce2a
+[input] Geometry Dash was NOT the active window -- SPACE was going to another window. Brought GD back to the front.
+[session] d:\Coding Projects\Meta 2026 Hackathon\tmp4ctc45py\sessions\20261102_025424_b9749a7d
+[yolo] TensorRT engine on the GPU (NVIDIA GeForce RTX 5070 Ti)
+[controller] imported legacy encoder; new route inputs, mode heads and motion model train separately
+[controller data] analytical velocity inputs aligned with measured targets; old live trial requires revalidation
+[controller data] motion mask v3: legacy replay rows retained; re-evaluation required before trial
+[controller data] measured-velocity migration: kept 1, excluded 2 inconsistent examples; source is backed up before overwrite
+[controller] evaluation requires witnessed hold/release labels; old trial cancelled for revalidation
+[controller] live updates save to C:\Users\mysou\AppData\Local\Temp\tmp_slyglxe\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmp_slyglxe\sessions\20261102_025431_6d52fe83
+saved C:\Users\mysou\AppData\Local\Temp\tmp_slyglxe\route_controller.pt
+[controller] live updates save to C:\Users\mysou\AppData\Local\Temp\tmp1b7eq7t6\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmp1b7eq7t6\sessions\20261102_025431_64b927d5
+LEVEL COMPLETE: experience/candidate saved to C:\Users\mysou\AppData\Local\Temp\tmp1b7eq7t6\route_controller.pt; controller promotion still requires validation.
+saved C:\Users\mysou\AppData\Local\Temp\tmp1b7eq7t6\route_controller.pt
+[controller] live updates save to C:\Users\mysou\AppData\Local\Temp\tmpefvmqh9d\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmpefvmqh9d\sessions\20261102_025431_8cf41092
+LEVEL COMPLETE during controller evaluation: progress saved; restart the same level and resume the controller to finish comparison.
+saved C:\Users\mysou\AppData\Local\Temp\tmpefvmqh9d\route_controller.pt
+[controller] live updates save to C:\Users\mysou\AppData\Local\Temp\tmpxhvvkgzh\route_controller.pt
+[session] C:\Users\mysou\AppData\Local\Temp\tmpxhvvkgzh\sessions\20261102_025431_d879a3e6
+saved C:\Users\mysou\AppData\Local\Temp\tmpxhvvkgzh\route_controller.pt
+Skipping fixture_tail/7: fewer than 30 recorded frames
+Observing demonstration 1/7 (training, 40 frames)
+Observing demonstration 2/7 (training, 40 frames)
+Observing demonstration 3/7 (training, 40 frames)
+Observing demonstration 4/7 (training, 40 frames)
+Observing demonstration 5/7 (validation, 40 frames)
+Observing demonstration 6/7 (training, 40 frames)
+Skipping fixture_tail/5: too few reliable observations (minimum 20); 0/40 reliable frames; {'mode uncertain': 40}
+Observing demonstration 7/7 (training, 40 frames)
+Skipping fixture_tail/6: no continuous valid segment (minimum 8 frames); 30/40 reliable frames; {'mode uncertain': 10}
+Training 1/1: {'loss': 4.047490051947534, 'motion_loss': 3.363644883967936, 'grad_steps': 128, 'value_loss': 0.01653339120957753, 'policy_loss': 0.6588329970836639, 'teacher_draws': 16384, 'buffer': 32, 'validation': 16, 'coaching_draws': {'cube/human/1': 8114, 'cube/human/0': 8270}, 'eps': 0.15, 'promoted': False, 'promotions': 0}
+Saved candidate and planner calibration: C:\Users\mysou\AppData\Local\Temp\tmphqy5zboo\trained
+Accepted planner parameters: none (existing physics retained)
+Run: python preview_boxes.py --backend yolo-only --route-controller --no-route --clearance-reward --model "C:\Users\mysou\AppData\Local\Temp\tmphqy5zboo\trained\route_controller.pt" --motion-model "C:\Users\mysou\AppData\Local\Temp\tmphqy5zboo\trained\motion_model.npz"
+Skipping fixture_tail/7: fewer than 30 recorded frames
+Observing demonstration 1/7 (training, 40 frames)
+Observing demonstration 2/7 (training, 40 frames)
+Observing demonstration 3/7 (training, 40 frames)
+Observing demonstration 4/7 (training, 40 frames)
+Observing demonstration 5/7 (validation, 40 frames)
+Observing demonstration 6/7 (training, 40 frames)
+Skipping fixture_tail/5: too few reliable observations (minimum 20); 0/40 reliable frames; {'mode uncertain': 40}
+Observing demonstration 7/7 (training, 40 frames)
+Skipping fixture_tail/6: no continuous valid segment (minimum 8 frames); 30/40 reliable frames; {'mode uncertain': 10}
+Training 1/1: {'loss': 0.47239172260742635, 'motion_loss': 0.10777258846871973, 'grad_steps': 128, 'value_loss': 0.005129509649123065, 'policy_loss': 0.3581002572318539, 'teacher_draws': 16384, 'buffer': 32, 'validation': 16, 'coaching_draws': {'cube/human/0': 8129, 'cube/human/1': 8255}, 'eps': 0.15, 'promoted': False, 'promotions': 0}
+Saved candidate and planner calibration: C:\Users\mysou\AppData\Local\Temp\tmphqy5zboo\refreshed
+Accepted planner parameters: none (existing physics retained)
+Run: python preview_boxes.py --backend yolo-only --route-controller --no-route --clearance-reward --model "C:\Users\mysou\AppData\Local\Temp\tmphqy5zboo\refreshed\route_controller.pt" --motion-model "C:\Users\mysou\AppData\Local\Temp\tmphqy5zboo\refreshed\motion_model.npz"
+Skipping fixture_tail/7: fewer than 30 recorded frames
+Observing demonstration 1/7 (training, 40 frames)
+Observing demonstration 2/7 (training, 40 frames)
+Observing demonstration 3/7 (training, 40 frames)
+Observing demonstration 4/7 (training, 40 frames)
+Observing demonstration 5/7 (validation, 40 frames)
+Skipping fixture/4: too few reliable observations (minimum 20); 0/40 reliable frames; {}
+Observing demonstration 6/7 (training, 40 frames)
+Skipping fixture_tail/5: too few reliable observations (minimum 20); 0/40 reliable frames; {'mode uncertain': 40}
+Observing demonstration 7/7 (training, 40 frames)
+Skipping fixture_tail/6: no continuous valid segment (minimum 8 frames); 30/40 reliable frames; {'mode uncertain': 10}
+..................
+======================================================================
+FAIL: test_yolo_selects_current_engine_but_not_stale_engine (test_training_diagnostics.DiagnosticsTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "d:\Coding Projects\Meta 2026 Hackathon\test_training_diagnostics.py", line 149, in test_yolo_selects_current_engine_but_not_stale_engine
+    self.assertEqual(YoloDetector(str(weights)).loaded_path, str(engine.resolve()))
+AssertionError: 'd:\\Coding Projects\\Meta 2026 Hackathon\\tmp9uz1dvr2\\model.engine' != 'D:\\Coding Projects\\Meta 2026 Hackathon\\tmp9uz1dvr2\\model.engine'
+- d:\Coding Projects\Meta 2026 Hackathon\tmp9uz1dvr2\model.engine
+? ^
++ D:\Coding Projects\Meta 2026 Hackathon\tmp9uz1dvr2\model.engine
+? ^
+
+
+----------------------------------------------------------------------
+Ran 117 tests in 14.563s
+
+FAILED (failures=1)
+[controller] separated imitation policy from reward values; weights and existing optimizer history preserved
+[controller] evaluation requires witnessed hold/release labels; old trial cancelled for revalidation

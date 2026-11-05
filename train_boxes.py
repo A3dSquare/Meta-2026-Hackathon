@@ -19,7 +19,7 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--model", default=None, help="checkpoint to resume (.pt for dqn, .zip for ppo)")
     p.add_argument("--algo", default="dqn", choices=("dqn", "ppo"))
     p.add_argument("--steps", "--timesteps", dest="steps", type=int, default=3_000_000)
-    p.add_argument("--device", default="cpu", choices=("cpu", "cuda", "auto"))
+    p.add_argument("--device", default="auto", choices=("cpu", "cuda", "auto"))
     p.add_argument("--frame-skip", type=int, default=2,
                    help="game frames per decision (2 = 30 decisions/s)")
     p.add_argument("--no-hires", action="store_true",
@@ -70,9 +70,46 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                         "this level to ~3 s before its furthest point and the brain plays and LEARNS "
                         "from there (the replayed part isn't learned from); the other attempts are "
                         "normal training from the start")
+    p.add_argument("--trust-replay", action="store_true",
+                   help="--landmarks: while the landmarks are locked, replay the remembered presses exactly "
+                        "(the safety shield doesn't edit them). Use with a route built from YOUR run "
+                        "(import_human_route.py)")
+    p.add_argument("--no-frontier-explore", action="store_true",
+                   help="--play: don't vary the brain's moves near the end of the best run (it then "
+                        "repeats the same moves there every attempt)")
+    p.add_argument("--ghost", action="store_true",
+                   help="--landmarks: follow the remembered PATH (the icon's height along the level) in cube "
+                        "sections instead of replaying the remembered presses; learns per stretch from deaths "
+                        "(timing shifts, or back to the press replay where it keeps dying). Other modes replay")
+    p.add_argument("--guide", nargs="?", type=float, const=8.0, default=None, metavar="MARGIN",
+                   help="--landmarks: the brain plays and the remembered route guides it -- where they "
+                        "disagree the brain wins when it clearly prefers its choice (Q difference >= MARGIN, "
+                        "default 8), else the route. The safety shield checks both as usual")
+    p.add_argument("--trust-replay-ab", action="store_true",
+                   help="test --trust-replay fairly: every other attempt trusts the replay, the others "
+                        "keep the shield on it (logged per attempt in route_timing.jsonl)")
+    p.add_argument("--no-early-press", action="store_true",
+                   help="shield: don't press a step early when waiting only works by pressing at the "
+                        "very next step. That rule covers a planner that thinks presses land sooner than "
+                        "they do; with --ms-delay the timing is measured, and at tight gaps (a triple "
+                        "spike under hanging spikes) it jumped a decision too early")
+    p.add_argument("--no-death-pause", action="store_true",
+                   help="don't ESC-pause the game after each death while the bot saves its logs, "
+                        "route memory and checkpoints (that work then lags the next attempt's start)")
+    p.add_argument("--strict-offline-gate", action="store_true",
+                   help="route controller: the old promotion gate (a candidate must also match the "
+                        "held-out human labels and TD error). Default: it only has to be no less safe "
+                        "and predict motion no worse, then the live A/B comparison on the level decides")
     p.add_argument("--no-route", action="store_true",
                    help="turn off the route memory (per-level practice of spots it keeps dying at, routes/)")
     p.add_argument("--routes", default="routes", help="folder the route memory keeps its levels in")
+    p.add_argument("--level", default=None,
+                   help="route folder to use (e.g. level_20261103_172553) instead of recognising the level "
+                        "from its first frames -- recognition can miss and start a new, empty route")
+    p.add_argument("--landmarks", action="store_true",
+                   help="replay the best run's presses by WHERE the level is (spikes / blocks ahead) instead of "
+                        "the clock; needs the route memory (not --no-route). Planner shield still vetoes. "
+                        "Saved to <routes>/<level>/landmarks.json")
     p.add_argument("--fast-steps", action="store_true",
                    help="decide as soon as 2 game frames have passed even if processing ran long "
                         "(more decisions/s, but their length varies; off = the tested behaviour)")
@@ -81,6 +118,8 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
                         "(keeps the newest N; 0 = off)")
     p.add_argument("--no-shield", action="store_true",
                    help="don't let the physics preview veto actions it predicts will crash")
+    p.add_argument("--shield", action="store_true",
+                   help="force the physics shield ON (overrides evidence-based auto-off for trusted modes)")
     p.add_argument("--motion-fix", action="store_true",
                    help="also use the learned physics correction (experimental; off by default)")
     p.add_argument("--hazards", default="hazards",
@@ -96,6 +135,10 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
 
 def build(args):
     """Capture + % reader + GymGDEnv + EntityBoxEnv + Trainer config."""
+    if str(args.motion_model).lower() != 'none' and not os.path.isfile(args.motion_model):
+        raise ValueError(f'Physics calibration not found: {args.motion_model}. '
+                         'Pass --motion-model with your existing motion_model.npz. '
+                         'Use --motion-model none only to deliberately run without saved calibration.')
     from capture import CaptureConfig, GDCapture
     from env import EnvConfig, GymGDEnv
     from env_boxes import EntityBoxEnv
@@ -124,7 +167,10 @@ def build(args):
     base.settle_s = float(args.settle)
     lag = None if str(args.death_lag).lower() == "auto" else float(args.death_lag)
     from detect import make_detector
-    det = make_detector(args.backend, icon_hue=tuple(args.icon_hue))
+    # Brain device only: YOLO keeps its own auto (GPU/TensorRT engine) path so an
+    # explicit --device cpu never forces the detector onto the CPU.
+    det = make_detector(args.backend, icon_hue=tuple(args.icon_hue),
+                        device=(dev if str(dev) == "cuda" else None))
     env = EntityBoxEnv(base, backend=args.backend, detector=det, frame_skip=args.frame_skip,
                        hires=not args.no_hires, death_lag_s=lag,
                        motion_path=None if str(args.motion_model).lower() == "none" else args.motion_model,
@@ -138,6 +184,31 @@ def build(args):
         env.hazmem = HazardMemory(args.hazards)
         if env.hazmem.active:
             print(f"[hazards] {len(env.hazmem.templates)} object picture(s) in {args.hazards}/ in use")
+    if getattr(args, "trust_replay", False):
+        import trainer as _trainer_mod
+        _trainer_mod.TRUST_REPLAY = True
+        print("[landmarks] --trust-replay: locked replay goes out as remembered (no shield edits)")
+    if getattr(args, "no_frontier_explore", False):
+        import trainer as _trainer_mod
+        _trainer_mod.FRONTIER_EXPLORE = 0.0
+        _trainer_mod.FRONTIER_EVERY = 0
+    if getattr(args, "ghost", False):
+        import landmark_route as _lm_mod
+        _lm_mod.GHOST = True
+        print("[landmarks] --ghost: cube sections follow the remembered path (learns per stretch from deaths)")
+    if getattr(args, "guide", None) is not None:
+        import trainer as _trainer_mod
+        _trainer_mod.GUIDE_MARGIN = float(args.guide)
+        print(f"[landmarks] --guide {args.guide:g}: the brain plays; the route decides only where the brain "
+              f"is unsure (Q difference < {args.guide:g})")
+    if getattr(args, "trust_replay_ab", False):
+        import trainer as _trainer_mod
+        _trainer_mod.TRUST_REPLAY_AB = True
+        print("[landmarks] --trust-replay-ab: odd attempts replay as remembered, even ones shielded")
+    if getattr(args, "no_early_press", False):
+        import trainer as _trainer_mod
+        _trainer_mod.EARLY_PRESS = False
+        print("[shield] --no-early-press: no pressing a step early at tight timings")
     cfg = TrainConfig(algo=args.algo, total_steps=args.steps, device=dev, name=args.name,cpu_threads=args.cpu_threads,
                       update_steps=args.update_steps, replay_ratio=args.replay_ratio,
                       jump_margin=args.jump_margin, hold_cost=args.hold_cost,
@@ -145,10 +216,14 @@ def build(args):
                       flight_margin=args.flight_margin,flight_buffer=args.flight_buffer,
                       flight_teacher_weight=args.flight_teacher_weight,
                       shield=not args.no_shield, route=not args.no_route or args.play or args.frontier,
-                      route_dir=args.routes,
-                      play=bool(args.play), frontier=bool(args.frontier) and not args.play)
+                      route_dir=args.routes, route_level=getattr(args, 'level', None),
+                      landmarks=bool(getattr(args, "landmarks", False)),
+                      play=bool(args.play), frontier=bool(args.frontier) and not args.play,
+                      strict_offline_gate=bool(getattr(args, "strict_offline_gate", False)),
+                      pause_on_death=not bool(getattr(args, "no_death_pause", False)))
     if args.route_controller:
         if cfg.algo!='dqn':raise ValueError('--route-controller currently requires --algo dqn')
+        if getattr(args,'shield',False):cfg.shield_auto_off=False  # explicit --shield wins over evidence
         from route_controller import RouteObservationEnv
         cfg.route_controller=True
         if cfg.name=='preview_boxes':cfg.name='route_controller'

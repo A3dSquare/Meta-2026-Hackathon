@@ -63,13 +63,13 @@ class CaptureConfig:
     target_fps: int = 60  # hard lock: read() emits exactly this many ticks/sec
     region: Optional[Region] = None
     output_idx: int = 0  # primary monitor
-    max_buffer_len: int = 8
+    max_buffer_len: int = 4  # small queue = fresher frames, same read() API
     prefetch: bool = False  # experimental: Python-heavy search can starve the extra reader
     prefetch_wait_s: float = 0.  # polling never invokes coarse Windows condition timeouts
     max_frame_age_s: float = .1  # an old buffered frame is a drop, not a fresh observation
-    # INTER_AREA is best for downscale quality; INTER_LINEAR is ~2x faster.
-    # At 320x180 both are <<1ms, so keep quality by default.
-    interpolation: int = cv2.INTER_AREA
+    # LINEAR is ~2x faster than AREA for the final small step with no visible
+    # difference at 320x180; the big shrink still uses fast_downscale (AREA-equivalent).
+    interpolation: int = cv2.INTER_LINEAR
     # --- consistency knobs ---
     stale_timeout_s: float = 1.0  # no fresh frame for this long -> restart
     max_consec_none: int = 120  # ~2s of None polls at 60Hz -> restart
@@ -96,6 +96,7 @@ class GDCapture:
         self._prefetch_aligned = False
         self.profile = None
         self.last_frame_ts: float | None = None   # when the newest frame was shown (seconds)
+        self.last_timestamp_exact = False
         self._ts_mode: str | None = None          # "dxcam" (exact) / "none" (arrival times)
         self._bgr_direct: bool = True  # True once we confirm native BGR path
         self._running: bool = False
@@ -398,13 +399,16 @@ class GDCapture:
             self._small[:, :, 0] = bgr[:, :, 2]
             self._small[:, :, 1] = bgr[:, :, 1]
             self._small[:, :, 2] = bgr[:, :, 0]
-        elif (self.cfg.interpolation == cv2.INTER_AREA and bgr.shape[0] >= 360 and bgr.shape[1] >= 640
+        elif (bgr.shape[0] >= 360 and bgr.shape[1] >= 640
               and self.cfg.width <= 640 and self.cfg.height <= 360):
             # Shrink ONCE: a 640x360 copy for the detector, and the small frame from it
-            # (was: two full-size AREA resizes per frame, the slowest step on 1440p screens)
+            # (was: two full-size AREA resizes per frame, the slowest step on 1440p screens).
+            # For ANY interpolation: this branch used to require INTER_AREA, so switching the
+            # default to INTER_LINEAR left last_hires empty -- record_demonstrations then saved
+            # no frames at all (7 clips, 0 frames) and the bot re-shrank the full frame itself.
             hi = fast_downscale(bgr, 640, 360)
             self._hires_next = hi
-            cv2.resize(hi, (self.cfg.width, self.cfg.height), dst=self._small, interpolation=cv2.INTER_AREA)
+            cv2.resize(hi, (self.cfg.width, self.cfg.height), dst=self._small, interpolation=self.cfg.interpolation)
             tmp = self._small[:, :, 0].copy()
             self._small[:, :, 0] = self._small[:, :, 2]
             self._small[:, :, 2] = tmp
@@ -549,15 +553,19 @@ class GDCapture:
                 if isinstance(got, tuple) and len(got) == 2:
                     frame, ts = got
                     if ts is not None and float(ts) > 0:
+                        self.last_timestamp_exact = True
                         if getattr(self, "_ts_mode", None) is None:
                             self._ts_mode = "dxcam"
                             log.info("frame times: from dxcam (exact)")
                         return frame, float(ts)
+                    self.last_timestamp_exact = False
                     return frame, time.perf_counter()
+                self.last_timestamp_exact = False
                 return got, time.perf_counter()
             except TypeError:
                 self._ts_mode = "none"       # older dxcam: no timestamps
                 log.info("frame times: dxcam has none, using arrival times")
+        self.last_timestamp_exact = False
         return camera.get_latest_frame(), time.perf_counter()
 
     def _note_tick(self, missed: int, *, fresh: bool) -> None:

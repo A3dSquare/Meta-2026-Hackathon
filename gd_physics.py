@@ -35,7 +35,7 @@ class Phys:
     cube_v0: float = 20.5       # jump speed (blocks/s)
     cube_g: float = 95.0        # gravity (blocks/s^2)
     ship_a: float = 55.0        # (old single value; ship_up / ship_down are used)
-    # (starting values measured on a recording of your game -- custom-for-claude.mp4; the
+    # (starting values measured on a recording of your game -- recs/custom_reference.mp4; the
     #  ModeCalibrator keeps measuring them live)
     ship_up: float = 58.0       # ship acceleration while holding / falling while released
     ship_down: float = 45.0     # (was 55 / 55: the fall was ~20% too strong)
@@ -1702,6 +1702,13 @@ class ModeEstimator:
         detector keeps saying so, the motion check can't switch it away."""
         self._icon_lock = max(0, getattr(self, "_icon_lock", 0) - 1)
         if mode is None or mode not in MODE_ID or conf < 0.5:
+            self._icon_run = (None, 0)
+            return
+        if self._hint is not None and self._hint_t > 0 and mode != self._hint:
+            # A portal of a known mode was just crossed: the icon is mid-change (flash,
+            # particles) and reads as something else for a few frames. Live (Polargeist ~48%):
+            # through a CUBE portal it read as "wave" for 4-6 decisions and played them as a
+            # wave, right where the cube had to land on a platform over thorns.
             self._icon_run = (None, 0)
             return
         m, n = getattr(self, "_icon_run", (None, 0))

@@ -29,6 +29,10 @@ def build_network(obs_dim,arch):
             self.trunk=nn.Sequential(*layers)
             self.values=nn.ModuleList([nn.Linear(d,1) for _ in MODES])
             self.advantages=nn.ModuleList([nn.Linear(d,2) for _ in MODES])
+            # Independent parameters: TD rewards must not move the action
+            # classifier trained from witnessed inputs and coaching.
+            self.policy_trunk=copy.deepcopy(self.trunk)
+            self.policy_heads=copy.deepcopy(self.advantages)
             self.register_buffer('motion_trust',th.zeros(len(MODES)))
 
         def modes(self,o):
@@ -57,7 +61,7 @@ def build_network(obs_dim,arch):
                 previous=effective
             return th.stack(points,dim=1)
 
-        def forward(self,o):
+        def features(self,o):
             dt=o[:,OBS_DIM+2:OBS_DIM+3].clamp(.01,.1).expand(-1,HORIZON)
             modes=self.modes(o);trust=self.motion_trust[modes][:,None]
             predictions=[]
@@ -72,7 +76,21 @@ def build_network(obs_dim,arch):
                         predicted=self.dynamics(o[selected],th.full_like(dt[selected],action),dt[selected]).flatten(1)
                     used[selected]=predicted.clamp(-2.,2.)
                 predictions.append(used*valid.repeat_interleave(2,dim=1))
-            z=self.trunk(th.cat((o,*predictions,trust),dim=1))
+            return th.cat((o,*predictions,trust),dim=1)
+
+        def policy(self,o):
+            modes=self.modes(o);z=self.policy_trunk(self.features(o))
+            if len(o)==1 and o.device.type=='cpu' and not th.is_grad_enabled():
+                return self.policy_heads[int(modes[0])](z)
+            logits=th.stack([head(z) for head in self.policy_heads],dim=1)
+            return logits[th.arange(len(o),device=o.device),modes]
+
+        def initialize_policy(self):
+            self.policy_trunk.load_state_dict(self.trunk.state_dict())
+            self.policy_heads.load_state_dict(self.advantages.state_dict())
+
+        def forward(self,o):
+            modes=self.modes(o);z=self.trunk(self.features(o))
             if len(o)==1 and o.device.type=='cpu' and not th.is_grad_enabled():
                 i=int(modes[0]);a=self.advantages[i](z)
                 return self.values[i](z)+a-a.mean(1,keepdim=True)
@@ -103,6 +121,7 @@ class RouteLearner:
         self.data_migration={};self._migration_source=None
         self.trial_model=None;self.trial=None;self.trial_modes=set();self.trial_skip_until_reset=False
         self.trial_failures=0;self.next_trial_episode=13;self.next_trial_grad=512
+        self.demo_imports=[]
 
     @property
     def evaluating(self):return self.trial is not None
@@ -125,36 +144,49 @@ class RouteLearner:
 
     def q_values(self,obs):
         with self.th.no_grad():
-            return self._active_network()(self.th.as_tensor(obs[None],device=self.dev,dtype=self.th.float32))[0].cpu().numpy()
+            return self._active_network().policy(self.th.as_tensor(obs[None],device=self.dev,dtype=self.th.float32))[0].cpu().numpy()
 
-    def act(self,obs,deterministic=False):
+    def act(self,obs,deterministic=False,with_prediction=True):
         q=self.q_values(obs);mode=int(mode_indices(obs))
         active_modes=self.trusted_modes | (self.trial_modes if self.evaluating and not self.cfg.play and not self.trial_skip_until_reset and self.trial.arm=='candidate' else set())
         self.last_role='learned' if mode in active_modes else ('planner bootstrap' if self.context.get('verified') else 'planner: limited forecast')
         if self.evaluating:self.last_role='evaluation '+self.trial.arm+' / '+self.last_role
         if not deterministic and not self.evaluating:
             self.steps_seen+=1
-            if self.rng.random()<self.epsilon():return int(self.rng.integers(2)),dict(q=q,controller_role='exploration',motion_prediction=self.predict_actions(obs))
+            if self.rng.random()<self.epsilon():
+                _ex=dict(q=q,controller_role='exploration')
+                if with_prediction:_ex['motion_prediction']=self.predict_actions(obs)
+                return int(self.rng.integers(2)),_ex
         if mode not in active_modes:
             if self.context.get('first_action') is not None:action=int(self.context['first_action'])
             elif obs[OFF_SEARCH+3]>.5:action=int(obs[OFF_SEARCH]>max(obs[OFF_SEARCH+1],obs[OFF_SEARCH+2]))
             else:action=0
         else:action=int(q[1]>q[0])
+        if not with_prediction:
+            return action,dict(q=q,controller_role=self.last_role)
         return action,dict(q=q,controller_role=self.last_role,motion_prediction=self.predict_actions(obs))
 
     def predict_actions(self,obs):
         net=self._active_network();th=self.th;mode=int(mode_indices(obs))
-        tensor=th.as_tensor(obs[None],device=self.dev,dtype=th.float32)
-        dt=float(np.clip(obs[OBS_DIM+2],.01,.1));durations=th.full((1,HORIZON),dt,device=self.dev)
+        dt=float(np.clip(obs[OBS_DIM+2],.01,.1))
         learned=bool(net.motion_trust[mode]>.5)
         result=dict(source='learned' if learned else 'analytical prior',origin_y=float(obs[0]*8.),
                     times=[(j+1)*dt for j in range(HORIZON)])
-        with th.no_grad():
+        if not learned:
             for action,name in enumerate(('release','hold')):
-                values=(net.dynamics(tensor,th.full_like(durations,float(action)),durations)[0].clamp(-2.,2.).cpu().numpy()
-                        if learned else obs[ANALYTIC_START+action*HORIZON*2:ANALYTIC_START+(action+1)*HORIZON*2].reshape(HORIZON,2))
+                values=obs[ANALYTIC_START+action*HORIZON*2:ANALYTIC_START+(action+1)*HORIZON*2].reshape(HORIZON,2)
                 result[name]=(values*np.array([8.,20.])).tolist()
                 result[name+'_valid']=obs[VALID_START+action*HORIZON:VALID_START+(action+1)*HORIZON].astype(bool).tolist()
+            return result
+        tensor=th.as_tensor(np.stack((obs,obs)),device=self.dev,dtype=th.float32)
+        durations=th.full((2,HORIZON),dt,device=self.dev)
+        actions=th.tensor([[0.]*HORIZON,[1.]*HORIZON],device=self.dev,dtype=th.float32)
+        with th.no_grad():
+            values=net.dynamics(tensor,actions,durations).clamp(-2.,2.).cpu().numpy()
+        scale=np.array([8.,20.])
+        for action,name in enumerate(('release','hold')):
+            result[name]=(values[action]*scale).tolist()
+            result[name+'_valid']=obs[VALID_START+action*HORIZON:VALID_START+(action+1)*HORIZON].astype(bool).tolist()
         return result
 
     def hold_prob(self,obs):
@@ -183,7 +215,7 @@ class RouteLearner:
         observed=float(nxt[0]-obs[0])*UNIT
         return label if abs(observed-expected)<=.25 else -1
 
-    def add_segment(self,obs,act,rew,next_obs_last,terminal,upto=None,teacher=None,route_records=None,completed=False):
+    def add_segment(self,obs,act,rew,next_obs_last,terminal,upto=None,teacher=None,route_records=None,completed=False,human_demo=False,motion_valid=None,human_labels=None):
         T=len(act);upto=T if upto is None else min(T,upto)
         states=list(obs)+([next_obs_last] if next_obs_last is not None else [])
         # Episode split is stable across max-rollout flushes and restarts.
@@ -199,12 +231,24 @@ class RouteLearner:
             sequence=np.zeros(HORIZON,np.float32);durations=np.zeros(HORIZON,np.float32)
             outcomes=np.zeros((HORIZON,2),np.float32);mask=np.zeros(HORIZON,np.float32)
             mode=int(mode_indices(o))
+            grounded_before=None
             for j in range(HORIZON):
                 k=t+j
                 if k>=T or k+1>=len(states) or (terminal and k>=T-1):break
+                if motion_valid is not None and not motion_valid[k]:break
                 nx=states[k+1]
                 if (int(mode_indices(nx))!=mode or min(o[OBS_DIM+10],nx[OBS_DIM+10])<.5
                         or o[OBS_DIM+6]!=nx[OBS_DIM+6] or o[OBS_DIM+7]!=nx[OBS_DIM+7]):break
+                # OBS_DIM+4 is grounded. Landing, takeoff or resting contact is
+                # governed by the surface, not by free-flight action dynamics;
+                # a partially observed airborne->grounded->airborne bounce is
+                # an impulse the GRU cannot observe. Keep horizon steps that
+                # end in the grounded state the window started in (or stay
+                # airborne), but never grade steps after a landing/takeoff.
+                grounded_next=bool(nx[OBS_DIM+4]>.5)
+                if grounded_before is None:
+                    grounded_before=grounded_next
+                elif grounded_next!=grounded_before:break
                 dt=float(nx[OBS_DIM+3])
                 if not .005<=dt<=.1:break
                 sequence[j]=act[k];durations[j]=dt
@@ -216,8 +260,15 @@ class RouteLearner:
                 outcomes[j]=[(float(nx[0])-float(o[0])),measured_velocity/20.]
                 mask[j]=1.
             label=int(teacher[t]) if teacher is not None else -1
-            label=self._observed_label(o,states[t+1],label,act[t]) if t+1<len(states) else -1
-            if label>=0:
+            if human_demo:
+                # Successful human inputs are independent supervision. Requiring
+                # agreement with the planner would perpetuate its mistakes.
+                reliable=(t+1<len(states) and min(o[OBS_DIM+10],states[t+1][OBS_DIM+10])>.5)
+                label=(int(human_labels[t] if human_labels is not None else act[t])
+                       if completed and reliable and remaining[t]>.15 else -1)
+            else:
+                label=self._observed_label(o,states[t+1],label,act[t]) if t+1<len(states) else -1
+            if label>=0 and not human_demo:
                 # Validate several REAL frames, including time after the
                 # delayed first command can actually affect the player.
                 record=route_records[t] if route_records else {}
@@ -245,6 +296,7 @@ class RouteLearner:
                 ret=discounted_return,discount=0. if terminal and end==T else discount,
                 mode=mode,success=bool(completed or not terminal or survival_seconds>=1.5),teacher=label,
                 actions=sequence,durations=durations,outcomes=outcomes,mask=mask,episode=self.episode_id)
+            row['source']='human' if human_demo else 'gameplay'
             # Planner distillation is a recommendation, NOT a claim that an
             # unexecuted action succeeded. Keep it separate from witnessed labels.
             record=route_records[t] if route_records else {}
@@ -267,7 +319,10 @@ class RouteLearner:
         buckets={}
         for row in self.replay.rows():
             label=row['teacher'] if row['teacher']>=0 else row.get('planner',-1)
-            if label>=0:buckets.setdefault((row['mode'],label),[]).append(row)
+            # Equal source strata prevent numerous planner guesses from
+            # swamping witnessed manual examples within an action bucket.
+            source=('human' if row.get('source')=='human' else 'witnessed' if row['teacher']>=0 else 'planner')
+            if label>=0:buckets.setdefault((row['mode'],label,source),[]).append(row)
         return buckets
 
     def _coaching_rows(self,n,buckets=None):
@@ -276,8 +331,14 @@ class RouteLearner:
         if buckets is None:buckets=self._coaching_buckets()
         keys=list(buckets)
         if not keys:return []
-        return [buckets[key][int(self.rng.integers(len(buckets[key])))]
-                for key in (keys[int(self.rng.integers(len(keys)))] for _ in range(n))]
+        groups={}
+        for key in keys:groups.setdefault(key[:2],[]).append(key)
+        actions=list(groups);result=[]
+        for _ in range(n):
+            strata=groups[actions[int(self.rng.integers(len(actions)))]]
+            key=strata[int(self.rng.integers(len(strata)))] if len(strata)>1 else strata[0]
+            result.append(buckets[key][int(self.rng.integers(len(buckets[key])))])
+        return result
 
     def _motion_buckets(self):
         # Keep policy TD sampling unchanged. Motion needs examples of both
@@ -288,11 +349,23 @@ class RouteLearner:
                 buckets.setdefault((row['mode'],int(row['actions'][0])),[]).append(row)
         return buckets
 
-    def train(self,new_steps,tick=None):
+    def data_audit(self):
+        """Retained examples, separately for training and held-out validation."""
+        from collections import Counter
+        audit={}
+        for name,replay in (('training',self.replay),('validation',self.validation)):
+            counts=Counter((MODES[r['mode']],r.get('source','legacy'),int(r['teacher'])) for r in replay.rows())
+            audit[name]=[dict(mode=mode,source=source,label=label,count=count)
+                         for (mode,source,label),count in sorted(counts.items())]
+        return audit
+
+    def train(self,new_steps,tick=None,queue_live_trial=True):
         th,c=self.th,self.cfg
         if self.evaluating:return {}
         if len(self.replay)<c.warmup:return {}
-        self.candidate.train();losses=[];motion_losses=[];teacher_draws=0
+        self.candidate.train();losses=[];motion_losses=[];td_losses=[];imitation_losses=[];teacher_draws=0
+        from collections import Counter
+        coaching_draws=Counter()
         count=min(c.max_grad_steps,max(1,int(c.replay_ratio*new_steps)))
         coaching_buckets=self._coaching_buckets()
         motion_buckets=self._motion_buckets()
@@ -307,7 +380,9 @@ class RouteLearner:
             coaching=self._coaching_rows(c.batch_size,coaching_buckets)
             valid=b['teacher']>=0
             if coaching:
-                guide=self._batch(coaching);guide_q=self.candidate(guide['obs'])
+                coaching_draws.update(f'{MODES[r["mode"]]}/{r.get("source","legacy")}/'
+                    f'{r["teacher"] if r["teacher"]>=0 else r.get("planner",-1)}' for r in coaching)
+                guide=self._batch(coaching);guide_q=self.candidate.policy(guide['obs'])
                 per_row=th.nn.functional.cross_entropy(guide_q,guide['guide'],reduction='none')
                 weights=th.where(guide['teacher']>=0,1.,.25)
                 imitation=(per_row*weights).sum()/weights.sum().clamp_min(1.)
@@ -322,18 +397,27 @@ class RouteLearner:
             deltas=motion[:,:,0]-th.cat((th.zeros_like(motion[:,:1,0]),motion[:,:-1,0]),dim=1)
             consistency=((deltas-motion[:,:,1]*20./8.*mb['durations'])**2*mb['mask']).sum()/mb['mask'].sum().clamp_min(1.)
             loss=td+imitation+dynamics+.05*consistency
-            self.opt.zero_grad();loss.backward();th.nn.utils.clip_grad_norm_(self.candidate.parameters(),c.max_grad_norm)
+            self.opt.zero_grad();loss.backward()
+            # A large TD/motion gradient must not shrink the independent
+            # imitation update through one global clipping norm.
+            policy_parameters=list(self.candidate.policy_trunk.parameters())+list(self.candidate.policy_heads.parameters())
+            other_parameters=[p for name,p in self.candidate.named_parameters() if not name.startswith('policy_')]
+            th.nn.utils.clip_grad_norm_(policy_parameters,c.max_grad_norm)
+            th.nn.utils.clip_grad_norm_(other_parameters,c.max_grad_norm)
             self.opt.step();self.grad_steps+=1
             if self.grad_steps%c.target_every==0:self.target.load_state_dict(self.candidate.state_dict())
             losses.append(float(loss.detach()));motion_losses.append(float(dynamics.detach()))
-            teacher_draws+=int(valid.sum())
+            td_losses.append(float(td.detach()));imitation_losses.append(float(imitation.detach()))
+            teacher_draws+=int((guide['teacher']>=0).sum()) if coaching else 0
         self.candidate.eval()
         self.last_evaluation=self.evaluate_candidate()
-        if self.last_evaluation.get('offline_passed') and self.episode_id>=self.next_trial_episode and self.grad_steps>=self.next_trial_grad:
+        if queue_live_trial and self.last_evaluation.get('offline_passed') and self.episode_id>=self.next_trial_episode and self.grad_steps>=self.next_trial_grad:
             from controller_evaluation import LiveComparison
             self.trial_model=copy.deepcopy(self.candidate).eval()
             self.trial_modes=set(self.last_evaluation['eligible_modes'])
-            self.trial=LiveComparison()
+            # 12 alternating attempts (6 each), a real margin over the noise and no extra shield
+            # dependence: the offline gate no longer filters on human labels, so this decides
+            self.trial=LiveComparison(attempts=12,shield_tolerance=.005,require_margin=True)
             self.last_evaluation['reason']='offline checks passed; frozen live comparison queued'
         elif self.last_evaluation.get('offline_passed'):
             self.last_evaluation.update(reason='offline checks passed; collecting more training before another live comparison',
@@ -341,20 +425,28 @@ class RouteLearner:
                 gradient_steps_remaining=max(0,self.next_trial_grad-self.grad_steps))
         promoted=self.last_evaluation['promoted']
         self.last_stats=dict(loss=float(np.mean(losses)),motion_loss=float(np.mean(motion_losses)),grad_steps=count,
+            value_loss=float(np.mean(td_losses)),policy_loss=float(np.mean(imitation_losses)),
             teacher_draws=teacher_draws,buffer=len(self.replay),validation=len(self.validation),
+            coaching_draws=dict(coaching_draws),
             eps=self.epsilon(),promoted=promoted,promotions=self.promotion_count)
         return self.last_stats
 
     def _metrics(self,network,rows):
         th=self.th;b=self._batch(rows)
         with th.no_grad():
-            qs=network(b['obs']);action=qs.argmax(1)
+            qs=network(b['obs']);action=network.policy(b['obs']).argmax(1)
             predictions=network.dynamics(b['obs'],b['actions'],b['durations'])
             squared=(predictions-b['outcomes'])**2
             labels=b['teacher']>=0
             accuracy=float((action[labels]==b['teacher'][labels]).float().mean()) if labels.any() else None
-            counts=[int((b['guide']==a).sum()) for a in (0,1)]
-            recalls=[float((action[b['guide']==a]==a).float().mean()) if counts[a] else None for a in (0,1)]
+            counts=[int((b['teacher']==a).sum()) for a in (0,1)]
+            recalls=[float((action[b['teacher']==a]==a).float().mean()) if counts[a] else None for a in (0,1)]
+            human=th.as_tensor([r.get('source')=='human' for r in rows],device=self.dev)
+            human_counts=[int((human & (b['teacher']==a)).sum()) for a in (0,1)]
+            human_recalls=[float((action[human & (b['teacher']==a)]==a).float().mean()) if human_counts[a] else None for a in (0,1)]
+            planner=th.as_tensor([r.get('planner',-1) for r in rows],device=self.dev)
+            planner_labels=planner>=0
+            planner_agreement=float((action[planner_labels]==planner[planner_labels]).float().mean()) if planner_labels.any() else None
             mask=b['mask'];n=mask.sum().clamp_min(1.)
             dy=float(th.sqrt((squared[:,:,0]*mask).sum()/n)*8.)
             interval_velocity=float(th.sqrt((squared[:,:,1]*mask).sum()/n)*20.)
@@ -366,6 +458,22 @@ class RouteLearner:
             observed=mask>.5
             p95=float(th.quantile(th.sqrt(squared[:,:,0][observed]),.95)*8.) if observed.any() else None
             v95=float(th.quantile(velocity_error[observed].abs(),.95)) if observed.any() else None
+            # Diagnostics only (not gate inputs): locate the position error
+            # tail. grounded_start uses the OBS_DIM+4 flag of the window's
+            # first observation, matching the add_segment mask construction.
+            horizon_rmse=[(float(th.sqrt((squared[:,j,0]*mask[:,j]).sum()/mask[:,j].sum())*8.)
+                            if float(mask[:,j].sum())>0 else None) for j in range(mask.shape[1])]
+            horizon_samples=[int(mask[:,j].sum()) for j in range(mask.shape[1])]
+            grounded_start=b['obs'][:,OBS_DIM+4]>.5
+            def _subset_rmse(sel):
+                sub=observed & sel[:,None].expand_as(observed)
+                return float(th.sqrt((squared[:,:,0][sub]).mean())*8.) if bool(sub.any()) else None
+            breakdown=dict(per_horizon_rmse=horizon_rmse,per_horizon_samples=horizon_samples,
+                grounded_start_rmse=_subset_rmse(grounded_start),
+                airborne_start_rmse=_subset_rmse(~grounded_start),
+                grounded_start_samples=int((observed & grounded_start[:,None].expand_as(observed)).sum()),
+                airborne_start_samples=int((observed & (~grounded_start)[:,None].expand_as(observed)).sum()),
+                p95_overall=p95)
             survival=b['obs'][:,OFF_SEARCH:OFF_SEARCH+3]
             press=survival[:,0];release=survival[:,1:].max(1).values
             unsafe=th.where(action.bool(),press,release)<.895
@@ -376,10 +484,14 @@ class RouteLearner:
         return dict(n=len(rows),labels=int(labels.sum()),accuracy=accuracy,position_rmse=dy,velocity_rmse=vy,
                     position_p95=p95,velocity_p95=v95,
                     interval_velocity_rmse=interval_velocity,action_label_counts=counts,action_recall=recalls,
-                    unsafe_rate=safety,td_error=td,motion_samples=int(mask.sum()))
+                    human_action_label_counts=human_counts,human_action_recall=human_recalls,
+                    planner_labels=int(planner_labels.sum()),planner_agreement=planner_agreement,
+                    unsafe_rate=safety,td_error=td,motion_samples=int(mask.sum()),
+                    motion_breakdown=breakdown)
 
     def evaluate_candidate(self):
-        rows=self.validation.rows();report=dict(promoted=False,modes={},reason='insufficient held-out episodes')
+        rows=self.validation.rows();report=dict(promoted=False,modes={},reason='insufficient held-out episodes',evaluation_policy_version=4,
+                                               action_scores='independent imitation policy; TD uses separate value network')
         eligible=[];improved=False;passed=True
         for mode in sorted({r['mode'] for r in rows}):
             group=[r for r in rows if r['mode']==mode]
@@ -401,13 +513,30 @@ class RouteLearner:
             if mode not in self.trusted_modes:
                 ok=motion_ok and supervised and balanced and new['accuracy']>=.75 and new['unsafe_rate']<=.05
                 improved=improved or ok
-            else:
+            elif getattr(self.cfg,'strict_offline_gate',False):
                 ok=(motion_ok and balanced and new['unsafe_rate']<=old['unsafe_rate']+.005
                     and new['position_rmse']<=old['position_rmse']*1.05+.01
                     and new['velocity_rmse']<=old['velocity_rmse']*1.05+.1
                     and (not supervised or new['accuracy']>=old['accuracy']-.01)
                     and new['td_error']<=old['td_error']*1.1+.01)
                 improved=improved or (supervised and new['accuracy']>old['accuracy']+.005) or new['position_rmse']<old['position_rmse']-.01
+            else:
+                # Gate to the LIVE comparison (controller_evaluation.LiveComparison decides by
+                # progress on the level): no less safe, motion no worse, still both presses and
+                # releases. Agreement with human labels and TD error are reported, not required:
+                # live (031445) every one of 81 candidates failed them -- the 85% recall bar the
+                # incumbent itself misses (presses 70%), and accuracy vs labels the incumbent was
+                # just fitted to -- while the candidates were learning to press earlier, which is
+                # what the shield (962 right vs 5 wrong) kept asking for. No candidate was ever
+                # promoted in any session: in-game training never reached the live brain.
+                still_both=all(x is not None and x>=.5 for x in new['action_recall'])
+                # motion: enough witnessed data, and no worse than the incumbent (below) -- not the
+                # absolute 0.3 / 4.0 bar, which the incumbent itself misses (031445: 0.32 / 4.07)
+                motion_seen=new['motion_samples']>=self.cfg.controller_eval_min and witnessed=={0,1}
+                ok=(motion_seen and still_both and new['unsafe_rate']<=old['unsafe_rate']+.005
+                    and new['position_rmse']<=old['position_rmse']*1.05+.01
+                    and new['velocity_rmse']<=old['velocity_rmse']*1.05+.1)
+                improved=improved or ok
             report['modes'][MODES[mode]]=dict(incumbent=old,candidate=new,passed=bool(ok),motion_verified=motion_ok,
                 balanced_action_supervision=balanced,
                 blockers=(["motion validation"] if not motion_ok else [])
@@ -415,7 +544,8 @@ class RouteLearner:
                     +(["hold/release coverage or recall"] if not balanced else [])
                     +(["witnessed action accuracy"] if supervised and new['accuracy']<.75 else [])
                     +(["unsafe action rate"] if new['unsafe_rate']>.05 else [])
-                    +(["incumbent regression checks"] if mode in self.trusted_modes and not ok else []))
+                    +(["incumbent regression checks"] if mode in self.trusted_modes and not ok else []),
+                gate=('strict' if getattr(self.cfg,'strict_offline_gate',False) else 'safety+motion; live comparison decides'))
             if mode in self.trusted_modes or ok:
                 eligible.append(mode);passed=passed and ok
         # A shared encoder update cannot silently bypass a previously trusted
@@ -460,8 +590,8 @@ class RouteLearner:
                 shutil.copy2(path,backup)
             self._migration_source=None
         state=dict(route_controller_version=VERSION,obs_dim=self.obs_dim,arch=list(self.cfg.net_arch),
-            motion_targets_version=2,analytic_velocity_version=2,data_migration=self.data_migration,
-            evaluation_policy_version=2,trial_schedule=dict(failures=self.trial_failures,
+            motion_targets_version=3,analytic_velocity_version=2,data_migration=self.data_migration,demo_imports=self.demo_imports,
+            evaluation_policy_version=4,action_policy_version=1,trial_schedule=dict(failures=self.trial_failures,
                 next_episode=self.next_trial_episode,next_grad=self.next_trial_grad),
             q=self.q.state_dict(),candidate=self.candidate.state_dict(),target=self.target.state_dict(),opt=self.opt.state_dict(),
             steps_seen=self.steps_seen,grad_steps=self.grad_steps,episode_id=self.episode_id,episode_open=self.episode_open,
@@ -475,6 +605,7 @@ class RouteLearner:
 
     def load(self,path):
         ck=self.th.load(path,map_location=self.dev,weights_only=False)
+        self.imported_legacy = 'route_controller_version' not in ck
         if 'route_controller_version' not in ck:
             if ck.get('obs_dim')!=OBS_DIM:raise ValueError('legacy checkpoint observation layout does not match')
             # Preserve the useful base encoder; new route inputs initially
@@ -491,14 +622,29 @@ class RouteLearner:
                         state[f'values.{i}.{suffix}'].copy_(ck['q'][f'v.{suffix}'])
                         state[f'advantages.{i}.{suffix}'].copy_(ck['q'][f'a.{suffix}'])
                 self.q.load_state_dict(state)
+            self.q.initialize_policy()
             self.candidate.load_state_dict(self.q.state_dict());self.target.load_state_dict(self.q.state_dict())
             print('[controller] imported legacy encoder; new route inputs, mode heads and motion model train separately')
             return
         if ck['route_controller_version']!=VERSION or ck['obs_dim']!=self.obs_dim:
             raise ValueError('unsupported route-controller checkpoint version/layout')
         for key,network in (('q',self.q),('candidate',self.candidate),('target',self.target)):
-            network.load_state_dict(ck[key])
-        self.opt.load_state_dict(ck['opt']);self.steps_seen=ck['steps_seen'];self.grad_steps=ck['grad_steps']
+            if ck.get('action_policy_version',0)<1:
+                missing,unexpected=network.load_state_dict(ck[key],strict=False)
+                if unexpected or any(not name.startswith('policy_') for name in missing):
+                    raise ValueError('Unsupported legacy controller state during policy migration')
+                network.initialize_policy()
+            else:network.load_state_dict(ck[key])
+        optimizer=copy.deepcopy(ck['opt'])
+        if ck.get('action_policy_version',0)<1:
+            # The new parameters were appended after all old parameters, so
+            # existing Adam moments retain their identities. New moments start empty.
+            current=self.opt.state_dict()['param_groups']
+            if len(optimizer['param_groups'])!=1 or len(current)!=1:
+                raise ValueError('Unsupported optimizer groups during policy migration')
+            optimizer['param_groups'][0]['params']=current[0]['params']
+            print('[controller] separated imitation policy from reward values; weights and existing optimizer history preserved')
+        self.opt.load_state_dict(optimizer);self.steps_seen=ck['steps_seen'];self.grad_steps=ck['grad_steps']
         self.episode_id=ck['episode_id'];self.replay.load(ck['replay']);self.validation.load(ck['validation'])
         if ck.get('episode_open',False):self.episode_id+=1
         self.rng.bit_generator.state=ck['rng'];self.trusted_modes=set(ck['trusted_modes'])
@@ -506,6 +652,17 @@ class RouteLearner:
         self.promotion_pending=ck.get('promotion_pending',False)
         self.last_evaluation=ck.get('evaluation',{})
         self.data_migration=ck.get('data_migration',{})
+        self.demo_imports=ck.get('demo_imports',[])
+        if ck.get('motion_targets_version',1)<3:
+            # v3: replay rows do not store the per-step grounded trace, so
+            # legacy rows cannot be re-masked exactly. Keep every row and its
+            # outcomes; only clear stale gate results so the candidate is
+            # re-evaluated before any trust/trial decision. New rows built by
+            # add_segment carry the grounded-transition mask break.
+            self.data_migration=dict(self.data_migration,
+                motion_mask='grounded-transition break applied to newly built rows; legacy rows retained unmodified')
+            self.last_evaluation={}
+            print('[controller data] motion mask v3: legacy replay rows retained; re-evaluation required before trial')
         if ck.get('motion_targets_version',1)<2:
             discarded=0;retained=0
             for replay in (self.replay,self.validation):
@@ -520,7 +677,7 @@ class RouteLearner:
                         target[:,1]=np.where(row['mask']>.5,observed/20.,0.)
                         row['outcomes']=target;clean.append(row);retained+=1
                     replay.buckets[key]=clean;replay.seen[key]=len(clean)
-            self.data_migration=dict(discarded_inconsistent=discarded,retained=retained,
+            self.data_migration=dict(self.data_migration,discarded_inconsistent=discarded,retained=retained,
                 velocity_targets='measured displacement / elapsed time',pending_trial_cancelled=bool(ck.get('live_trial')))
             # No approved controller is reset. Only an unapproved shadow
             # candidate trained on contradictory targets is restarted.
@@ -548,10 +705,10 @@ class RouteLearner:
         self.trial_failures=schedule.get('failures',0)
         self.next_trial_episode=schedule.get('next_episode',self.episode_id+24)
         self.next_trial_grad=schedule.get('next_grad',self.grad_steps+512)
-        if ck.get('evaluation_policy_version',1)<2:
+        if ck.get('evaluation_policy_version',1)<4:
             self.last_evaluation={}
-            print('[controller] old one-action evaluation cancelled; collecting balanced action supervision before live comparison')
-        if ck.get('live_trial') and not self._migration_source and ck.get('evaluation_policy_version',1)>=2:
+            print('[controller] evaluation requires witnessed hold/release labels; old trial cancelled for revalidation')
+        if ck.get('live_trial') and not self._migration_source and ck.get('evaluation_policy_version',1)>=4:
             from controller_evaluation import LiveComparison
             trial=ck['live_trial'];self.trial=LiveComparison();self.trial.__dict__.update(trial['comparison'])
             self.trial_model=copy.deepcopy(self.candidate);self.trial_model.load_state_dict(trial['model'])

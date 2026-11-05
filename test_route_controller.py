@@ -298,13 +298,14 @@ class LearningTests(unittest.TestCase):
             self.assertEqual(file_sha256(path),digest)
             restored.save(path)
             self.assertEqual(file_sha256(path+'.before_cube_targets'),digest)
-            self.assertEqual(torch.load(path,weights_only=False)['motion_targets_version'],2)
+            # v2 velocity filtering ran on load; saves now stamp motion-mask v3.
+            self.assertEqual(torch.load(path,weights_only=False)['motion_targets_version'],3)
 
     def test_velocity_validation_still_rejects_wrong_velocity_with_correct_positions(self):
         learner=self.learner()
         with torch.no_grad():
             for parameter in learner.candidate.parameters():parameter.zero_()
-            learner.candidate.advantages[0].bias[1]=1.
+            learner.candidate.policy_heads[0].bias[1]=1.
             learner.candidate.motion_heads[0].bias[1]=1.
         for i in range(32):learner.validation.add(row(i%2,teacher=1 if i%2 else -1))
         report=learner.evaluate_candidate()
@@ -327,11 +328,11 @@ class LearningTests(unittest.TestCase):
         with torch.no_grad():
             for net in (learner.q,learner.candidate):
                 for parameter in net.parameters():parameter.zero_()
-            learner.q.advantages[0].bias.copy_(torch.tensor([1.,0.]))
-            learner.candidate.trunk[0].weight[0,0]=1.
-            learner.candidate.trunk[2].weight[0,0]=1.
-            learner.candidate.advantages[0].bias[0]=.5
-            learner.candidate.advantages[0].weight[1,0]=2.
+            learner.q.policy_heads[0].bias.copy_(torch.tensor([1.,0.]))
+            learner.candidate.policy_trunk[0].weight[0,0]=1.
+            learner.candidate.policy_trunk[2].weight[0,0]=1.
+            learner.candidate.policy_heads[0].bias[0]=.5
+            learner.candidate.policy_heads[0].weight[1,0]=2.
         for i in range(32):
             sample=row(i%2,teacher=i%2);sample['obs'][0]=i%2
             sample['obs'][OFF_SEARCH:OFF_SEARCH+4]=[1.,1.,1.,1.]
@@ -342,8 +343,8 @@ class LearningTests(unittest.TestCase):
         learner.q.load_state_dict(learner.candidate.state_dict());learner.trusted_modes={0}
         before={k:v.clone() for k,v in learner.q.state_dict().items()}
         with torch.no_grad():
-            learner.candidate.advantages[0].weight.zero_()
-            learner.candidate.advantages[0].bias.copy_(torch.tensor([1.,0.]))
+            learner.candidate.policy_heads[0].weight.zero_()
+            learner.candidate.policy_heads[0].bias.copy_(torch.tensor([1.,0.]))
         self.assertFalse(learner.evaluate_candidate().get('offline_passed',False))
         self.assertTrue(all(torch.equal(v,learner.q.state_dict()[k]) for k,v in before.items()))
 
@@ -351,7 +352,7 @@ class LearningTests(unittest.TestCase):
         learner=self.learner()
         with torch.no_grad():
             for parameter in learner.candidate.parameters():parameter.zero_()
-            learner.candidate.advantages[0].bias[1]=1.
+            learner.candidate.policy_heads[0].bias[1]=1.
             learner.candidate.motion_heads[0].bias.fill_(1.)
         for i in range(32):learner.validation.add(row(i%2,teacher=1 if i%2 else -1))
         report=learner.evaluate_candidate()
@@ -626,6 +627,41 @@ class WorldModelLearningTests(unittest.TestCase):
         self.assertLess(after['position_rmse'],before['position_rmse']*.5)
         self.assertLess(after['velocity_rmse'],before['velocity_rmse']*.5)
 
+    def test_motion_mask_breaks_at_grounded_transition(self):
+        learner=RouteLearner(CONTROLLER_DIM,2,config())
+        grounded=[0,0,1,1,1,1,1,1]  # airborne for 2 steps, then landing
+        states=[]
+        for i,g in enumerate(grounded):
+            o=observation();o[0]=i*.01;o[OBS_DIM+4]=float(g);states.append(o)
+        learner.episode_id=1
+        learner.add_segment(states[:-1],[0]*7,[.1]*7,states[-1],False)
+        rows=learner.replay.rows()
+        self.assertTrue(rows)
+        # First row starts airborne: step 0 ends still airborne (graded),
+        # step 1 ends grounded (landing) and must break the mask there.
+        self.assertEqual(rows[0]['mask'].sum(),1.)
+        self.assertEqual(rows[0]['mask'][0],1.)
+        self.assertTrue(np.all(rows[0]['mask'][1:]==0.))
+        # A row starting grounded whose whole horizon stays grounded keeps
+        # every horizon step (segment length permitting).
+        full=[r for r in rows if r['obs'][OBS_DIM+4]>.5 and r['mask'].sum()==HORIZON]
+        self.assertTrue(full)
+        self.assertTrue(all(np.all(r['mask']==1.) for r in full))
+
+    def test_metrics_include_motion_breakdown(self):
+        learner=RouteLearner(CONTROLLER_DIM,2,config())
+        rows=[]
+        for i in range(8):
+            r=row(i%2,teacher=-1);r['obs'][OBS_DIM+4]=float(i%2)
+            rows.append(r)
+        metrics=learner._metrics(learner.candidate,rows)
+        self.assertIn('motion_breakdown',metrics)
+        breakdown=metrics['motion_breakdown']
+        self.assertEqual(len(breakdown['per_horizon_rmse']),HORIZON)
+        self.assertEqual(len(breakdown['per_horizon_samples']),HORIZON)
+        self.assertEqual(breakdown['grounded_start_samples']+breakdown['airborne_start_samples'],
+                         int(sum(breakdown['per_horizon_samples'])))
+
 
 class ObservationLoopTests(unittest.TestCase):
     def test_completion_saves_experience_and_pending_trial_without_fake_champion(self):
@@ -682,6 +718,72 @@ class ObservationLoopTests(unittest.TestCase):
         self.assertIn('preview hidden',prediction_status(dict(plan=plan,path_hit=True),False))
         plan['sequence_safety']=dict(nominal=1.,worse=.5)
         self.assertIn('timing-sensitive',prediction_status(dict(plan=plan),True))
+
+    def test_intended_hold_path_uses_brain_forecast_and_respects_validity(self):
+        from preview_boxes import _intended_hold_path
+        dbg=dict(motion_prediction=dict(source='learned',origin_y=2.,times=[.04,.08,.12],
+            hold=[[1.,0.],[2.,0.],[9.,0.]],hold_valid=[True,True,False],
+            release=[[0.,0.]],release_valid=[True]))
+        got=_intended_hold_path(dbg)
+        self.assertIsNotNone(got)
+        pts,tail,source=got
+        self.assertEqual(source,'learned')
+        self.assertEqual(pts[0],(0.,0.))
+        self.assertEqual(len(pts),3)  # third step invalid -> truncated
+        self.assertAlmostEqual(pts[1][0],10.38*.04)
+        self.assertEqual(pts[1][1],1.)
+        self.assertEqual(tail,[])  # no arcs supplied -> no continuation
+        self.assertIsNone(_intended_hold_path({}))
+        self.assertIsNone(_intended_hold_path(dict(motion_prediction=dict(hold=[]))))
+
+    def test_intended_hold_path_stitches_analytic_tail_at_brain_end(self):
+        from preview_boxes import _intended_hold_path
+        dbg=dict(motion_prediction=dict(source='learned',origin_y=0.,times=[.04,.08],
+            hold=[[1.,0.],[2.,0.]],hold_valid=[True,True],
+            release=[[0.,0.]],release_valid=[True]))
+        arcs=[('best',False,[(0.,0.),(5.,5.)]),('hold',False,[(0.,0.),(1.,.5),(2.,0.)])]
+        pts,tail,source=_intended_hold_path(dbg,arcs)
+        end=pts[-1]
+        # tail prefers 'hold' arc and is rebased to start at the brain end
+        self.assertTrue(tail)
+        self.assertAlmostEqual(tail[0][0],end[0]+1.)
+        self.assertAlmostEqual(tail[0][1],end[1]+.5)
+        self.assertTrue(all(x>end[0] for x,_ in tail))
+        # without a 'hold' arc, fall back to 'best'
+        pts2,tail2,_=_intended_hold_path(dbg,[('best',False,[(0.,0.),(3.,3.)])])
+        self.assertAlmostEqual(tail2[0][0],pts2[-1][0]+3.)
+
+    def test_shield_evidence_auto_off_requires_trusted_mode_and_policy_majority(self):
+        import time as _time
+        from trainer import Trainer
+        tr=Trainer.__new__(Trainer)
+        tr.cfg=config(shield_min_overrides=3)
+        tr.learner=SimpleNamespace(trusted_modes={0})
+        tr._shield_pending=[];tr._shield_stats={};tr._shield_off_modes=set()
+        tr.session=SimpleNamespace(event=lambda *a,**k:None);tr.attempts=0
+        # untrusted mode never auto-disables
+        for _ in range(5):tr._shield_note_override('ship',0,1,'learned')
+        tr._shield_pending=[dict(r,t=_time.time()) for r in tr._shield_pending]
+        tr._shield_attribute(True)
+        self.assertNotIn('ship',tr._shield_off_modes)
+        # trusted mode, policy-right majority past the floor -> off
+        for _ in range(3):tr._shield_note_override('cube',0,1,'learned')
+        tr._shield_pending=[dict(r,t=_time.time()) for r in tr._shield_pending]
+        tr._shield_attribute(True)  # died immediately: policy_right
+        self.assertIn('cube',tr._shield_off_modes)
+        # but a trusted mode where shield keeps winning stays on
+        tr2=Trainer.__new__(Trainer)
+        tr2.cfg=config(shield_min_overrides=3)
+        tr2.learner=SimpleNamespace(trusted_modes={0})
+        tr2._shield_pending=[];tr2._shield_stats={};tr2._shield_off_modes=set()
+        tr2.session=SimpleNamespace(event=lambda *a,**k:None);tr2.attempts=0
+        import time as _t2
+        for _ in range(3):
+            tr2._shield_note_override('cube',0,1,'learned')
+            tr2._shield_pending[-1]['t']=_t2.time()-2.  # survived >1s
+        tr2._shield_attribute(False)
+        self.assertNotIn('cube',tr2._shield_off_modes)
+        self.assertEqual(tr2._shield_stats['cube'],[3,0,3])
 
     def test_gui_uses_action_q_values_without_another_network_forward(self):
         from preview_boxes import _Tr

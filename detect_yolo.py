@@ -22,6 +22,7 @@ import glob
 import json
 import os
 import shutil
+import pathlib
 
 import numpy as np
 
@@ -45,7 +46,7 @@ class YoloDetector:
         self.engine = str(device) != 'cpu' and os.path.exists(eng) and os.path.getmtime(eng) >= os.path.getmtime(path)
         if os.path.exists(eng) and os.path.getmtime(eng) < os.path.getmtime(path):
             print(f"[yolo] {eng} is older than {path} (retrained since): using the .pt -- re-run --export")
-        self.loaded_path = os.path.abspath(eng if self.engine else path)
+        self.loaded_path = str(pathlib.Path(eng if self.engine else path).resolve())
         self._m = YOLO(eng, task="detect") if self.engine else YOLO(path)
         try:
             import torch

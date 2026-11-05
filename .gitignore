@@ -65,3 +65,12 @@ yolo_check_*.png
 # --- hazard pictures it learns by itself (machine-local; a wrong one came back via git) ---
 hazards/learned/
 hazards/candidates/
+
+# --- run logs, demonstration recordings, caches (GBs; local only) ---
+logs_boxes/
+demonstrations/
+detection_cache/
+_to_delete/
+tmp*/
+*.engine
+yolo_gd_prev.pt

@@ -49,6 +49,10 @@ except ImportError as e:  # pragma: no cover
     raise ImportError("gymnasium is required") from e
 
 from detect import BLOCK_FRAC_H, CLS_ID, Entities, make_detector
+try:
+    import cv2 as _CV2  # hot-path reuse (surface lines / hires downscale)
+except Exception:
+    _CV2 = None
 
 # ----------------------------------------------------------------------------
 # Observation encoding (shared with sim_gd.py)
@@ -85,14 +89,38 @@ FAR = 2.0                         # empty slot: 16 blocks away (off screen)
 SPEED_1X = 10.38                  # GD 1x speed, blocks per second
 
 
+_DOWNSCALE_MEMO: dict = {}
 def _fast_downscale(img: np.ndarray, w: int, h: int) -> np.ndarray:
     """= cv2.INTER_AREA, ~3-4x faster on big frames (same as capture.fast_downscale)."""
-    import cv2
+    _cv = _CV2 if _CV2 is not None else __import__("cv2")
+    try:
+        _key = (int(img.shape[0]), int(img.shape[1]), int(w), int(h))
+        _hit = _DOWNSCALE_MEMO.get(_key)
+    except Exception:
+        _key = _hit = None
+    if _hit is not None:
+        _halved, _near = _hit
+        out = img
+        if _halved:
+            while out.shape[1] // 2 >= 0.95 * w and out.shape[0] // 2 >= 0.95 * h:
+                out = _cv.resize(out, (out.shape[1] // 2, out.shape[0] // 2), interpolation=_cv.INTER_LINEAR)
+        if out.shape[1] != w or out.shape[0] != h:
+            out = _cv.resize(out, (w, h), interpolation=_cv.INTER_LINEAR if _near else _cv.INTER_AREA)
+        return out
+    _halved0 = False
     while img.shape[1] // 2 >= 0.95 * w and img.shape[0] // 2 >= 0.95 * h:
-        img = cv2.resize(img, (img.shape[1] // 2, img.shape[0] // 2), interpolation=cv2.INTER_LINEAR)
+        img = _cv.resize(img, (img.shape[1] // 2, img.shape[0] // 2), interpolation=_cv.INTER_LINEAR)
+        _halved0 = True
     if img.shape[1] != w or img.shape[0] != h:
         near = abs(img.shape[1] - w) <= 0.06 * w and abs(img.shape[0] - h) <= 0.06 * h
-        img = cv2.resize(img, (w, h), interpolation=cv2.INTER_LINEAR if near else cv2.INTER_AREA)
+        img = _cv.resize(img, (w, h), interpolation=_cv.INTER_LINEAR if near else _cv.INTER_AREA)
+    else:
+        near = True
+    try:
+        if _key is not None and len(_DOWNSCALE_MEMO) < 8:
+            _DOWNSCALE_MEMO[_key] = (_halved0, bool(near))
+    except Exception:
+        pass
     return img
 
 
@@ -193,6 +221,21 @@ def special_boxes(ents: Entities, reach: float = 17.0) -> list:
 
 
 USE_MS_DELAY = False     # train_boxes --ms-delay turns it on
+# A portal coming up is remembered from this many blocks ahead and applied once the icon is past
+# it, even if neither was seen at the crossing. Live (Jumper, 18%): the blue gravity portal was
+# last detected 2.6 blocks ahead (the old limit was 2.5) and not again until it was behind the
+# icon -- the bot played the rest of the attempt as an upside-down cube on the floor.
+PORTAL_ARM_BLOCKS = 5.0
+# GD applies a portal when the icon TOUCHES it, not when the centres line up: the gravity flip
+# shows in the icon's motion with the portal's centre still 0.5-0.9 blocks ahead (Jumper 13%,
+# attempts 2 and 12). Applying it at the centre (or 0.3 blocks past it) left the bot planning
+# with the old gravity for 2-3 decisions -- right where the cube has to jump off the ceiling.
+PORTAL_TOUCH_BLOCKS = 0.8
+
+
+def portal_touching(portal_x: float, icon_x: float) -> bool:
+    """Is the icon at the portal (GD has applied it), from just before touching to ~half past?"""
+    return -0.6 * BLOCK_W < portal_x - icon_x < PORTAL_TOUCH_BLOCKS * BLOCK_W
 
 
 def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phys,
@@ -227,6 +270,9 @@ def physics_features(ents: Entities, speed: float, est: ModeEstimator, phys: Phy
         eff = portal_effect(hue_)
         if eff is not None and (t_ - b_) >= 2.4 and (x1_ - x0_) >= 0.6 and not on_block:
             portals.append((x0_, x1_, b_, t_) + eff)
+    # a gravity TOGGLE the icon already touches has been applied by the env (portal_touching):
+    # flying on through it in the preview must not toggle it back
+    portals = [q for q in portals if not (q[4] == "g" and q[5] == 0 and q[0] < half)]
     specials = special_boxes(ents)
     # just landed? Standing level with a known surface and not moving counts as on the
     # ground right away (the 3-still-frames rule alone misses taps right after a landing)
@@ -359,9 +405,11 @@ def encode_obs(ents: Entities, *, hold: bool, prev_py: float | None,
     # the rest of out[RESERVED] stays 0: room for future features without a new brain
     half_pw = 0.5 * BLOCK_W
     ahead = []
+    _pid = CLS_ID["player"]
+    _ncls = ENT_CLASSES
     for e in ents.items:
         c = int(e.cls)
-        if c == CLS_ID["player"] or c >= ENT_CLASSES:
+        if c == _pid or c >= _ncls:
             continue
         x0, x1 = e.x - e.w / 2, e.x + e.w / 2
         if x1 < px - half_pw:      # fully behind the icon: irrelevant now
@@ -626,7 +674,7 @@ class EntityBoxEnv(gym.Wrapper):
         if not self.hires or self.base is None:
             return None
         try:
-            import cv2
+            cv2 = _CV2 if _CV2 is not None else __import__("cv2")
             hi = getattr(self.base.cap, "last_hires", None)   # already shrunk by the capture
             if hi is not None and hi.shape[:2] == (360, 640):
                 return hi
@@ -712,10 +760,13 @@ class EntityBoxEnv(gym.Wrapper):
         positions was off by up to 1.2 blocks after deaths froze the icon in mid-air), and
         it follows the camera. A line must be seen at the same height twice in a row."""
         try:
-            import cv2
+            cv2 = _CV2 if _CV2 is not None else __import__("cv2")
             img = np.asarray(frame)
             h, w = img.shape[:2]
-            cols = np.r_[int(0.05 * w):int(0.28 * w), int(0.48 * w):int(0.95 * w)]   # not the icon
+            cols = getattr(self, "_surf_cols", None)
+            if cols is None or getattr(self, "_surf_w", None) != w:
+                cols = np.r_[int(0.05 * w):int(0.28 * w), int(0.48 * w):int(0.95 * w)]   # not the icon
+                self._surf_cols, self._surf_w = cols, w
             hsv = cv2.cvtColor(np.ascontiguousarray(img[:, cols, :3]), cv2.COLOR_RGB2HSV)
             sc = hsv[:, :, 2].astype(np.int16) - (hsv[:, :, 1].astype(np.int16) >> 1)
             up, dn = np.roll(sc, 2, axis=0), np.roll(sc, -2, axis=0)
@@ -824,6 +875,7 @@ class EntityBoxEnv(gym.Wrapper):
                 ents = self.hazmem.apply(ents, hi if hi is not None else self.last_hires, getattr(ents, "scroll", None))
             except Exception as ex:
                 self._loud("hazards", ex)
+        ents = self._keep_specials(ents)
         self.last_ents = ents
         _t1 = time.perf_counter()
         self.timing["detect"] += _t1 - _t0
@@ -847,6 +899,7 @@ class EntityBoxEnv(gym.Wrapper):
                                        and motion_scroll is not None and motion_scroll < -.0025*self.frame_skip)
         floor_rel = ceil_rel = None
         self._floor_source = 'unknown'
+        self._track_pending_portal(ents, pl)
         if pl is not None:
             py = ents.player_pos()[1]
             y_b = (0.75 - py) / BLOCK_H
@@ -863,7 +916,7 @@ class EntityBoxEnv(gym.Wrapper):
             for e in ents.items:            # portal crossing the icon: mode may change now
                 c_ = int(e.cls)
                 kind_ = getattr(e, "kind", None)
-                if c_ == CLS_ID["portal"] and kind_ and abs(e.x - px_) < 0.6 * BLOCK_W and self._portal_cool <= 0:
+                if c_ == CLS_ID["portal"] and kind_ and portal_touching(e.x, px_) and self._portal_cool <= 0:
                     # YOLO named the exact portal: apply it (no size / colour guessing)
                     from gd_objects import portal_fx
                     fx = portal_fx(kind_)
@@ -875,7 +928,10 @@ class EntityBoxEnv(gym.Wrapper):
                         else:
                             self.mode_est.portal_fx(fx)
                         self._portal_cool = 10
-                elif c_ == CLS_ID["portal"] and abs(e.x - px_) < 0.6 * BLOCK_W and self._portal_cool <= 0:
+                        _pp = getattr(self, "_pending_portal", None)
+                        if _pp is not None and _pp.get("kind") == kind_:
+                            _pp["applied"] = True          # seen crossing it: don't apply it twice
+                elif c_ == CLS_ID["portal"] and portal_touching(e.x, px_) and self._portal_cool <= 0:
                     # mode / gravity portals are ~3 blocks tall (speed portals are shorter and
                     # don't change the mode); a "portal" that sits on a detected block is a
                     # pillar, not a portal (live runs: pillars turned the cube into a "UFO")
@@ -887,6 +943,9 @@ class EntityBoxEnv(gym.Wrapper):
                                         and abs(w.y - e.y) < (w.h + e.h) / 2 for w in walls_)):
                         self.mode_est.portal_hint(float(getattr(e, "hue", -1.0)))
                         self._portal_cool = 10
+                        _pp = getattr(self, "_pending_portal", None)
+                        if _pp is not None and _pp.get("fx") is None:
+                            _pp["applied"] = True
                 elif c_ in (CLS_ID["orb_y"], CLS_ID["orb_b"], CLS_ID["orb_p"], CLS_ID["pad"]) \
                         and abs(e.x - px_) < 1.0 * BLOCK_W and abs(e.y - py) < 1.5 * BLOCK_H:
                     self.mode_est.gravity_hint()   # orbs / pads can flip gravity
@@ -1177,7 +1236,118 @@ class EntityBoxEnv(gym.Wrapper):
             "lines": [None if q is None else round(float(q), 4) for q in self._lines],
         }
 
+    SPECIAL_KEEP = 3   # decisions a pad / orb missing from a picture is kept, moved with the scroll
+
+    def _keep_specials(self, ents):
+        """A pad / orb YOLO saw last decision but misses in this picture is still there: keep
+        it (moved by this decision's scroll) for up to SPECIAL_KEEP decisions. Live (041703,
+        28 of 45 deaths at 21%): a yellow pad 1-2 blocks ahead dropped out of ONE picture, the
+        planner then saw the cube run into the pillar behind it -- waiting looked as deadly as
+        jumping (0.20 / 0.20) -- and the jump that followed went over the pad."""
+        try:
+            import copy as _copy
+            if self._terrain_shift is not None:
+                shift = float(self._terrain_shift)
+            else:
+                shift = -float(self.speed or SPEED_1X) * BLOCK_W * float(self._motion_dt())
+            cur = [e for e in ents.items if int(e.cls) in (1, 2, 3, 4)]
+            keep = []
+            for e, age in getattr(self, "_special_mem", []):
+                nx = e.x + shift
+                if age >= self.SPECIAL_KEEP or nx < -0.05:
+                    continue
+                if any(int(c.cls) == int(e.cls) and abs(c.x - nx) < 0.04 and abs(c.y - e.y) < 0.04 for c in cur):
+                    continue                               # seen again: the fresh one is used
+                g = _copy.copy(e)
+                g.x = nx
+                keep.append((g, age + 1))
+            if keep and not self._death_frozen:
+                ents.items = list(ents.items) + [g for g, _ in keep]
+            self._special_mem = [(e, 0) for e in cur] + keep
+        except Exception as ex:
+            self._loud("specials", ex)
+        return ents
+
+    def _track_pending_portal(self, ents, pl) -> None:
+        """A portal YOLO named, coming up at the icon's height, is remembered and moved with the
+        scroll; once the icon is past it, its effect is applied -- even if the icon wasn't seen
+        IN the portal. Live (level 051717, 12 of 21 deaths at 5%): the yellow gravity portal's
+        flash hid the icon for exactly the frames it crossed, the crossing check never fired,
+        and the planner kept predicting a fall to the floor while the cube rose into the
+        ceiling spikes upside down."""
+        try:
+            from gd_objects import portal_fx
+            if pl is not None:
+                px, py = ents.player_pos()
+                self._last_px, self._last_py = px, py
+            else:
+                px, py = getattr(self, "_last_px", 0.37), getattr(self, "_last_py", None)
+            if self._terrain_shift is not None:
+                shift = float(self._terrain_shift)
+            else:
+                shift = -float(self.speed or SPEED_1X) * BLOCK_W * float(self._motion_dt())
+            pend = getattr(self, "_pending_portal", None)
+            if pend is not None:
+                pend["x"] += shift
+                pend["age"] += 1
+                if pl is not None:
+                    # seen again: re-anchor it (the scroll estimate drifts over a few blocks)
+                    for e in ents.items:
+                        if int(e.cls) == CLS_ID["portal"] and abs(e.x - pend["x"]) < 1.2 * BLOCK_W:
+                            pend["x"], pend["y"], pend["h"] = float(e.x), float(e.y), float(e.h)
+                            break
+                if pl is not None and abs(pend["x"] - px) < 1.0 * BLOCK_W:
+                    # how close (in height) the icon came to it while level with it
+                    dy_ = abs(py - pend["y"])
+                    pend["dy"] = min(pend.get("dy", dy_), dy_)
+                if pend["x"] < px + PORTAL_TOUCH_BLOCKS * BLOCK_W:    # the icon has reached it
+                    # armed from up to PORTAL_ARM_BLOCKS away: the icon may have jumped over /
+                    # dropped under it since. Not applied if the icon was seen passing well
+                    # above / below it (unseen at the crossing: applied, as before).
+                    if pend.get("dy") is not None and pend["dy"] > 0.5 * pend["h"] + 0.9 * BLOCK_H:
+                        print(f"[portal] passed {pend['kind']} {pend['dy'] / BLOCK_H:.1f} blocks off its centre: not applied")
+                        pend["applied"] = True
+                    if not pend["applied"]:
+                        fx = pend["fx"]
+                        if fx is None:                         # unnamed portal: by its colour
+                            self.mode_est.portal_hint(float(pend["hue"]))
+                        elif fx[0] == "speed":
+                            self.speed = float(fx[1])
+                            self._speed_hist.clear()
+                            self._speed_hist.extend([float(fx[1])] * 5)
+                        else:
+                            self.mode_est.portal_fx(fx)
+                        self._portal_cool = 10             # (the crossing check must not apply it again)
+                        print(f"[portal] reached {pend['kind']} without seeing the icon at it: applied")
+                    self._pending_portal = None
+                elif pend["age"] > 40:
+                    self._pending_portal = None
+            if pl is not None and getattr(self, "_pending_portal", None) is None:
+                walls_ = [w for w in ents.items if int(w.cls) == CLS_ID["wall"]]
+                for e in ents.items:
+                    kind = getattr(e, "kind", None)
+                    if int(e.cls) != CLS_ID["portal"] or not (0.3 * BLOCK_W < e.x - px < PORTAL_ARM_BLOCKS * BLOCK_W):
+                        continue
+                    if kind:
+                        fx = portal_fx(kind)
+                        if fx is not None and fx[0] != "none" and abs(e.y - py) < 0.6 * max(e.h, 2.0 * BLOCK_H):
+                            self._pending_portal = dict(x=float(e.x), y=float(e.y), h=float(e.h), fx=fx, kind=kind,
+                                                        age=0, applied=False)
+                            break
+                    elif (float(getattr(e, "hue", -1.0)) >= 0 and e.h / BLOCK_H >= 2.4 and e.w / BLOCK_W >= 0.6
+                          and abs(e.y - py) < 0.45 * e.h
+                          and not any(abs(w.x - e.x) < (w.w + e.w) / 2 and abs(w.y - e.y) < (w.h + e.h) / 2
+                                      for w in walls_)):
+                        # (the same tests as the crossing check's unnamed portals)
+                        self._pending_portal = dict(x=float(e.x), y=float(e.y), h=float(e.h), fx=None, kind="portal",
+                                                    hue=float(e.hue), age=0, applied=False)
+                        break
+        except Exception as ex:
+            self._loud("portal-track", ex)
+
     def _new_attempt(self) -> None:
+        self._pending_portal = None
+        self._special_mem = []
         self.last_clearance = None
         self._tracking_age = 0
         self._calibration_valid = False
@@ -1263,6 +1433,27 @@ class EntityBoxEnv(gym.Wrapper):
             if 0<=age<10.:
                 self._action_observation_age_s=age
                 self.profile.add('action_observation_age',age)
+        # --precise-press: the replay asked for its press at an exact moment (perf_counter).
+        # Wait for it here and send the key ourselves. A normal key goes out inside the first
+        # base step, after waiting for the next capture slot: add that measured wait (EMA) so a
+        # precise press lands where a normal one with the right timing would have.
+        t_step0 = time.perf_counter()
+        press_at, self._press_at = getattr(self, '_press_at', None), None
+        self._press_wait_extra = 0.0
+        held_before = bool(inp is not None and inp.held)
+        precise_sent = False
+        slot_wait = float(getattr(self, '_slot_wait', 1/120))
+        if press_at is not None and a == 1 and inp is not None and not held_before and self._in_level:
+            target = min(float(press_at) + slot_wait, t_step0 + 0.12)   # never stall a decision longer
+            while True:
+                now = time.perf_counter()
+                if now >= target:
+                    break
+                time.sleep(0.001 if target - now > 0.02 else 0)   # (Windows sleeps can overshoot ~15 ms: spin the end)
+            inp.set(True)
+            precise_sent = True
+            self._press_wait_extra = (time.perf_counter() - t_step0) - slot_wait
+            self.profile.add('precise_press_wait', time.perf_counter() - t_step0)
         died = complete = paused = False
         px_moved = None          # pixel-shift verdict over this step's frames
         info: dict = {}
@@ -1321,6 +1512,12 @@ class EntityBoxEnv(gym.Wrapper):
                 0.05 * max(1, self._slot_mark - (s_mark if s_mark is not None else self._slot_mark - self.frame_skip))
         if frame is None:
             frame = self.last_frame
+        if (not precise_sent and a == 1 and not held_before and inp is not None
+                and getattr(inp, 'last_send_t', None) is not None and not paused):
+            # how long a normal press waits inside the base step for its capture slot
+            sw = float(inp.last_send_t) - t_step0
+            if 0.0 <= sw <= 0.05:
+                self._slot_wait = 0.9 * float(getattr(self, '_slot_wait', 1/120)) + 0.1 * sw
         a = int(info.get('action_applied', a))
         self._input_trace = dict(requested=requested_action, applied=a,
                                  paused=bool(info.get('paused')), foreground=getattr(self, '_focus_state', None),
@@ -1361,6 +1558,16 @@ class EntityBoxEnv(gym.Wrapper):
         }
         if not paused:
             self._moving.append(moved)
+        if died and getattr(self, "pause_on_death", False):
+            # Freeze the game NOW: the respawn has already happened and everything after a death
+            # (death cause + snapshot PNG here; route memory, trial scoring and 40 MB checkpoint
+            # saves in the trainer) used to run while the next attempt played -- its first
+            # second lagged and live trial attempts died at 1%. The trainer resumes when done.
+            try:
+                self.pause()
+                out_info["paused_for_death"] = True
+            except Exception as ex:
+                self._loud("death-pause", ex)
         if died:
             if self.death_lag_s is not None:
                 lag = min(int(round(self.death_lag_s * 60 / self.frame_skip)), max(0, len(self._moving) - 1))
@@ -1398,16 +1605,35 @@ class EntityBoxEnv(gym.Wrapper):
                 except Exception as ex:
                     self._loud("death-cause", ex)
             if self.death_dir and self._snap:
-                try:
-                    import death_snaps
-                    death_snaps.save(list(self._snap), lag, int(self._dbg.get("attempt", self._n_deaths + 1)),
-                                     self.death_dir, self.death_keep, peak_pct=100.0 * self._peak, cause=cause)
-                except Exception as ex:
-                    self._loud("death-snap-save", ex)
+                # drawing + PNG-encoding the snapshot (~0.1-0.2 s) ran inside the step while the
+                # next attempt was already playing: do it on a background thread unless paused
+                args_ = (list(self._snap), lag, int(self._dbg.get("attempt", self._n_deaths + 1)),
+                         self.death_dir, self.death_keep)
+                kw_ = dict(peak_pct=100.0 * self._peak, cause=cause)
+                def _save_snap(a=args_, k=kw_):
+                    try:
+                        import death_snaps
+                        death_snaps.save(*a, **k)
+                    except Exception as ex:
+                        self._loud("death-snap-save", ex)
+                if out_info.get("paused_for_death"):
+                    _save_snap()
+                else:
+                    import threading
+                    threading.Thread(target=_save_snap, daemon=True).start()
             self._new_attempt()
+            self._pct_sticky = self._level_end = False
+            self._end_gone_t = None
         out_info["n_entities"] = len(self.last_ents.items)
         self._update_in_level(info)
         out_info["in_level"] = self._in_level
+        if getattr(self, "_level_end", False) and not complete and not died:
+            self._level_end = self._pct_sticky = False
+            self._end_gone_t = None
+            complete = True
+            out_info["complete"] = True
+            print("[level] the icon left the level and nothing respawned: LEVEL COMPLETE "
+                  "(its % had stopped reading, so 100% was never seen)")
         return v, 0.0, complete, False, out_info
 
     def _update_in_level(self, info: dict) -> None:
@@ -1419,11 +1645,37 @@ class EntityBoxEnv(gym.Wrapper):
         age = info.get("pct_age")
         if age is not None and age < 900:
             self._pct_ever = True
+        was = self._in_level
         if age is not None and self._pct_ever:
             ok = age < 90                       # the level's % read within the last 1.5 s
+            if (not ok and was and self._no_icon <= 60 and not info.get("frozen")
+                    and age < 60 * 30):
+                # ALREADY in a level, the icon still on screen, the picture moving: the % text
+                # just stopped reading (live, Stereo Madness's last section: the last % read
+                # was 89 while the game showed ~94, inputs went off after 1.5 s and the ship
+                # fell into the spikes every attempt with the brain asking to hold). Stay in.
+                # Entering a level still needs a % read; menus don't come in through here.
+                ok = True
+                self._pct_sticky = True
+                if not getattr(self, "_pct_sticky_said", False):
+                    self._pct_sticky_said = True
+                    print("[input] the level's % stopped reading -- the icon is still playing, inputs stay on")
         else:                                   # (% turned off: the icon has to do; deaths hide
             ok = self._no_icon <= 60            #  it for ~1 s, so allow 2 s without it)
-        was = self._in_level
+        # The end of a level whose % stopped reading: "100%" is never read, so the run would
+        # never see "complete" and would keep going on the level-complete screen. While the %
+        # isn't reading, the icon vanishing for good -- 3 s with no death, no respawn and no
+        # % read -- is the end of the level (a death respawns within ~1 s at "0%", which reads).
+        if age is not None and age < 90:
+            self._pct_sticky = False
+            self._end_gone_t = None
+        if getattr(self, "_pct_sticky", False) and pl is None:
+            if getattr(self, "_end_gone_t", None) is None:
+                self._end_gone_t = time.perf_counter()
+            elif time.perf_counter() - self._end_gone_t >= 3.0:
+                self._level_end = True
+        elif pl is not None:
+            self._end_gone_t = None
         # (a frozen picture = paused / a menu over the level: no presses either)
         self._in_level = bool(ok and not info.get("frozen"))
         if was != self._in_level and getattr(self, "_started", False):

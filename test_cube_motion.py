@@ -85,11 +85,20 @@ class CubePhysicsTests(unittest.TestCase):
 
     def test_partial_arcs_learn_gravity_without_waiting_for_original_floor(self):
         physics=Phys(cube_g=108.,cube_v0=22.);learner=CubePhysicsLearner()
+        learner.DRIFT=1.                      # (the learning itself; the live bound is tested below)
         for _ in range(20):self.arc(learner,physics)
         self.assertGreaterEqual(learner.accepted,3)
         self.assertLess(abs(physics.cube_g-90.),abs(108.-90.))
         self.assertLess(abs(physics.cube_v0-19.5),abs(22.-19.5))
         self.assertGreater(learner.updates,0)
+
+    def test_live_updates_stay_near_the_starting_physics(self):
+        physics=Phys(cube_g=108.,cube_v0=22.);learner=CubePhysicsLearner()
+        for _ in range(20):self.arc(learner,physics)
+        self.assertGreater(learner.updates,0)
+        self.assertLess(physics.cube_g,108.)                       # still moves the right way ...
+        self.assertGreaterEqual(physics.cube_g,108.*(1-learner.DRIFT)-1e-9)   # ... but only so far
+        self.assertLessEqual(abs(physics.cube_v0-22.),22.*learner.DRIFT+1e-9)
 
     def test_one_arc_does_not_change_parameters_and_invalid_frames_do_not_vote(self):
         physics=Phys(cube_g=108.,cube_v0=22.);learner=CubePhysicsLearner()

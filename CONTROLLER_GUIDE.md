@@ -18,12 +18,21 @@ optimizer, exploration, deployed/candidate weights and any pending evaluation:
 python preview_boxes.py --backend yolo-only --route-controller --model checkpoints/route_controller.pt --no-route --hold-cost 0.0 --clearance-reward
 ```
 
-The default output is `checkpoints/route_controller.pt`. The validated champion
-is `checkpoints/route_controller_best.pt`. The original `preview_boxes.pt`,
+For a fresh controller or a legacy-encoder import, the default output is
+`checkpoints/route_controller.pt`; the validated champion is
+`checkpoints/route_controller_best.pt`. When resuming an existing route-controller
+checkpoint, live updates save back to the exact `--model` file and the champion
+is saved alongside it with `_best` appended. Startup prints the destination.
+The original legacy `preview_boxes.pt`,
 `best_boxes.pt`, and YOLO weights are not overwritten by this controller.
 Starting repeatedly from a LEGACY checkpoint reimports its encoder and starts
 the new experience again; resume `route_controller.pt` after the first run.
 Omit `--model` to initialize the new controller without importing an encoder.
+
+Pass `--motion-model` with an existing calibration file (currently
+`checkpoints/manual_v1/motion_model.npz` for the working calibration). Missing
+files are rejected before capture starts. Use `--motion-model none` only when
+deliberately running without loading or saving physics calibration.
 
 The default CPU thread/capture settings still apply. No GPU training process,
 real-time OS priority, or background gameplay process is introduced. The new
@@ -316,6 +325,11 @@ ceiling without jumping remains valid. The recorded performance fixture was
 updated against the unoptimized reference with the same collision correction;
 old expected results are retained on changed cases for audit.
 # Landing/takeoff evidence and earlier-decision diagnostics
+
+Manual left-click demonstrations are supported by `record_demonstrations.py`
+and `train_demonstrations.py`. See [DEMONSTRATIONS.md](DEMONSTRATIONS.md) for
+recording keys, offline training, validation rules, and the two output paths
+needed to load the taught controller and blue-line physics.
 
 Controller prediction inputs now use interval-average velocity for both the
 analytical prior and learned motion, matching the measured training targets.

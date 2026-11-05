@@ -60,11 +60,14 @@ class CubePhysicsLearner:
     Fit on earlier observations and check a later observation. Parameter
     proposals must improve validation across at least three separate arcs.
     """
+    DRIFT=.02             # live updates stay within 2% of the session's starting physics
+
     def __init__(self):
         self.arcs=deque(maxlen=25);self.points=[];self.rest=None;self.key=None
         self.time=0.;self.first_dt=None;self.voted=False;self.accepted=0;self.updates=0
         self.suspended=False
         self.last={}
+        self.anchor=None      # (gravity, jump speed) when this session started learning
 
     def reset(self,rest=None,key=None):
         self.points=[];self.rest=rest;self.key=key;self.time=0.;self.first_dt=None;self.voted=False
@@ -124,6 +127,8 @@ class CubePhysicsLearner:
         old=float(np.mean([self.gravity_error(s,physics.cube_g) for s in self.arcs]))
         new=float(np.mean([self.gravity_error(s,proposal) for s in self.arcs]))
         changed=False
+        old_g,old_v0=float(physics.cube_g),float(physics.cube_v0)
+        if self.anchor is None:self.anchor=(old_g,old_v0)
         if np.quantile(values,.75)-np.quantile(values,.25)<=12. and new<old*.9-.003:
             physics.cube_g=.85*physics.cube_g+.15*proposal;changed=True
         launches=[s for s in self.arcs if s['speed'] is not None]
@@ -133,6 +138,14 @@ class CubePhysicsLearner:
             new_v=float(np.mean([self.launch_error(s,physics.cube_g,proposal_v) for s in launches]))
             if np.quantile(speeds,.75)-np.quantile(speeds,.25)<=2. and new_v<old_v*.9-.003:
                 physics.cube_v0=.85*physics.cube_v0+.15*proposal_v;changed=True
-        if changed:self.updates+=1
+        if changed:
+            # Live it can only fine-tune: at most DRIFT from the values this session started
+            # with. 223732: one session's arcs walked gravity 93.1 -> 86.0 (-8%) and its saved
+            # motion model then had every jump arc wrong -- dying at 9% instead of 22%.
+            if self.anchor is None:self.anchor=(old_g,old_v0)
+            g0,v00=self.anchor
+            physics.cube_g=float(np.clip(physics.cube_g,g0*(1-self.DRIFT),g0*(1+self.DRIFT)))
+            physics.cube_v0=float(np.clip(physics.cube_v0,v00*(1-self.DRIFT),v00*(1+self.DRIFT)))
+            self.updates+=1
         self.last.update(updates=self.updates,gravity_validation_before=old,gravity_validation_proposed=new,
                          gravity=float(physics.cube_g),jump_speed=float(physics.cube_v0))

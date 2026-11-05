@@ -9,10 +9,12 @@ Window: the 640x360 frame the detector sees, with
   magenta = portal (labelled), green = player,
   thick box = nearest hazard ahead, bar on the left = how much the policy
   wants to jump right now, green border = SPACE held.
-  Predicted paths: thick green = if it jumps now, thin yellow = if it jumps
-  in 4 steps, thin magenta = if it keeps holding (ship / wave / robot), white
-  dots = if it doesn't press (follows ledges / falls); red X = that path
-  crashes there.
+  Predicted paths: thick cyan = the controller's intended plan when a brain
+  forecast is available (faded cyan tail = analytic physics continuation
+  past the brain horizon; else the best line the search found, which the
+  safety shield follows), thin magenta = if it keeps holding (ship / wave /
+  robot), white dots = if it doesn't press (follows ledges / falls);
+  red X = that path crashes there.
 Keys in the window: q / ESC quit (saves).  p pause/unpause training (GD
 gets ESC; click back into GD within 2 s after unpausing).
 
@@ -32,6 +34,49 @@ _COL = {0: (0, 0, 255), 1: (0, 255, 255), 2: (255, 160, 0), 3: (255, 0, 255),
         4: (0, 165, 255), 5: (255, 0, 200), 6: (170, 170, 170), 7: (0, 255, 0)}
 
 
+def _intended_hold_path(dbg=None, arcs=None, speed=10.38):
+    """Controller's intended next moves, stitched to an analytic continuation.
+
+    Brain part: the constant-HOLD forecast already computed by the last
+    act() call (stored in env._dbg by trainer.act) -- never runs the network
+    again. Continuation: the planner's own 'hold' analytic arc (or its
+    'best' search arc) rebased to start where the brain forecast ends, so
+    the line keeps going past the brain's ~5-step horizon. The stitch is
+    visual only: the analytic tail begins at the brain end point (a visible
+    step there would mean the two models disagree).
+
+    Returns (brain_points, continuation_points, source) in (x_blocks,
+    y_blocks) relative to the player, origin at current height.
+    None = no brain forecast available; caller falls back to planner 'best'.
+    """
+    mp = (dbg or {}).get('motion_prediction') or {}
+    hold = mp.get('hold') or []
+    valid = mp.get('hold_valid') or []
+    if not hold:
+        return None
+    times = mp.get('times') or [(j + 1) * .04 for j in range(len(hold))]
+    pts = [(0., 0.)]
+    for j, ((dy, _vy), t) in enumerate(zip(hold, times)):
+        if j < len(valid) and not valid[j]:
+            break
+        pts.append((speed * float(t), float(dy)))
+    if len(pts) < 2:
+        return None
+    end_x, end_y = pts[-1]
+    # Analytic tail: prefer the 'hold' arc (same constant-input assumption
+    # as the brain forecast); fall back to the planner 'best' arc.
+    tail = []
+    for name in ('hold', 'best'):
+        cand = next((q[2] for q in (arcs or []) if q[0] == name), None)
+        if cand and len(cand) >= 2:
+            # estimate the tail arc's sample spacing in x to rebase by time;
+            # arcs are (x, y) in blocks at uniform decision steps.
+            tail = [(end_x + (x - cand[0][0]), end_y + (y - cand[0][1]))
+                    for x, y in cand if end_x + (x - cand[0][0]) > end_x + 1e-9]
+            break
+    return (pts, tail, mp.get('source', 'learned'))
+
+
 class _Env:
     """What the drawing needs, grabbed on the main thread (cheap: references, a few numbers),
     so the GUI thread never reads the live env while it changes."""
@@ -45,13 +90,14 @@ class _Env:
         self._last_search=dict(path_unknown=bool(search.get('path_unknown')),path_hit=bool(search.get('path_hit')),
                                plan=dict(search.get('plan') or {}))
         self._dbg=dict(getattr(env,'_dbg',None) or {})
+        self.intended=_intended_hold_path(self._dbg, self.last_arcs)
         self._lines = getattr(env, "_lines", None)
         me = getattr(env, "mode_est", None)
         self.mode_est = None if me is None else type("ME", (), {"mode": me.mode, "mini": me.mini, "g": me.g,
                                                               "lag": me.lag})()
         ph = getattr(env, "phys", None)
         self.phys = None if ph is None else type("PH", (), {"apex": ph.apex, "airtime": ph.airtime,
-                                                          "n_cal": ph.n_cal})()
+                                                           "n_cal": ph.n_cal})()
         mfx = getattr(env, "motion_fix", None)
         self.motion_fix = None if mfx is None else type("MF", (), {"n": mfx.n, "m_trust": np.array(mfx.m_trust)})()
         self.speed = env.speed
@@ -109,16 +155,33 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
         cv2.rectangle(img, (x0, y0), (x1, y1), c, 3 if e is near else 1)
         if e is near or int(e.cls) in (1, 2, 3, 4, 5):
             cv2.putText(img, CLASSES[int(e.cls)], (x0, max(12, y0 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, c, 1)
+    # hitboxes the planner actually uses for hazards (thin white)
+    try:
+        from env_boxes import preview_boxes as _hz_boxes, BLOCK_W as _BW, BLOCK_H as _BH
+        _px, _py = ents.player_pos()
+        for _x0, _x1, _b, _t in _hz_boxes(ents, 20)[0]:
+            cv2.rectangle(img,
+                          (int((_px + _x0 * _BW) * W), int((_py - _t * _BH) * H)),
+                          (int((_px + _x1 * _BW) * W), int((_py - _b * _BH) * H)),
+                          (255, 255, 255), 1)
+    except Exception:
+        pass
     # physics preview (in the current mode): thin magenta = keep holding (ship / wave /
-    # robot), white dots = don't press, thick cyan = the best line the search found
-    # (what the safety shield goes by),
+    # robot), white dots = don't press, thick cyan = the controller's intended
+    # plan when a brain forecast is available (else the best line the search
+    # found, which is what the safety shield goes by),
     # red X = where that path would crash
     try:
         from env_boxes import BLOCK_W, BLOCK_H
         ppx, ppy = ents.player_pos()
         # A missing player has no measured origin for these relative paths.
         # Drawing at Entities.player_pos()'s default invents a tall falling arc.
-        arcs=getattr(env,'last_arcs',[]) if ents.player() is not None else []
+        arcs=list(getattr(env,'last_arcs',[]) or []) if ents.player() is not None else []
+        intended=getattr(env,'intended',None)
+        if intended is not None:
+            # Replace -- do not merely relabel -- the planner 'best' line with
+            # the controller's actual intended forecast (+ faded analytic tail).
+            arcs=[q for q in arcs if q[0]!='best']+[('best',False,intended[0])]
         for name, hit, pts in arcs:
             # (green "tap now" / yellow "tap in 4" are no longer drawn: the shield goes by the
             # cyan search line; the brain still gets those plans as inputs)
@@ -136,6 +199,13 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
                 thick = name in ("tap now", "best")
                 cv2.polylines(img, [P], False, (0, 0, 0), 4 if thick else 3, cv2.LINE_AA)   # outline
                 cv2.polylines(img, [P], False, col, 2 if thick else 1, cv2.LINE_AA)
+                if name == 'best' and intended is not None and intended[1]:
+                    # faded analytic continuation after the brain horizon
+                    T = np.array([[(ppx + x * BLOCK_W) * W, (ppy - y * BLOCK_H) * H]
+                                  for x, y in intended[1]], np.int32)
+                    if len(T) >= 2:
+                        faint = tuple(int(c * .45) for c in col)
+                        cv2.polylines(img, [T], False, faint, 1, cv2.LINE_AA)
             if hit:                                   # red X where that path would crash
                 ex, ey = (int(v) for v in P[-1])
                 cv2.line(img, (ex - 5, ey - 5), (ex + 5, ey + 5), (0, 0, 255), 2)
@@ -179,9 +249,15 @@ def render(env, tr, a: int, info: dict, scale: float) -> np.ndarray:
         search=getattr(env,'_last_search',None) or {}
         plan=search.get('plan') or {}
         role=(getattr(env,'_dbg',None) or {}).get('controller_role','planner bootstrap')
-        status=prediction_status(search,pl is not None)
-        cv2.putText(img,f'Cyan: predicted plan ({status}); control: {role}',(20,H-8),
-                    cv2.FONT_HERSHEY_SIMPLEX,.38,(255,255,0),1)
+        intended=getattr(env,'intended',None)
+        if intended is not None:
+            tail='+faded physics tail' if intended[1] else 'brain horizon only'
+            cv2.putText(img,f'Cyan: controller intended plan ({intended[2]} forecast {tail}); control: {role}',(20,H-8),
+                        cv2.FONT_HERSHEY_SIMPLEX,.38,(255,255,0),1)
+        else:
+            status=prediction_status(search,pl is not None)
+            cv2.putText(img,f'Cyan: predicted plan ({status}); control: {role}',(20,H-8),
+                        cv2.FONT_HERSHEY_SIMPLEX,.38,(255,255,0),1)
     elif me is not None and me.mode in ('ship','wave'):
         search=getattr(env,'_last_search',None) or {}
         status='view limit: continuation unverified' if search.get('path_unknown') else 'best planned route; future inputs may change'

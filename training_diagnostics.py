@@ -81,6 +81,19 @@ class SessionLog:
         with open(os.path.join(self.directory, name + '.jsonl'), 'a') as f:
             f.write(json.dumps(dict(time=time.time(), session_id=self.id, **data)) + '\n')
 
+    def flush(self):
+        try:
+            self.file.flush()
+        except Exception:
+            pass
+
+    def close(self):
+        self.flush()
+        try:
+            self.file.close()
+        except Exception:
+            pass
+
 
 class Timings:
     def __init__(self):
@@ -129,6 +142,24 @@ def inferred_surface(player_y, rest_y, block_h, gravity, grounded, platform, mod
     return gravity * distance
 
 
+def _ballistic(segment, gravity):
+    """True while stored cube velocities follow gravity (no contact/impulse).
+
+    A landing can be followed by an immediate buffered jump: every later
+    sample may still be flagged airborne even though velocity was reset.
+    The stored per-step ``vy`` sequence exposes that discontinuity.
+    """
+    previous = segment[0]
+    for current in segment[1:]:
+        dt = current.get('motion_dt', current.get('dt', 0))
+        if not 0 < dt <= .1 or previous.get('vy') is None or current.get('vy') is None:
+            return False
+        if abs(current['vy'] - (previous['vy'] - gravity * dt)) > 8.:
+            return False
+        previous = current
+    return True
+
+
 def flight_errors(steps, crash_index=None, horizons=(1, 3, 5)):
     """Compare cube ballistic predictions to later detections, in blocks.
 
@@ -143,6 +174,7 @@ def flight_errors(steps, crash_index=None, horizons=(1, 3, 5)):
             continue
         if first.get('y') is None or p.get('vy0') is None:
             continue
+        gravity = first.get('g', 1) * p.get('cube_g', 95)
         for h in horizons:
             if i + h >= end:
                 continue
@@ -153,8 +185,13 @@ def flight_errors(steps, crash_index=None, horizons=(1, 3, 5)):
                    or (s.get('preview_inputs') or {}).get('grounded', True)
                    or not 0 < s.get('motion_dt', s.get('dt', 0)) <= .1 for s in tail):
                 continue
+            # Grounded flags alone miss buffered landings/jumps and other
+            # impulses: if observed velocity leaves the ballistic path,
+            # this horizon is not free flight and must not grade physics.
+            if not _ballistic([first, *tail], gravity):
+                continue
             t = sum(s.get('motion_dt', s['dt']) for s in tail)
-            predicted = first['y'] + p.get('y0', 0) + p['vy0'] * t - .5 * first.get('g', 1) * p.get('cube_g', 95) * t*t
+            predicted = first['y'] + p.get('y0', 0) + p['vy0'] * t - .5 * gravity * t * t
             yield dict(index=i, horizon=h, seconds=t, predicted=predicted,
                        observed=tail[-1]['y'], error=tail[-1]['y'] - predicted)
 

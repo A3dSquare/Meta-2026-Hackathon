@@ -9,7 +9,7 @@ same shape and an existing brain keeps working. The exact type (red orb, 2x spee
 portal...) rides along as `kind` and drives the blue line's physics.
 
 Launch strengths are relative to the cube's own jump. Yellow / pink / red orbs and pads
-were measured on a recording of your game (custom-for-claude.mp4, 30 fps); the less
+were measured on a recording of your game (recs/custom_reference.mp4, 30 fps); the less
 common ones (black / dash / spider orbs, mode scaling for ship / ufo / ball / swing)
 are approximate and get checked against recordings.
 """

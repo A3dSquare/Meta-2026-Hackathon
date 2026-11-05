@@ -397,7 +397,7 @@ class DiagnosticsTests(unittest.TestCase):
         steps = []
         for i in range(7):
             t = i * .04
-            steps.append(dict(mode='cube', player=True, g=1, y=2+10*t-47.5*t*t,
+            steps.append(dict(mode='cube', player=True, g=1, y=2+10*t-47.5*t*t, vy=10-95*t,
                               dt=.033, motion_dt=.04,
                               preview_inputs=dict(grounded=False, vy0=10-95*t, y0=0, cube_g=95)))
         errors = list(flight_errors(steps))
@@ -406,6 +406,28 @@ class DiagnosticsTests(unittest.TestCase):
         steps[1]['preview_inputs']['grounded'] = True
         self.assertFalse(any(e['index'] == 0 for e in flight_errors(steps)))
         self.assertFalse(list(flight_errors(steps, crash_index=0)))
+
+    def test_ballistic_error_excludes_buffered_jump_impulse(self):
+        # Falling, then an unflagged landing + immediate jump resets vy.
+        # Later samples remain airborne, but horizons crossing the impulse
+        # are not uninterrupted free flight.
+        vys = [-20., -23.8, -27.6, 15., 11.2, 7.4, 3.6]
+        steps = []
+        y = 5.
+        for i, vy in enumerate(vys):
+            if i:
+                y += vy * .04
+            steps.append(dict(mode='cube', player=True, g=1, y=y, vy=vy,
+                              dt=.04, motion_dt=.04,
+                              preview_inputs=dict(grounded=False, vy0=vys[0], y0=0, cube_g=95)))
+        errors = list(flight_errors(steps))
+        got = {(e['index'], e['horizon']) for e in errors}
+        # No horizon starting before the impulse may cross it.
+        self.assertFalse(any(i < 3 and i + h >= 3 for i, h in got))
+        self.assertIn((0, 1), got)
+        self.assertIn((1, 1), got)
+        # Post-impulse ballistic windows remain eligible.
+        self.assertIn((3, 3), got)
 
     def test_sessions_preserve_legacy_and_have_cause(self):
         from dataclasses import dataclass

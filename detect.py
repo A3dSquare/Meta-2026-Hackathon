@@ -57,6 +57,11 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+try:
+    import cv2 as _CV2
+except Exception:
+    _CV2 = None
+
 CLASSES = ["spike", "orb_y", "orb_b", "orb_p", "pad", "portal", "wall", "player"]
 CLS_ID = {c: i for i, c in enumerate(CLASSES)}
 N_CLASSES = len(CLASSES)
@@ -230,7 +235,7 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False,
     player_box (normalized x0,y0,x1,y1) masks the cube out (a rotated cube
     is a diamond, and a diamond's top edge looks exactly like a spike).
     """
-    import cv2
+    cv2 = _CV2 if _CV2 is not None else __import__("cv2")
 
     H, W = bgr.shape[:2]
     blk = BLOCK_FRAC_H * H                         # block size in px
@@ -266,7 +271,7 @@ def detect_hazards(bgr: np.ndarray, player_box=None, force_bright: bool = False,
     # Which side is solid? The side that looks like a block (texture or dark fill).
     line_walls = []
     if line_rows:
-        import cv2 as _cv
+        _cv = _CV2 if _CV2 is not None else __import__("cv2")
         _edges = _cv.Canny(_cv.cvtColor(bgr, _cv.COLOR_BGR2GRAY), 40, 120)
         _bg = float(np.percentile(R[::4, ::4, 2], 75))
         band = max(3, int(0.6 * blk))
@@ -496,7 +501,7 @@ def _trim_empty_walls(found: list, bgr, V, blk: float, player_box=None) -> list:
     flies / runs through (whole-level test: a ship corridor 'filled' with solid).
     A row inside a real block has texture (grid lines, outlines) or a fill clearly
     darker than the background; a band >= 0.7 block of neither is open space."""
-    import cv2
+    cv2 = _CV2 if _CV2 is not None else __import__("cv2")
     out = []
     H, W = V.shape[:2]
     bg = float(np.percentile(V[::4, ::4], 75))       # the (bright) background panels
@@ -654,7 +659,7 @@ def detect_specials(bgr: np.ndarray, player_box=None, hsv=None, solids=None, ref
       pad:    flat strip, height <= 0.5 block, width >= 1.8 x height
     Everything else (decoration) is dropped.
     """
-    import cv2
+    cv2 = _CV2 if _CV2 is not None else __import__("cv2")
 
     H, W = bgr.shape[:2]
     blk = BLOCK_FRAC_H * H
@@ -1156,7 +1161,7 @@ def _overlaps(a, b) -> bool:
     return False
 
 
-def make_detector(backend: str = "heuristic", icon_hue: tuple = (55, 95)):
+def make_detector(backend: str = "heuristic", icon_hue: tuple = (55, 95), device=None):
     """heuristic = built-in rules; yolo = built-in rules + YOLO for what they miss;
     yolo-only = everything from YOLO, icon + its mode included (detect_yolo.YoloOnlyDetector)."""
     if backend == "yolo-only":
@@ -1168,10 +1173,10 @@ def make_detector(backend: str = "heuristic", icon_hue: tuple = (55, 95)):
                       "Install the CUDA build of PyTorch for your GPU.")
         except Exception:
             pass
-        return YoloOnlyDetector(icon_hue=icon_hue)
+        return YoloOnlyDetector(icon_hue=icon_hue, device=device)
     if backend == "yolo":
         from detect_yolo import YoloDetector
-        y = YoloDetector()
+        y = YoloDetector(device=device)
         every = 1
         try:
             import torch

@@ -1,0 +1,17 @@
+Train on my gameplay - python record_demonstrations.py --level
+- F6 -> Play
+- F7 -> Stop
+- F8 -> Discard
+- F9 -> Save 
+
+python train_demonstrations.py "demonstrations/RECORDING_FOLDER" --model checkpoints/route_controller.pt --out checkpoints/manual_v1
+
+Run the model with the motion training:
+
+- python preview_boxes.py --backend yolo-only --route-controller --no-route --clearance-reward --model checkpoints/manual_v1/route_controller.pt --motion-model checkpoints/manual_v1/motion_model.npz
+
+Train YOLO:
+- Record = python record.py --level orbs-and-pads --seconds 45
+- python label_boxes.py --rec recs/orbs-and-pads.mp4
+- python detect_yolo.py --train                               
+- python detect_yolo.py --export      

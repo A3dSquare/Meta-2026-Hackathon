@@ -53,8 +53,9 @@ __all__ = [
 ]
 
 PAUSE_KEY = "esc"  # ESC freezes GD for training
-RESUME_KEY = "space"  # SPACE restarts/plays after settle (user contract:
-# death -> ESC pause -> train -> wait 3s -> SPACE play)
+RESUME_KEY = "esc"  # ESC again closes GD's pause menu = resume. NOT space: GD also takes that
+# SPACE as a jump the moment play continues -- every resumed attempt began with a jump straight
+# into the first spike (live 045624: all --play deaths at 1%, pause menu in the first frame)
 
 
 def _stacked_to_hwc(stacked):
